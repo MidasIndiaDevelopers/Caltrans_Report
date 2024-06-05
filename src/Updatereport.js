@@ -42,40 +42,8 @@ export const Updatereport = () => {
                     throw new Error('No worksheets found in the uploaded file');
                 }
 
-                // names = worksheet._workbook._definedNames.matrixMap;
-
-                // for (let key in names) {
-                //     let a = names[key].sheets['81_I'];
-                //     let b = a[a.length - 1];
-                //     let c = b[b.length - 1];
-                //     let location = c['address'];
-                //     // console.log(key, location)
-                //     if (key == 'Phi') {
-                //         if (cast === "inplace") {
-                //             data = { ...data, [location]: 0.9 };
-                //         }
-                //         else {
-                //             data = { ...data, [location]: 1 };
-                //         }
-                //     }
-                // }
-
-                // for (let key1 in worksheet._rows) {
-                //     // console.log(worksheet._rows[key1])
-                //     for (let key2 in worksheet._rows[key1]._cells) {
-                //         if (worksheet._rows[key1]._cells[key2]['_address'] == 'F111') {
-                //             // console.log(worksheet._rows[key1]._cells[key2]['_value']['model']['value'])
-                //             worksheet._rows[key1]._cells[key2]['_value']['model']['value'] = data['F111'];
-                //             // console.log(worksheet._rows[key1]._cells[key2]['_value']['model']['value'])
-                //         }
-                //     }
-                // }
-                // workbook.worksheets[1] = worksheet;
-
-                // console.log(worksheet)
-                // console.log(workbook);
                 setWorkbookData(workbook);
-                // setSheetData(jsonData);
+
                 setSheetName(worksheet.name);
 
             } catch (error) {
@@ -132,7 +100,7 @@ export const Updatereport = () => {
                 mr = Number(mn) * Number(phi);
 
                 data = { ...data, [location]: mr };
-               
+
                 // location of oK
                 if (mr < Number(mu)) {
                     let location1 = rows[key1]._cells[29]._value.model.address;
@@ -142,23 +110,31 @@ export const Updatereport = () => {
                 }
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dv') {
-               dv=rows[key1]._cells[4]._value.model.value;
+                dv = rows[key1]._cells[4]._value.model.value;
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sm') {
-                let add1=rows[key1]._cells[6]._value.model.address; 
-                data = { ...data, [add1]: 'Min[0.8dv, 18.0(in.)]' };              
-                let add2=rows[key1]._cells[13]._value.model.address;
-                // let val=rows[key1]._cells[13]._value.model.value;
-                if(0.8*dv>=18){
-                    data = { ...data, [add2]: 18 };  
+                if (sp === "ca1") {
+                    let add1 = rows[key1]._cells[6]._value.model.address;
+                    data = { ...data, [add1]: 'Min[0.8dv, 18.0(in.)]' };
+                    let add2 = rows[key1]._cells[13]._value.model.address;
+                    // let val=rows[key1]._cells[13]._value.model.value;
+                    if (0.8 * dv >= 18) {
+                        data = { ...data, [add2]: 18 };
+                    }
+                    else {
+                        data = { ...data, [add2]: 0.8 * dv };
+                    }
                 }
-                else{
-                    data = { ...data, [add2]: 0.8*dv };  
-                }
-             }
+            }
 
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dc') {
+                if (cvr === "ca2") {
+                    let add1 = rows[key1]._cells[9]._value.model.address;
+                    data = { ...data, [add1]: 2.5 };
+                }
+            }
         }
-        
+
         console.log(worksheet);
         for (let key in data) {
             const match = key.match(/^([A-Za-z]+)(\d+)$/);
@@ -170,12 +146,12 @@ export const Updatereport = () => {
                 let value = 0;
                 let factor = 1;
                 for (let i = row.length - 1; i >= 0; i--) {
-                    value += (row.charCodeAt(i) - 64)*factor;
-                    factor*=26;
+                    value += (row.charCodeAt(i) - 64) * factor;
+                    factor *= 26;
                 }
-                
+
                 // console.log(worksheet._rows[col-1]._cells[value-1]._value.model.value)
-                worksheet._rows[col-1]._cells[value-1]._value.model.value = data[key]; 
+                worksheet._rows[col - 1]._cells[value - 1]._value.model.value = data[key];
             }
         }
         workbook.worksheets[1] = worksheet;
