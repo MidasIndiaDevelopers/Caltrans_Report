@@ -6,12 +6,12 @@ import * as XLSX from 'xlsx';
 
 const UpdateExcel = () => {
     const [file, setFile] = useState(null);
-
+    let names = [];
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
     };
 
-    const updateExcelFile = () => {
+    function createReport() {
         if (!file) {
             alert('Please select an Excel file first.');
             return;
@@ -21,33 +21,55 @@ const UpdateExcel = () => {
 
         reader.onload = (e) => {
             const data = new Uint8Array(e.target.result);
-            const file = XLSX.read(data, { type: 'array' });
+            const file = XLSX.read(data, { type: 'array', cellStyles: true });
 
             // Select the first sheet
             const sheetname = '81_I';
             const worksheet = file.Sheets[sheetname];
+            console.log(worksheet);
             //to find cell name
+            names = file.Workbook.Names; // to store all the names saved in sheet1;
+            for (let i = 0; i < names.length; i++) {
+                console.log(names[i]);
+                if (names[i].Name == 'Phi') {
+                    let arr = names[i].Ref.split("$");
+                    let celladd = arr[1] + arr[2];
+                    if (cast === "inplace") {
+                        worksheet[celladd] = { t: 's', v: 0.9 };
+                    }
+                    else {
+                        worksheet[celladd] = { t: 's', v: 1 };
+                    }
+                    console.log(arr, celladd);
+                }
+            }
 
-            const cellAddress = 'check';
-            const newValue = 'Updated Value';
+
+            // const cellAddress = 'check';
+            // const newValue = 'Updated Value';
             // console.log('entry1',file.Workbook.Names, file.Workbook.Names[0].Ref.split("$"), worksheet);
-            console.log('entry1', file.Workbook.Names);
+            // console.log('entry1', file.Workbook.Names);
+
             // const name=file.Workbook.Names[0].Ref.split;
 
-            if (!worksheet[cellAddress]) {
-                // console.log('entry1', worksheet['J11']);
-                worksheet[cellAddress] = { t: 's', v: newValue };
-            } else {
-                worksheet[cellAddress].v = newValue;
-            }
+            // if (!worksheet[cellAddress]) {
+            //     // console.log('entry1', worksheet['J11']);
+            //     worksheet[cellAddress] = { t: 's', v: newValue };
+            // } else {
+            //     worksheet[cellAddress].v = newValue;
+            // }
 
             // Convert the workbook to binary array
             const updatedData = XLSX.write(file, { bookType: 'xlsx', type: 'array' });
+            console.log(updatedData);
 
             // Create a Blob from the binary array and create a download link
             const blob = new Blob([updatedData], { type: 'application/octet-stream' });
+            console.log(blob);
             const url = URL.createObjectURL(blob);
+            console.log(url);
             const a = document.createElement('a');
+            console.log(a);
             a.href = url;
             a.download = 'updated_file.xlsx';
             document.body.appendChild(a);
@@ -79,10 +101,8 @@ const UpdateExcel = () => {
     function updateReport() {
 
     }
-    function createReport() {
 
-    }
-    console.log(cast,sp,cvr);
+    // console.log(cast, sp, cvr);
     return (
         <Panel width={520} height={400} marginTop={3} padding={2} variant="shadow2">
             <div >
@@ -108,7 +128,7 @@ const UpdateExcel = () => {
                         }}
                     >
                         <Radio
-                            name="Inplace"
+                            name=" Cast In-Place"
                             value="inplace"
                             checked={cast === "inplace"}
                         />
@@ -229,33 +249,33 @@ const UpdateExcel = () => {
             <div
                 style={{ display: "flex", justifyContent: "space-between", marginTop: "35px" }}
             >
-               <Grid container>
+                <Grid container>
                     <Grid item xs={6}>
-                    <Typography variant="h1" height="40px" paddingTop="15px"  >
-                        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange}  />
+                        <Typography variant="h1" height="40px" paddingTop="15px"  >
+                            <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
                         </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={6}>
-                    <div
-                    style={{
-                        borderBottom: "1px solid gray",
-                        height: "40px",
-                        width: "200px",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                    }}
-                >
-                    <div style={{ fontSize: "12px", paddingBottom: "2px" }}>
-                        {/* {firstSelectedElement} */}
-                    </div>
-                </div>
+                        <div
+                            style={{
+                                borderBottom: "1px solid gray",
+                                height: "40px",
+                                width: "200px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <div style={{ fontSize: "12px", paddingBottom: "2px" }}>
+                                {/* {firstSelectedElement} */}
+                            </div>
+                        </div>
                     </Grid>
-                </Grid>                            
+                </Grid>
             </div>
 
-            
+
             <div
                 style={{
                     display: "flex",
@@ -266,7 +286,7 @@ const UpdateExcel = () => {
                 }}
             >
                 {Buttons.NormalButton("contained", "Import Report", () => importReport())}
-                {Buttons.MainButton("contained", "Update Report", () => updateReport())}
+                {/* {Buttons.MainButton("contained", "Update Report", () => updateReport())} */}
                 {Buttons.MainButton("contained", "Create Report", () => createReport())}
             </div>
         </Panel>
