@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import * as Buttons from "./Components/Buttons";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
+import AlertDialogModal from './AlertDialogModal';
 export const Updatereport = () => {
     const [workbookData, setWorkbookData] = useState(null);
     const [sheetData, setSheetData] = useState([]);
@@ -11,18 +12,18 @@ export const Updatereport = () => {
     const [cast, setCast] = useState("inplace");
     const [sp, setSp] = useState("ca1");
     const [cvr, setCvr] = useState("ca2");
-
     const [value, setValue] = useState(1);
+    const [SelectWorksheets, setWorksheet] = useState({})
     let names = {};
-    let data = {};
+    const [check, setCheck] = useState(false);
     function onChangeHandler(event) {
         setValue(event.target.value);
     }
     const items = new Map([
-        ['Korean', 1],
-        ['American', 2],
-        ['Asia', 3],
-        ['Midas', 4]
+        ['LC1', 1],
+        ['LC2', 2],
+        ['LC3', 3],
+        ['LC4', 4]
     ]);
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
@@ -36,10 +37,28 @@ export const Updatereport = () => {
 
                 // Get the first worksheet
                 // console.log(workbook);
-                let worksheet = workbook.worksheets[1];
-                // console.log(worksheet);
+                let worksheet;
+                console.log(workbook);
+                for (let key in workbook.worksheets) {
+                    const regex = /^[0-9]+_[A-Z]$/;
+                    if (regex.test(workbook.worksheets[key].name)) {
+                        // console.log(workbook.worksheets[key].name)
+                        worksheet=workbook.worksheets[key];
+                        setWorksheet(prevstate => ({
+                            ...prevstate, [key]: workbook.worksheets[key]
+                        }));
+                    }
+
+                }
                 if (!worksheet) {
                     throw new Error('No worksheets found in the uploaded file');
+                }
+                else{
+                    console.log( worksheet);
+                    let cellvalue=worksheet._rows[2]._cells[2]._value.value;
+                    if(cellvalue!='AASHTO-LRFD2017'){
+                        alert();
+                    }                    
                 }
 
                 setWorkbookData(workbook);
@@ -55,11 +74,11 @@ export const Updatereport = () => {
         reader.readAsArrayBuffer(file);
     };
 
-    function updatedata() {
+    function updatedata(wkey, worksheet) {
         if (!workbookData) return;
-        let workbook = workbookData;
-        let worksheet = workbook.worksheets[1];
-        console.log(worksheet);
+        // let workbook = workbookData;
+        // let worksheet = workbook.worksheets[1];
+        // console.log(wkey,worksheet);
         if (!worksheet) {
             throw new Error('No worksheets found in the uploaded file');
         }
@@ -70,6 +89,7 @@ export const Updatereport = () => {
         let phi;
         let mr;
         let dv;
+        let data = {};
         for (let key1 in rows) {           // to traverse all the rows of excel sheet
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mn') {
@@ -105,7 +125,7 @@ export const Updatereport = () => {
                 if (mr < Number(mu)) {
                     let location1 = rows[key1]._cells[29]._value.model.address;
                     let location2 = rows[key1]._cells[13]._value.model.address;
-                    data = { ...data, [location1]: 'fail' };
+                    data = { ...data, [location1]: 'NG' };
                     data = { ...data, [location2]: '<' };
                 }
             }
@@ -129,13 +149,17 @@ export const Updatereport = () => {
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dc') {
                 if (cvr === "ca2") {
-                    let add1 = rows[key1]._cells[9]._value.model.address;
-                    data = { ...data, [add1]: 2.5 };
+                    let add1 = rows[key1]._cells[8]._value.model.address;
+
+                    let add2 = rows[key1]._cells[11]._value.model.address;
+                    let val2 = rows[key1]._cells[11]._value.model.value + 3.6 - 5;
+                    data = { ...data, [add1]: '2*2.5' };
+                    data = { ...data, [add2]: val2 };
                 }
             }
         }
 
-        console.log(worksheet);
+        // console.log(worksheet);
         for (let key in data) {
             const match = key.match(/^([A-Za-z]+)(\d+)$/);
             if (match) {
@@ -150,22 +174,27 @@ export const Updatereport = () => {
                     factor *= 26;
                 }
 
-                // console.log(worksheet._rows[col-1]._cells[value-1]._value.model.value)
+                // console.log(col - 1,value - 1)
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.value = data[key];
             }
         }
-        workbook.worksheets[1] = worksheet;
-
-        // console.log(worksheet)
-        // console.log(workbook);
-        setWorkbookData(workbook);
+        workbookData.worksheets[wkey] = worksheet;
+        setWorkbookData(workbookData);
         // setSheetData(jsonData);
         setSheetName(worksheet.name);
     }
     // console.log(workbookData)
+    function alert() {
+        setCheck(true);
+    }
 
     const handleFileDownload = async () => {
-        updatedata();
+        console.log(SelectWorksheets);
+       
+        for (let wkey in SelectWorksheets) {
+            updatedata(wkey, SelectWorksheets[wkey]);
+        }
+
         if (!workbookData) return;
         const worksheet = workbookData.getWorksheet(sheetName);
         const buffer = await workbookData.xlsx.writeBuffer();
@@ -368,7 +397,9 @@ export const Updatereport = () => {
                 {/* {Buttons.NormalButton("contained", "Import Report", () => importReport())} */}
                 {/* {Buttons.MainButton("contained", "Update Report", () => updatedata())}  */}
                 {Buttons.MainButton("contained", "Create Report", () => handleFileDownload())}
+                ({check && <AlertDialogModal />})
             </div>
+
         </Panel>
     );
     // return (
