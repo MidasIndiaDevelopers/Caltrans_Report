@@ -1,10 +1,14 @@
-import { DropList, Grid, Panel, Typography } from '@midasit-dev/moaui';
+import { DropList, Grid, Panel, Typography, VerifyUtil } from '@midasit-dev/moaui';
 import { Radio, RadioGroup } from "@midasit-dev/moaui";
 import React, { useState } from 'react';
 import * as Buttons from "./Components/Buttons";
-import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import AlertDialogModal from './AlertDialogModal';
+import { midasAPI } from "./Function/Common";
+import { enqueueSnackbar } from 'notistack';
+import { ThetaBeta1 } from './Function/ThetaBeta';
+
+
 export const Updatereport = () => {
     const [workbookData, setWorkbookData] = useState(null);
     const [sheetData, setSheetData] = useState([]);
@@ -14,22 +18,24 @@ export const Updatereport = () => {
     const [cvr, setCvr] = useState("ca2");
     const [value, setValue] = useState(1);
     const [SelectWorksheets, setWorksheet] = useState({})
+    const [Lc, setLc] = useState({});
+    const [item, setItem] = useState(new Map([['Select Load Combination', 1]]))
     let names = {};
     const [check, setCheck] = useState(false);
     function onChangeHandler(event) {
         setValue(event.target.value);
     }
-    const items = new Map([
-        ['LC1', 1],
-        ['LC2', 2],
-        ['LC3', 3],
-        ['LC4', 4]
-    ]);
+    let items = new Map([]);
+
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
-
         reader.onload = async (e) => {
+            //    await Promise.all([fetchLc()]) 
+            await fetchLc();
+            // console.log(lc)
+            // showLc(lc)
+
             try {
                 let buffer = e.target.result;
                 let workbook = new ExcelJS.Workbook();
@@ -43,7 +49,7 @@ export const Updatereport = () => {
                     const regex = /^[0-9]+_[A-Z]$/;
                     if (regex.test(workbook.worksheets[key].name)) {
                         // console.log(workbook.worksheets[key].name)
-                        worksheet=workbook.worksheets[key];
+                        worksheet = workbook.worksheets[key];
                         setWorksheet(prevstate => ({
                             ...prevstate, [key]: workbook.worksheets[key]
                         }));
@@ -53,16 +59,14 @@ export const Updatereport = () => {
                 if (!worksheet) {
                     throw new Error('No worksheets found in the uploaded file');
                 }
-                else{
-                    console.log( worksheet);
-                    let cellvalue=worksheet._rows[2]._cells[2]._value.value;
-                    if(cellvalue!='AASHTO-LRFD2017'){
+                else {
+                    console.log(worksheet);
+                    let cellvalue = worksheet._rows[2]._cells[2]._value.value;
+                    if (cellvalue != 'AASHTO-LRFD2017') {
                         alert();
-                    }                    
+                    }
                 }
-
                 setWorkbookData(workbook);
-
                 setSheetName(worksheet.name);
 
             } catch (error) {
@@ -76,20 +80,27 @@ export const Updatereport = () => {
 
     function updatedata(wkey, worksheet) {
         if (!workbookData) return;
-        // let workbook = workbookData;
-        // let worksheet = workbook.worksheets[1];
-        // console.log(wkey,worksheet);
         if (!worksheet) {
             throw new Error('No worksheets found in the uploaded file');
         }
 
-        // names = worksheet._workbook._definedNames.matrixMap;
         let rows = worksheet._rows;
         let mn;
         let phi;
         let mr;
         let dv;
         let data = {};
+        let Av;
+        let Avm;
+        let Mmax;
+        let Mmin;
+        let Ag;
+        let St;
+        let Sb;
+        let Nmax;
+        let Nmin;
+        let E;
+        CalBetaTheta();
         for (let key1 in rows) {           // to traverse all the rows of excel sheet
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mn') {
@@ -157,8 +168,36 @@ export const Updatereport = () => {
                     data = { ...data, [add2]: val2 };
                 }
             }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Avm') {
+                Avm = rows[key1]._cells[12]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Av') {
+                Av = rows[key1]._cells[5]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mmax') {
+                Mmax = rows[key1]._cells[15]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mmin') {
+                Mmin = rows[key1]._cells[15]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Ag') {
+                Ag = rows[key1]._cells[14]._value.model.value;
+                St = rows[key1]._cells[24]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Sb') {
+                Sb = rows[key1]._cells[24]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Nmax') {
+                Nmax = rows[key1]._cells[15]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Nmin') {
+                Nmin = rows[key1]._cells[15]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$E') {
+                E = rows[key1]._cells[9]._value.model.value;
+            }
         }
-
+        console.log(Mmax, Mmin, Sb, St, Nmax, Nmin, Ag, E,worksheet)
         // console.log(worksheet);
         for (let key in data) {
             const match = key.match(/^([A-Za-z]+)(\d+)$/);
@@ -184,13 +223,87 @@ export const Updatereport = () => {
         setSheetName(worksheet.name);
     }
     // console.log(workbookData)
-    function alert() {
-        setCheck(true);
+    function CalBetaTheta() {
+        let value = ThetaBeta1(0.12, 0.078);
+        let theta = ThetaBeta1[0];
+        let beta = ThetaBeta1[1];
+    }
+
+    // to get all the loadcombinations
+    async function fetchLc() {
+        const endpointsDataKeys = [
+            { endpoint: "/db/lcom-gen", dataKey: "LCOM-GEN" },
+            { endpoint: "/db/lcom-conc", dataKey: "LCOM-CONC" },
+            { endpoint: "/db/lcom-src", dataKey: "LCOM-SRC" },
+            { endpoint: "/db/lcom-steel", dataKey: "LCOM-STEEL" },
+            { endpoint: "/db/lcom-stlcomp", dataKey: "LCOM-STLCOMP" },
+        ];
+        let check = false;
+        let lc;
+        try {
+            for (const { endpoint, dataKey } of endpointsDataKeys) {
+                const response = await midasAPI("GET", endpoint);
+                if (response && !response.error) {
+                    setLc(response[dataKey]);
+                    lc = response[dataKey];
+                    console.log(response[dataKey])
+                    check = true;
+                }
+            }
+
+            if (!check) {
+                enqueueSnackbar("Please Check Connection And Defined Load Combination", {
+                    variant: "error",
+                    anchorOrigin: {
+                        vertical: "top",
+                        horizontal: "center"
+                    },
+                });
+                setLc([' ']);
+                return null;
+            }
+            showLc(lc);
+        } catch (error) {
+            // console.error(`Error fetching data from ${endpoint}:`, error);
+            enqueueSnackbar("Unable to Fetch Data Check Connection", {
+                variant: "error",
+                anchorOrigin: {
+                    vertical: "top",
+                    horizontal: "center"
+                },
+            });
+            return null;
+        }
+
+    } // End fetching load combination
+
+    function showLc(lc) {
+        console.log(lc);
+        item.delete('1');
+        for (let key in lc) {
+            items.set(lc[key].NAME, key)
+            // console.log(key, lc[key].NAME)
+        }
+
+        setItem(items);
     }
 
     const handleFileDownload = async () => {
+        // fetchLc();
+        const combArray = Object.values(Lc);
+        if (combArray.length === 0) {
+            enqueueSnackbar("Please Define Load Combination", {
+                variant: "error",
+                anchorOrigin: {
+                    vertical: "top",
+                    horizontal: "center"
+                },
+            });
+            return;
+        }
+        console.log('load combinations', Lc)
         console.log(SelectWorksheets);
-       
+
         for (let wkey in SelectWorksheets) {
             updatedata(wkey, SelectWorksheets[wkey]);
         }
@@ -213,18 +326,19 @@ export const Updatereport = () => {
         newData[rowIndex][colIndex] = value;
         setSheetData(newData);
     };
+    function alert() {
+        setCheck(true);
+    }
     return (
         <Panel width={520} height={400} marginTop={3} padding={2} variant="shadow2">
             <div >
                 <Typography variant="h1"  > Casting Method</Typography>
-
                 <RadioGroup
                     margin={1}
                     onChange={(e) => setCast(e.target.value)} // Update state variable based on user selection
                     value={cast} // Bind the state variable to the RadioGroup
                     text=""
                 >
-
                     <div
                         style={{
                             display: "flex",
@@ -342,7 +456,7 @@ export const Updatereport = () => {
                     </Grid>
                     <Grid item xs={6} paddingLeft="10px">
                         <DropList
-                            itemList={items}
+                            itemList={item}
                             width="200px"
                             defaultValue="Korean"
                             value={value}
@@ -366,7 +480,7 @@ export const Updatereport = () => {
                     </Grid>
 
                     <Grid item xs={6}>
-                        <div
+                        {/* <div
                             style={{
                                 borderBottom: "1px solid gray",
                                 height: "40px",
@@ -376,10 +490,9 @@ export const Updatereport = () => {
                                 alignItems: "center",
                             }}
                         >
-                            <div style={{ fontSize: "12px", paddingBottom: "2px" }}>
-                                {/* {firstSelectedElement} */}
+                            <div style={{ fontSize: "12px", paddingBottom: "2px" }}>                                
                             </div>
-                        </div>
+                        </div> */}
                     </Grid>
                 </Grid>
             </div>
@@ -396,21 +509,12 @@ export const Updatereport = () => {
             >
                 {/* {Buttons.NormalButton("contained", "Import Report", () => importReport())} */}
                 {/* {Buttons.MainButton("contained", "Update Report", () => updatedata())}  */}
-                {Buttons.MainButton("contained", "Create Report", () => handleFileDownload())}
-                ({check && <AlertDialogModal />})
+                {Buttons.MainButton("contained", "Create Report", handleFileDownload)}
+                {check && <AlertDialogModal />}
             </div>
 
         </Panel>
     );
-    // return (
-    //   <div className="App">
-    //     <input type="file" onChange={handleFileUpload} />
-    //     {sheetData.length > 0 && (
-    //       <>            
-    //         <button onClick={handleFileDownload}>Download</button>
-    //       </>
-    //     )}
-    //   </div>
-    // );
+
 }
 

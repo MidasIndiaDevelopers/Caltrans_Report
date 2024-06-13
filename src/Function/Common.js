@@ -35,17 +35,18 @@ async function midasAPI(method, subURL, body) {
   //   return null;
   // }
   return await res.json();
-  }
+}
+
 
 function convertChartData(layoutData) {
-  let chartData = [{"id": "Line", "data": []}]
+  let chartData = [{ "id": "Line", "data": [] }]
   for (let i = 0; i < layoutData[0].length; i++) {
     if (isNaN(layoutData[0][i]) || isNaN(layoutData[1][i])) {
       return false;
     } else {
       chartData[0].data[i] = {
         "x": layoutData[0][i],
-        "y": layoutData[1][i],  
+        "y": layoutData[1][i],
       }
     }
   }
@@ -68,20 +69,20 @@ function chartScaleSet(chartData) {
   let margin = 0.1;
   let baseX = 2;
   let baseY = 1;
-  let baseRatio = baseY/baseX;
+  let baseRatio = baseY / baseX;
   let newBaseX = 2;
-  let newBaseY = ylen/(xlen/baseX);
-  let newRatio = newBaseY/newBaseX;
-  
+  let newBaseY = ylen / (xlen / baseX);
+  let newRatio = newBaseY / newBaseX;
+
   let newXmax, newXmin, newYmax, newYmin;
   if (baseRatio > newRatio) {
     newXmax = xmax + Math.abs(xmax * margin);
     newXmin = xmin - Math.abs(xmin * margin);
-    newYmax = (ymin + ymax)/2 + ylen/2*(baseY/newBaseY) + Math.abs(ymax * margin);
-    newYmin = (ymin + ymax)/2 - ylen/2*(baseY/newBaseY) - Math.abs(ymin * margin);
+    newYmax = (ymin + ymax) / 2 + ylen / 2 * (baseY / newBaseY) + Math.abs(ymax * margin);
+    newYmin = (ymin + ymax) / 2 - ylen / 2 * (baseY / newBaseY) - Math.abs(ymin * margin);
   } else {
-    newXmax = (xmax + xmin)/2 + xlen/2*(baseX/newBaseX) + Math.abs(xmax * margin);
-    newXmin = (xmax + xmin)/2 - xlen/2*(baseX/newBaseX) - Math.abs(xmin * margin);
+    newXmax = (xmax + xmin) / 2 + xlen / 2 * (baseX / newBaseX) + Math.abs(xmax * margin);
+    newXmin = (xmax + xmin) / 2 - xlen / 2 * (baseX / newBaseX) - Math.abs(xmin * margin);
     newYmax = ymax + Math.abs(ymax * margin);
     newYmin = ymin - Math.abs(ymin * margin);
   }

@@ -16,7 +16,9 @@ export default function AlertDialogModel() {
   const handleClose = () => {
     setOpen(false);
   };
-
+  // const handleClose = () => {
+  //   setOpen(false);
+  // };
   return (
     <React.Fragment>
       {/* <Button variant="outlined" onClick={handleClickOpen}>
@@ -37,10 +39,8 @@ export default function AlertDialogModel() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Disagree</Button>
-          <Button onClick={handleClose} autoFocus>
-            Agree
-          </Button>
+          {/* <Button onClick={handleClose}>Disagree</Button> */}
+          <Button onClick={handleClose} autoFocus>Agree</Button>
         </DialogActions>
       </Dialog>
     </React.Fragment>
