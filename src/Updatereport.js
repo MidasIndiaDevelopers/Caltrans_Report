@@ -99,8 +99,11 @@ export const Updatereport = () => {
         let Sb;
         let Nmax;
         let Nmin;
-        let E;
-        CalBetaTheta();
+        let E; let fc;
+        let Vu1; let Vu2;
+        let beta1;
+        let Vc;let Vc1;
+
         for (let key1 in rows) {           // to traverse all the rows of excel sheet
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mn') {
@@ -164,6 +167,16 @@ export const Updatereport = () => {
 
                     let add2 = rows[key1]._cells[11]._value.model.address;
                     let val2 = rows[key1]._cells[11]._value.model.value + 3.6 - 5;
+                    let val3 = rows[key1]._cells[21]._value.model.value
+                    let add4 = rows[key1]._cells[29]._value.model.address;
+                    let add5 = rows[key1]._cells[17]._value.model.address;
+                    if (val2 < 0) {
+                        val2 = 0.0;
+                    }
+                    if (val2 < val3) {
+                        data = { ...data, [add4]: 'NG' };
+                        data = { ...data, [add5]: '<' };
+                    }
                     data = { ...data, [add1]: '2*2.5' };
                     data = { ...data, [add2]: val2 };
                 }
@@ -195,10 +208,104 @@ export const Updatereport = () => {
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$E') {
                 E = rows[key1]._cells[9]._value.model.value;
+                fc = rows[key1]._cells[2]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Vu1') {
+                Vu1 = rows[key1]._cells[10]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Vu2') {
+                Vu2 = rows[key1]._cells[10]._value.model.value;
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Vc') {
+                Vc = rows[key1]._cells[9]._value.model.value;
+            }
+
+        }
+        // // console.log(Avm, Av, worksheet);
+        // if (Av >= Avm) {
+        let Ecm = (-1 * Number(Mmax) / Number(St) + Number(Nmax) / Number(Ag)) / Number(E);
+        let Ecn = (-1 * Number(Mmin) / Number(St) + Number(Nmin) / Number(Ag)) / Number(E);
+        let Etm = (-1 * Number(Mmax) / Number(Sb) + Number(Nmax) / Number(Ag)) / Number(E);
+        let Etn = (-1 * Number(Mmin) / Number(Sb) + Number(Nmin) / Number(Ag)) / Number(E);
+        // console.log(Vu1,Vu2,fc)
+        let a1 = Number(Vu1) / Number(fc);
+        let a2 = Number(Vu2) / Number(fc);
+        let Exm = (Ecm + Etm) / 2; let Exn = (Ecn + Etn) / 2;
+        // console.log(a1,a2, Exm * 1000, Exn * 1000)
+        let value1 = ThetaBeta1(a1, Exm * 1000);
+        let value2 = ThetaBeta1(a2, Exn * 1000);
+        // console.log(value1,value2);
+        let theta1 = value1[0]; let theta2 = value2[0];
+        beta1 = value1[1]; let beta2 = value2[1];
+        Vc1 = Vc / beta1;
+        console.log(theta1, theta2, beta1, beta2);
+
+        for (let key1 in rows) {
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm') {
+                let add1 = rows[key1]._cells[2]._value.model.address;
+                let add2 = rows[key1]._cells[8]._value.model.address;
+                data = { ...data, [add1]: 'Calculation for β and θ' };
+                data = { ...data, [add2]: '' };
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+                let add1 = rows[key1]._cells[3]._value.model.address;
+                let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address
+                data = { ...data, [add1]: 'β' };
+                data = { ...data, [add2]: '=' };
+                data = { ...data, [add3]: beta1.toFixed(3) };
+
+                let add4 = rows[key1]._cells[8]._value.model.address;
+                let add5 = rows[key1]._cells[9]._value.model.address;
+                let add6 = rows[key1]._cells[10]._value.model.address;
+                data = { ...data, [add4]: 'θ' };
+                data = { ...data, [add5]: '=' };
+                data = { ...data, [add6]: theta1.toFixed(3) };
+
+                let add7 = rows[key1]._cells[13]._value.model.address;
+                let add8 = rows[key1]._cells[14]._value.model.address;
+                let add9 = rows[key1]._cells[15]._value.model.address;
+                data = { ...data, [add7]: 'εx' };
+                data = { ...data, [add8]: '=' };
+                data = { ...data, [add9]: Exm.toFixed(8) };
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn') {
+                let add1 = rows[key1]._cells[2]._value.model.address;
+                let add2 = rows[key1]._cells[8]._value.model.address;
+                data = { ...data, [add1]: 'Calculation for β and θ' };
+                data = { ...data, [add2]: '' };
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn1') {
+                let add1 = rows[key1]._cells[3]._value.model.address;
+                let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address
+                data = { ...data, [add1]: 'β' };
+                data = { ...data, [add2]: '=' };
+                data = { ...data, [add3]: beta2.toFixed(3) };
+
+                let add4 = rows[key1]._cells[8]._value.model.address;
+                let add5 = rows[key1]._cells[9]._value.model.address;
+                let add6 = rows[key1]._cells[10]._value.model.address;
+                data = { ...data, [add4]: 'θ' };
+                data = { ...data, [add5]: '=' };
+                data = { ...data, [add6]: theta2.toFixed(3) };
+
+                let add7 = rows[key1]._cells[13]._value.model.address;
+                let add8 = rows[key1]._cells[14]._value.model.address;
+                let add9 = rows[key1]._cells[15]._value.model.address;
+                data = { ...data, [add7]: 'εx' };
+                data = { ...data, [add8]: '=' };
+                data = { ...data, [add9]: Exn.toFixed(8) };
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Vc') {
+                let add1 = rows[key1]._cells[9]._value.model.address;
+                data = { ...data, [add1]: Vc1 };
             }
         }
-        console.log(Mmax, Mmin, Sb, St, Nmax, Nmin, Ag, E,worksheet)
-        // console.log(worksheet);
+        // }
+        // else {
+        //     let Etm = (-1 * Number(Mmax) / Number(Sb) + Number(Nmax) / Number(Ag)) / Number(E);
+        //     let Etn = (-1 * Number(Mmin) / Number(Sb) + Number(Nmin) / Number(Ag)) / Number(E);
+        // }
+
         for (let key in data) {
             const match = key.match(/^([A-Za-z]+)(\d+)$/);
             if (match) {
@@ -213,21 +320,25 @@ export const Updatereport = () => {
                     factor *= 26;
                 }
 
-                // console.log(col - 1,value - 1)
+                // console.log(col - 1,value - 1, data[key])
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.value = data[key];
+
+                worksheet._rows[col - 1]._cells[value - 1]._value.model.type = 3;
+                if (data[key] == 'β') {
+                    for (let i = col; i <= Number(col) + 5; i++) {
+                        // console.log(i,col);
+                        delete worksheet._rows[i];
+                    }
+                }
             }
         }
         workbookData.worksheets[wkey] = worksheet;
         setWorkbookData(workbookData);
-        // setSheetData(jsonData);
+        // console.log(worksheet);
         setSheetName(worksheet.name);
     }
     // console.log(workbookData)
-    function CalBetaTheta() {
-        let value = ThetaBeta1(0.12, 0.078);
-        let theta = ThetaBeta1[0];
-        let beta = ThetaBeta1[1];
-    }
+
 
     // to get all the loadcombinations
     async function fetchLc() {
@@ -301,7 +412,7 @@ export const Updatereport = () => {
             });
             return;
         }
-        console.log('load combinations', Lc)
+        // console.log('load combinations', Lc)
         console.log(SelectWorksheets);
 
         for (let wkey in SelectWorksheets) {

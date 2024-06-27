@@ -12,7 +12,7 @@ function ThetaBeta1(x, y) {
     const xValues1 = [-0.20, -0.1, -0.05, 0, 0.125, 0.25, 0.5, 0.75, 1];
     const yValues1 = [0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25];
 
-    bilinearInterpolation(x, y, xValues1, yValues1, table1)
+   return bilinearInterpolation(x, y, xValues1, yValues1, table1)
 
 }
 
@@ -28,7 +28,7 @@ function ThetaBeta2(x,y) {
 ];
     const xValues2 = [-0.20, -0.1, -0.05, 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2.0];
     const yValues2 = [5, 10, 15, 20, 30, 40, 60, 80];
-    bilinearInterpolation(x, y, xValues2, yValues2, table2)
+  return  bilinearInterpolation(x, y, xValues2, yValues2, table2)
 }
 
 
@@ -55,7 +55,7 @@ function bilinearInterpolation(x, y, xValues, yValues, table) {
     const Q21 = table[y1Index][x2Index][1];
     const Q12 = table[y2Index][x1Index][1];
     const Q22 = table[y2Index][x2Index][1];
-    console.log(Q11, Q21, Q12, Q22)
+    // console.log(Q11, Q21, Q12, Q22)
     const P1=  ((x2 - x) / (x2 - x1)) * P11 + ((x - x1) / (x2 - x1)) * P21;
     const P2 = ((x2 - x) / (x2 - x1)) * P12 + ((x - x1) / (x2 - x1)) * P22;
     const P=((y2 - y) / (y2 - y1)) * P1 + ((y - y1) / (y2 - y1)) * P2;
@@ -63,7 +63,7 @@ function bilinearInterpolation(x, y, xValues, yValues, table) {
     const Q1=  ((x2 - x) / (x2 - x1)) * Q11 + ((x - x1) / (x2 - x1)) * Q21;
     const Q2 = ((x2 - x) / (x2 - x1)) * Q12 + ((x - x1) / (x2 - x1)) * Q22;
     const Q=((y2 - y) / (y2 - y1)) * Q1 + ((y - y1) / (y2 - y1)) * Q2;
-    console.log(P,Q);
+    // console.log(P,Q);
     return [P,Q];
 }
 function findIndex(values, value) {
@@ -72,7 +72,9 @@ function findIndex(values, value) {
             return i;
         }
     }
-    throw new Error('Value out of bounds');
+    if(value<=values[0]) return 0;
+    if(value>=values( values.length - 1)) return values.length - 1;
+    // throw new Error('Value out of bounds');
 }
 
 export { ThetaBeta1, ThetaBeta2 }
