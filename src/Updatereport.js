@@ -20,7 +20,6 @@ export const Updatereport = () => {
     const [SelectWorksheets, setWorksheet] = useState({})
     const [Lc, setLc] = useState({});
     const [item, setItem] = useState(new Map([['Select Load Combination', 1]]))
-    let names = {};
     const [check, setCheck] = useState(false);
     function onChangeHandler(event) {
         setValue(event.target.value);
@@ -102,9 +101,12 @@ export const Updatereport = () => {
         let E; let fc;
         let Vu1; let Vu2;
         let beta1;
-        let Vc;let Vc1;
+        let Vc;
+        let Vc1;
+        let dc;
+        let storedValues = {};
 
-        for (let key1 in rows) {           // to traverse all the rows of excel sheet
+        for (let key1 in rows) {           // to traverse all the rows of excel sheet 
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mn') {
                 let location = rows[key1]._cells[19]._value.model.address;
@@ -124,15 +126,15 @@ export const Updatereport = () => {
                     data = { ...data, [location]: 1 };
                     phi = 1;
                 }
+                console.log(phi);
             }
-
+        
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Mr') {
                 let location = rows[key1]._cells[5]._value.model.address;
 
                 let mu = rows[key1]._cells[17]._value.model.value;
                 mr = Number(mn) * Number(phi);
-
                 data = { ...data, [location]: mr };
 
                 // location of oK
@@ -160,27 +162,92 @@ export const Updatereport = () => {
                     }
                 }
             }
-
+            // if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dc') {
+            //     if (cvr === "ca2") {
+            //         let add1 = rows[key1]._cells[8]._value.model.address;
+            //         let add2 = rows[key1]._cells[11]._value.model.address;
+            //         let val2 = rows[key1]._cells[11]._value.model.value + 3.6 - 5;
+            //         let val3 = rows[key1]._cells[21]._value.model.value;
+            //         let add4 = rows[key1]._cells[29]._value.model.address;
+            //         let add5 = rows[key1]._cells[17]._value.model.address;
+            //         if (val2 < 0) {
+            //             val2 = 0.0;
+            //         }
+            //         if (val2 < val3) {
+            //             data = { ...data, [add4]: 'NG' };
+            //             data = { ...data, [add5]: '<' };
+            //         }
+            //         data = { ...data, [add1]: '2*2.5' };
+            //         data = { ...data, [add2]: val2 };
+            //     }
+            // }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dc') {
                 if (cvr === "ca2") {
-                    let add1 = rows[key1]._cells[8]._value.model.address;
-
-                    let add2 = rows[key1]._cells[11]._value.model.address;
-                    let val2 = rows[key1]._cells[11]._value.model.value + 3.6 - 5;
-                    let val3 = rows[key1]._cells[21]._value.model.value
-                    let add4 = rows[key1]._cells[29]._value.model.address;
-                    let add5 = rows[key1]._cells[17]._value.model.address;
-                    if (val2 < 0) {
-                        val2 = 0.0;
+                    for (let col = 0; col < rows[key1]._cells.length; col++) {
+                        if (rows[key1]._cells[col] != undefined) {
+                            let cellValue = rows[key1]._cells[col]._value.model.value;
+                            let cellAddress = rows[key1]._cells[col]._value.model.address;
+                            storedValues[cellAddress] = cellValue;
+                        }
                     }
-                    if (val2 < val3) {
-                        data = { ...data, [add4]: 'NG' };
-                        data = { ...data, [add5]: '<' };
+                let add1 = rows[key1]._cells[8]._value.model.address;
+                let add2 = rows[key1]._cells[11]._value.model.address;
+                let val2 = rows[key1]._cells[11]._value.model.value;
+                let val2_new;
+                let val3 = rows[key1]._cells[21]._value.model.value;
+                let add4 = rows[key1]._cells[29]._value.model.address;
+                let add5 = rows[key1]._cells[17]._value.model.address;
+                let column15Address;
+                let column15Value;
+                let column15Value_new;
+                let column9Address;
+                let column9Value;
+                let column9Value_new;
+            
+                // Move to the next row and check for $$B and the next $$dc
+                let nextKey1 = parseInt(key1, 10) + 1;
+                while (rows[nextKey1]) {
+                    if (rows[nextKey1]._cells[0] != undefined) {
+                        if (rows[nextKey1]._cells[0]._value.model.value == '$$B') {
+                            // Store the value and address of cell in column 13 for $$B row
+                            column15Address = rows[nextKey1]._cells[15]._value.model.address;
+                            column15Value = rows[nextKey1]._cells[15]._value.model.value;
+                            column15Value_new = (1+((1*2.5)/(((1/((column15Value -1)/ 1.8))+1.26)-1.75))); 
+                            column15Value_new = Math.round(column15Value_new);
+                            console.log(column15Value_new);
+                            storedValues[column15Address] = column15Value;
+                            data = { ...data, [column15Address]: column15Value_new };
+                        }
+                        if (rows[nextKey1]._cells[0]._value.model.value == '$$d-c') {
+                            // Store the value and address of cell in column 9 for $$dc row
+                             column9Value = rows[nextKey1]._cells[9]._value.model.value;
+                             column9Address = rows[nextKey1]._cells[9]._value.model.address;
+                             column9Value_new = column9Value - column9Value + 2.5;
+                             console.log(column9Value_new);
+                             storedValues[column9Address] = column9Value;
+                             data = { ...data, [column9Address]: column9Value_new };
+                             break;
+                        }
                     }
-                    data = { ...data, [add1]: '2*2.5' };
-                    data = { ...data, [add2]: val2 };
+                    nextKey1++;
                 }
+                console.log(storedValues);
+                val2_new = (((val2 + 3.6)*column15Value)/column15Value_new) - 5
+            
+                if (val2_new < 0) {
+                    val2_new = 0.0;
+                }
+            
+                if (val2_new < val3) {
+                    data = { ...data, [add4]: 'NG' };
+                    data = { ...data, [add5]: '<' };
+                }
+            
+                data = { ...data, [add1]: '2*2.5' };
+                data = { ...data, [add2]: val2_new };
+             }
             }
+
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$Avm') {
                 Avm = rows[key1]._cells[12]._value.model.value;
             }
@@ -221,6 +288,20 @@ export const Updatereport = () => {
             }
 
         }
+        console.log(Ag);
+        console.log(Sb);
+        console.log(St);
+        console.log(E);
+        console.log(fc);
+        console.log(Avm);
+        console.log(Av);
+        console.log(Mmax);
+        console.log(Mmin);
+        console.log(Nmax);
+        console.log(Nmin);
+        console.log(Vu1);
+        console.log(Vu2);
+        console.log(Vc);
         // // console.log(Avm, Av, worksheet);
         // if (Av >= Avm) {
         let Ecm = (-1 * Number(Mmax) / Number(St) + Number(Nmax) / Number(Ag)) / Number(E);
@@ -249,7 +330,8 @@ export const Updatereport = () => {
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
                 let add1 = rows[key1]._cells[3]._value.model.address;
-                let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address
+                let add2 = rows[key1]._cells[4]._value.model.address; 
+                let add3 = rows[key1]._cells[5]._value.model.address
                 data = { ...data, [add1]: 'β' };
                 data = { ...data, [add2]: '=' };
                 data = { ...data, [add3]: beta1.toFixed(3) };
@@ -264,7 +346,7 @@ export const Updatereport = () => {
                 let add7 = rows[key1]._cells[13]._value.model.address;
                 let add8 = rows[key1]._cells[14]._value.model.address;
                 let add9 = rows[key1]._cells[15]._value.model.address;
-                data = { ...data, [add7]: 'εx' };
+                data = { ...data, [add7]:  'εₓ'  };
                 data = { ...data, [add8]: '=' };
                 data = { ...data, [add9]: Exm.toFixed(8) };
             }
@@ -276,7 +358,7 @@ export const Updatereport = () => {
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn1') {
                 let add1 = rows[key1]._cells[3]._value.model.address;
-                let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address
+                let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address;
                 data = { ...data, [add1]: 'β' };
                 data = { ...data, [add2]: '=' };
                 data = { ...data, [add3]: beta2.toFixed(3) };
@@ -291,7 +373,7 @@ export const Updatereport = () => {
                 let add7 = rows[key1]._cells[13]._value.model.address;
                 let add8 = rows[key1]._cells[14]._value.model.address;
                 let add9 = rows[key1]._cells[15]._value.model.address;
-                data = { ...data, [add7]: 'εx' };
+                data = { ...data, [add7]: 'εₓ' };
                 data = { ...data, [add8]: '=' };
                 data = { ...data, [add9]: Exn.toFixed(8) };
             }
@@ -338,8 +420,6 @@ export const Updatereport = () => {
         setSheetName(worksheet.name);
     }
     // console.log(workbookData)
-
-
     // to get all the loadcombinations
     async function fetchLc() {
         const endpointsDataKeys = [

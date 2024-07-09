@@ -67,13 +67,15 @@ function bilinearInterpolation(x, y, xValues, yValues, table) {
     return [P,Q];
 }
 function findIndex(values, value) {
-    for (let i = 0; i < values.length - 1; i++) {
+    console.log(value);
+    console.log(values);
+    for (let i = 0; i < [values.length - 1]; i++) {
         if (value >= values[i] && value <= values[i + 1]) {
             return i;
         }
     }
     if(value<=values[0]) return 0;
-    if(value>=values( values.length - 1)) return values.length - 1;
+    if(value>=values [values.length - 1]) return values.length - 1;
     // throw new Error('Value out of bounds');
 }
 

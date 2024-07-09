@@ -19,30 +19,30 @@ export default function AlertDialogModel() {
   // const handleClose = () => {
   //   setOpen(false);
   // };
-  return (
-    <React.Fragment>
-      {/* <Button variant="outlined" onClick={handleClickOpen}>
-        Open alert dialog
-      </Button> */}
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Warning!!"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Design report is not as per 'AASHTO-LRFD2017'. Do you want to proceed further?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          {/* <Button onClick={handleClose}>Disagree</Button> */}
-          <Button onClick={handleClose} autoFocus>Agree</Button>
-        </DialogActions>
-      </Dialog>
-    </React.Fragment>
-  );
+  // return (
+  //   <React.Fragment>
+  //     {/* <Button variant="outlined" onClick={handleClickOpen}>
+  //       Open alert dialog
+  //     </Button> */}
+  //     <Dialog
+  //       open={open}
+  //       onClose={handleClose}
+  //       aria-labelledby="alert-dialog-title"
+  //       aria-describedby="alert-dialog-description"
+  //     >
+  //       <DialogTitle id="alert-dialog-title">
+  //         {"Warning!!"}
+  //       </DialogTitle>
+  //       <DialogContent>
+  //         <DialogContentText id="alert-dialog-description">
+  //           Design report is not as per 'AASHTO-LRFD2017'. Do you want to proceed further?
+  //         </DialogContentText>
+  //       </DialogContent>
+  //       <DialogActions>
+  //         {/* <Button onClick={handleClose}>Disagree</Button> */}
+  //         <Button onClick={handleClose} autoFocus>Agree</Button>
+  //       </DialogActions>
+  //     </Dialog>
+  //   </React.Fragment>
+  // );
 }
