@@ -98,7 +98,8 @@ export const Updatereport = () => {
         let Sb;
         let Nmax;
         let Nmin;
-        let E; let fc;
+        let E;
+        let fc;
         let Vu1; let Vu2;
         let beta1;
         let Vc;
@@ -148,7 +149,7 @@ export const Updatereport = () => {
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$dv') {
                 dv = rows[key1]._cells[4]._value.model.value;
             }
-            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sm') {
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sm') {  
                 if (sp === "ca1") {
                     let add1 = rows[key1]._cells[6]._value.model.address;
                     data = { ...data, [add1]: 'Min[0.8dv, 18.0(in.)]' };
@@ -317,9 +318,11 @@ export const Updatereport = () => {
         let value2 = ThetaBeta1(a2, Exn * 1000);
         // console.log(value1,value2);
         let theta1 = value1[0]; let theta2 = value2[0];
-        beta1 = value1[1]; let beta2 = value2[1];
+        beta1 = value1[1]; 
+        let beta2 = value2[1];
         Vc1 = Vc / beta1;
-        console.log(theta1, theta2, beta1, beta2);
+        console.log(theta1, theta2, beta1, beta2); 
+        let startBlanking = false;
 
         for (let key1 in rows) {
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm') {
@@ -327,29 +330,134 @@ export const Updatereport = () => {
                 let add2 = rows[key1]._cells[8]._value.model.address;
                 data = { ...data, [add1]: 'Calculation for β and θ' };
                 data = { ...data, [add2]: '' };
-            }
+            }  
+            // if (rows[key1]._cells[0] !== undefined && rows[key1]._cells[0]._value !== undefined) {
+            //     let cellValue = rows[key1]._cells[0]._value.model.value;
+        
+            //     if (cellValue === '$$strm1') {
+            //         startBlanking = true;
+            //     }
+        
+            //     if (startBlanking) {
+            //         // Blank all cells in the row
+            //         for (let cell of rows[key1]._cells) {
+            //             if (cell._value !== undefined && cell._value.model !== undefined) {
+            //                 cell._value.model.value = ''; // Blank the cell value
+            //             }
+            //         }
+            //     }
+        
+            //     if (cellValue === '$$fpo') {
+            //         break; // Stop blanking when the end marker is found
+            //     }
+            // }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
-                let add1 = rows[key1]._cells[3]._value.model.address;
-                let add2 = rows[key1]._cells[4]._value.model.address; 
-                let add3 = rows[key1]._cells[5]._value.model.address
-                data = { ...data, [add1]: 'β' };
-                data = { ...data, [add2]: '=' };
-                data = { ...data, [add3]: beta1.toFixed(3) };
+                for (let i = 1; i <= 50; i++) {
+                    let cell = rows[key1]._cells[i];
+                    if (cell && cell.model) {
+                        cell.model = {}; // Set model to an empty object
+                    }
+                }
+        
+                // Run another while loop to make corresponding column cells empty until $$fpo is found
+                let nextKey = parseInt(key1) + 1;
+                while (rows[nextKey] !== undefined) {
+                    if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
+                        break; // Stop the loop when $$fpo is found
+                    }
+        
+                    // Blank all cells in the current row of the while loop
+                    for (let i = 1; i <= 50; i++) {
+                        let cell = rows[nextKey]._cells[i];
+                        if (cell && cell.model) {
+                            cell.model = {}; // Set model to an empty object
+                        }
+                    }
+        
+        
+                    nextKey++;
+                }
+        
+                // let add1 = rows[key1]._cells[3]._value.model.address;
+                // let add2 = rows[key1]._cells[4]._value.model.address; 
+                // let add3 = rows[key1]._cells[5]._value.model.address;
+                // data = { ...data, [add1]: 'β' };
+                // data = { ...data, [add2]: '=' };
+                // data = { ...data, [add3]: beta1.toFixed(3) };
 
-                let add4 = rows[key1]._cells[8]._value.model.address;
-                let add5 = rows[key1]._cells[9]._value.model.address;
-                let add6 = rows[key1]._cells[10]._value.model.address;
-                data = { ...data, [add4]: 'θ' };
-                data = { ...data, [add5]: '=' };
-                data = { ...data, [add6]: theta1.toFixed(3) };
+                // let add4 = rows[key1]._cells[8]._value.model.address;
+                // let add5 = rows[key1]._cells[9]._value.model.address;
+                // let add6 = rows[key1]._cells[10]._value.model.address;
+                // data = { ...data, [add4]: 'θ' };
+                // data = { ...data, [add5]: '=' };
+                // data = { ...data, [add6]: theta1.toFixed(3) };
 
-                let add7 = rows[key1]._cells[13]._value.model.address;
-                let add8 = rows[key1]._cells[14]._value.model.address;
-                let add9 = rows[key1]._cells[15]._value.model.address;
-                data = { ...data, [add7]:  'εₓ'  };
-                data = { ...data, [add8]: '=' };
-                data = { ...data, [add9]: Exm.toFixed(8) };
+                // let add7 = rows[key1]._cells[13]._value.model.address;
+                // let add8 = rows[key1]._cells[14]._value.model.address;
+                // let add9 = rows[key1]._cells[15]._value.model.address;
+                // data = { ...data, [add7]:  'εₓ'  };
+                // data = { ...data, [add8]: '=' };
+                // data = { ...data, [add9]: Exm.toFixed(8) };
             }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$A') {
+                let cell = rows[key1]._cells[4];
+
+                // Check if cell and its properties are defined
+                if (cell && cell._address) {
+                    let add11 = cell._address;
+                    data = { ...data, [add11]: 'A' };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+                    // Handle this error scenario appropriately
+                }
+                let cell2 = rows[key1]._cells[6];
+                
+                // Check if cell and its properties are defined
+                if (cell2 && cell2._address) {
+                    let add12 = cell2._address;
+                    data = { ...data, [add12]: 'Aₘᵢₙ' };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+                    // Handle this error scenario appropriately
+                }
+                let cell3 = rows[key1]._cells[5];
+                let comparisonSymbol = Av >= Avm ? '≥' : '<';
+                if (cell3 && cell3._address) {
+                    let add13 = cell3._address;
+                    data = { ...data, [add13]: comparisonSymbol }
+                }
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$e') {
+                let cell = rows[key1]._cells[4]; 
+                if (cell && cell._address) {
+                    let add11 = cell._address;
+                    data = { ...data, [add11]: 'Ex' };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+                    // Handle this error scenario appropriately
+                }
+                let cell2 = rows[key1]._cells[5];
+                
+                // Check if cell and its properties are defined
+                if (cell2 && cell2._address) {
+                    let add12 = cell2._address;
+                    data = { ...data, [add12]: '=' };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+                    // Handle this error scenario appropriately
+                }
+                let cell3 = rows[key1]._cells[6];
+                if (cell3 && cell3._address){
+                    let add13 = cell3._address;
+                    let cell3Value = Av >= Avm ? Exm : Etm;
+                    data = { ...data, [add13]: cell3Value };
+                }
+            }
+
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn') {
                 let add1 = rows[key1]._cells[2]._value.model.address;
                 let add2 = rows[key1]._cells[8]._value.model.address;
@@ -368,7 +476,7 @@ export const Updatereport = () => {
                 let add6 = rows[key1]._cells[10]._value.model.address;
                 data = { ...data, [add4]: 'θ' };
                 data = { ...data, [add5]: '=' };
-                data = { ...data, [add6]: theta2.toFixed(3) };
+                data = { ...data, [add6]: theta2.toFixed(3) }; 
 
                 let add7 = rows[key1]._cells[13]._value.model.address;
                 let add8 = rows[key1]._cells[14]._value.model.address;
@@ -614,7 +722,6 @@ export const Updatereport = () => {
                     value={cast} // Bind the state variable to the RadioGroup
                     text=""
                 >
-
                     <div
                         style={{
                             display: "flex",
@@ -669,7 +776,6 @@ export const Updatereport = () => {
                             <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
                         </Typography>
                     </Grid>
-
                     <Grid item xs={6}>
                         {/* <div
                             style={{
@@ -687,8 +793,6 @@ export const Updatereport = () => {
                     </Grid>
                 </Grid>
             </div>
-
-
             <div
                 style={{
                     display: "flex",
