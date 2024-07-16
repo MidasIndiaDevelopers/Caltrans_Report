@@ -353,33 +353,106 @@ export const Updatereport = () => {
             //         break; // Stop blanking when the end marker is found
             //     }
             // }
-            let cell;
-            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+            // let cell;
+            // if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+            //     console.log(rows[key1])
             
-                for (let i = 1; i <= 50; i++) {
-                    cell = rows[key1]._cells[i];
-                    if (cell && cell.model) {
-                        cell.model = {}; // Set model to an empty object
-                    }
+            //     for (let i = 1; i <= 50; i++) {
+            //      cell = rows[key1]._cells[i];
+            //         if (cell && cell.model) {
+            //             cell.model = {};
+            //             cell.model.value = ' '; // Set model to an empty object
+            //         }
+            //     }
+        
+            //     // Run another while loop to make corresponding column cells empty until $$fpo is found
+            //     let nextKey = parseInt(key1) + 1;
+            //     while (rows[nextKey] !== undefined) {
+            //         console.log(rows[nextKey]);
+            //         if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
+            //             break; // Stop the loop when $$fpo is found
+            //         }       
+            //         // Blank all cells in the current row of the while loop
+            //         for (let i = 1; i <= 50; i++) {
+            //             let cell = rows[nextKey]._cells[i];
+            //             if (cell && cell.model) {
+            //                 cell.model = { }; 
+            //                 cell.model.value = ' ';
+            //             }
+            //         }
+        
+        
+            //         nextKey++;
+            //     }
+            function indexToLetter(index) {
+                // Convert a zero-based index to a letter (A, B, C, ..., Z, AA, AB, etc.)
+                let letter = '';
+                while (index >= 0) {
+                    letter = String.fromCharCode((index % 26) + 65) + letter;
+                    index = Math.floor(index / 26) - 1;
                 }
-        
-                // Run another while loop to make corresponding column cells empty until $$fpo is found
-                let nextKey = parseInt(key1) + 1;
-                while (rows[nextKey] !== undefined) {
-                    if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
-                        break; // Stop the loop when $$fpo is found
-                    }       
-                    // Blank all cells in the current row of the while loop
-                    for (let i = 1; i <= 50; i++) {
-                        let cell = rows[nextKey]._cells[i];
-                        if (cell && cell.model) {
-                            cell.model = {}; // Set model to an empty object
-                        }
-                    }
-        
-        
-                    nextKey++;
+                return letter;
+            }
+            let cell;
+if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+    console.log(rows[key1]);
+
+    for (let i = 1; i <= 50; i++) {
+        // Check if the cell is present
+        if (!rows[key1]._cells[i]) {
+            // Create a dummy cell if it's missing
+            rows[key1]._cells[i] = {
+                model: {
+                    value: 'dummy',
+                    address: indexToLetter(i) + key1 // Assign a dummy value
+                    // Add other necessary properties if required
+                    
+                },
+                _address : indexToLetter(i) + key1 +1
+            };
+        } else {
+            // If the cell is present, clear its value
+            cell = rows[key1]._cells[i];
+            if (cell && cell.model) {
+                cell.model = {};
+                cell.model.value = ' '; // Clear the value
+            }
+        }
+    }
+
+    // Run another while loop to make corresponding column cells empty until $$fpo is found
+    let nextKey = parseInt(key1) + 1;
+    while (rows[nextKey] !== undefined) {
+        console.log(rows[nextKey]);
+        if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
+            break; // Stop the loop when $$fpo is found
+        }
+        // Blank all cells in the current row of the while loop
+        for (let i = 1; i <= 50; i++) {
+            // Check if the cell is present
+            if (!rows[nextKey]._cells[i]) {
+                // Create a dummy cell if it's missing
+                rows[nextKey]._cells[i] = {
+                    model: {
+                        value: 'dummy', // Assign a dummy value
+                        address: indexToLetter(i) + nextKey// Add other necessary properties if required
+                    },
+                    _address : indexToLetter(i) + nextKey
+                };
+            } else {
+                // If the cell is present, clear its value
+                cell = rows[nextKey]._cells[i];
+                if (cell && cell.model) {
+                    cell.model = {};
+                    cell.model.value = ' '; // Clear the value
                 }
+            }
+        }
+
+        nextKey++;
+    }
+}
+
                 // let add1 = rows[key1]._cells[3]._value.model.address;
                 // let add2 = rows[key1]._cells[4]._value.model.address; 
                 // let add3 = rows[key1]._cells[5]._value.model.address;
@@ -400,8 +473,9 @@ export const Updatereport = () => {
                 // data = { ...data, [add7]:  'εₓ'  };
                 // data = { ...data, [add8]: '=' };
                 // data = { ...data, [add9]: Exm.toFixed(8) };
-            }
+            
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$A') {
+                console.log(rows[key1]._cells);
                 let cell = rows[key1]._cells[4];
 
                 // Check if cell and its properties are defined
@@ -432,6 +506,7 @@ export const Updatereport = () => {
                 }
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$e') {
+                console.log(rows[key1]._cells);
                 let cell = rows[key1]._cells[4]; 
                 if (cell && cell._address) {
                     let add11 = cell._address;
@@ -460,6 +535,8 @@ export const Updatereport = () => {
                 }
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sx') {
+                rows[key1]._cells = rows[key1]._cells.map(cell => cell === "" ? undefined : cell);
+                console.log(rows[key1]._cells);
                 let cell = rows[key1]._cells[4]; 
                 if (cell && cell._address) {
                     let add11 = cell._address;
@@ -583,9 +660,9 @@ export const Updatereport = () => {
         const endpointsDataKeys = [
             { endpoint: "/db/lcom-gen", dataKey: "LCOM-GEN" },
             { endpoint: "/db/lcom-conc", dataKey: "LCOM-CONC" },
-            { endpoint: "/db/lcom-src", dataKey: "LCOM-SRC" },
-            { endpoint: "/db/lcom-steel", dataKey: "LCOM-STEEL" },
-            { endpoint: "/db/lcom-stlcomp", dataKey: "LCOM-STLCOMP" },
+            // { endpoint: "/db/lcom-src", dataKey: "LCOM-SRC" },
+            // { endpoint: "/db/lcom-steel", dataKey: "LCOM-STEEL" },
+            // { endpoint: "/db/lcom-stlcomp", dataKey: "LCOM-STLCOMP" },
         ];
         let check = false;
         let lc;
