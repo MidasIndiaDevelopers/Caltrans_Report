@@ -76,7 +76,18 @@ export const Updatereport = () => {
 
         reader.readAsArrayBuffer(file);
     };
-
+    const [ag, setAg] = useState('');
+    const [sg, setSg] = useState('');
+  
+    const handleAgChange = (event) => {
+      setAg(event.target.value);
+    };
+  
+    const handleSgChange = (event) => {
+      setSg(event.target.value);
+    };
+    console.log(ag);
+    console.log(sg);
     function updatedata(wkey, worksheet) {
         if (!workbookData) return;
         if (!worksheet) {
@@ -326,7 +337,7 @@ export const Updatereport = () => {
         console.log(theta1, theta2, beta1, beta2); 
         let startBlanking = false;
 
-        for (let key1 in rows) {
+        for (let key1 in rows) {    
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm') {
                 let add1 = rows[key1]._cells[2]._value.model.address;
                 let add2 = rows[key1]._cells[8]._value.model.address;
@@ -394,21 +405,23 @@ export const Updatereport = () => {
                 return letter;
             }
             let cell;
+            let add15value = dv < sg ? dv : sg;
 if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
     console.log(rows[key1]);
-
+   
     for (let i = 1; i <= 50; i++) {
         // Check if the cell is present
         if (!rows[key1]._cells[i]) {
             // Create a dummy cell if it's missing
             rows[key1]._cells[i] = {
-                model: {
+                _value: {model: {
                     value: 'dummy',
-                    address: indexToLetter(i) + key1 // Assign a dummy value
+                    address: indexToLetter(i) + (parseInt(key1) + 1)// Assign a dummy value
                     // Add other necessary properties if required
                     
-                },
-                _address : indexToLetter(i) + key1 +1
+                }},
+                
+                _address : indexToLetter(i) + key1
             };
         } else {
             // If the cell is present, clear its value
@@ -433,11 +446,13 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
             if (!rows[nextKey]._cells[i]) {
                 // Create a dummy cell if it's missing
                 rows[nextKey]._cells[i] = {
-                    model: {
-                        value: 'dummy', // Assign a dummy value
-                        address: indexToLetter(i) + nextKey// Add other necessary properties if required
-                    },
-                    _address : indexToLetter(i) + nextKey
+                    _value: {
+                        model: {
+                            value: 'dummy', // Assign a dummy value
+                            address: indexToLetter(i) + nextKey// Add other necessary properties if required
+                        }
+                    },                   
+                    _address : indexToLetter(i) + nextKey 
                 };
             } else {
                 // If the cell is present, clear its value
@@ -452,7 +467,6 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
         nextKey++;
     }
 }
-
                 // let add1 = rows[key1]._cells[3]._value.model.address;
                 // let add2 = rows[key1]._cells[4]._value.model.address; 
                 // let add3 = rows[key1]._cells[5]._value.model.address;
@@ -560,31 +574,58 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
                 let cell3 = rows[key1]._cells[6];
                 if (cell3 && cell3._address) {
                     let add13 = cell3._address;
-                    data = { ...data, [add13]: 'Min| dv,maximum distance between the longitudinal r/f |' };
+                    // let add15value = dv < sg ? dv : sg;
+                    data = { ...data, [add13]: `Min| dv, maximum distance between the longitudinal r/f |  =  ${add15value}` };
                 } else {
                     // Handle the case where _address is undefined or not available
                     console.error("Error: Unable to determine address for rows[key1]._cells[6]")
                 }
-                let cell4 = rows[key1]._cells[24];
-                if (cell4 && cell4._address) {
-                    let add14 = cell4._address;
-                    data = { ...data, [add14]: '=' };
-                } else {
-                    // Handle the case where _address is undefined or not available
-                    console.error("Error: Unable to determine address for rows[key1]._cells[24]");
-                    // Handle this error scenario appropriately
-                }
-                let cell5 = rows[key1]._cells[25];
-                if (cell5 && cell5._address) {
-                    let add15 = cell5._address;
-                    let add15value = dv < sg ? dv : sg;
-                    data = { ...data, [add15]: add15value};
-                }else {
-                    // Handle the case where _address is undefined or not available
-                    console.error("Error: Unable to determine address for rows[key1]._cells[25]");
-                    // Handle this error scenario appropriately
-                }
+                 let cell4 = rows[key1]._cells[26];
+                 //rows[key1]._cells[26]=42
+                 data={...data,[cell4._address]:'42'}
+                // if (cell4 && cell4._address) {
+                //     let add14 = cell4._address;
+                //     data = { ...data, [add14]: '=' };
+                // } else {
+                //     // Handle the case where _address is undefined or not available
+                //     console.error("Error: Unable to determine address for rows[key1]._cells[24]");
+                //     // Handle this error scenario appropriately
+                // }
+                // let cell5 = rows[key1]._cells[25];
+                // if (cell5 && cell5._address) {
+                //     let add15 = cell5._address;
+                //     let add15value = dv < sg ? dv : sg;
+                //     data = { ...data, [add15]: add15value};
+                // }else {
+                //     // Handle the case where _address is undefined or not available
+                //     console.error("Error: Unable to determine address for rows[key1]._cells[25]");
+                //     // Handle this error scenario appropriately
+                // }
+              let a=10
+
             }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sxe') {
+                let cell3 = rows[key1]._cells[3];
+                if (cell3 && cell3._address) {
+                 let add13 = cell3._address;
+                 // let sxe = ((add15value*1.38)/(ag +0.63))
+                 data ={ ...data, [add13]: 'sxe'}
+                }
+                let cell4 = rows[key1]._cells[4];
+                if (cell4 && cell4._address) {
+                 let add14 = cell4._address;
+                 // let sxe = ((add15value*1.38)/(ag +0.63))
+                 data ={ ...data, [add14]: '='}
+                }
+                let cell5 = rows[key1]._cells[5];
+                if (cell5 && cell5._address) {
+                 let add15 = cell5._address;
+                 let sxe = ((add15value*1.38)/(ag +0.63))
+                 data ={ ...data, [add15]: sxe}
+                }
+                
+               
+         }
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn') {
                 let add1 = rows[key1]._cells[2]._value.model.address;
@@ -618,44 +659,35 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
                 data = { ...data, [add1]: Vc1 };
             }
         }
-        // }
-        // else {
-        //     let Etm = (-1 * Number(Mmax) / Number(Sb) + Number(Nmax) / Number(Ag)) / Number(E);
-        //     let Etn = (-1 * Number(Mmin) / Number(Sb) + Number(Nmin) / Number(Ag)) / Number(E);
-        // }
         for (let key in data) {
-            const match = key.match(/^([A-Za-z]+)(\d+)$/);
+            let match =  key.match(/^([A-Za-z]+)(\d+)$/);
             if (match) {
                 const row = match[1];
                 const col = match[2];
-                // console.log("Letter Part:", row); // Output: "AD"
-                // console.log("Number Part:", col); // Output: "111"
                 let value = 0;
                 let factor = 1;
                 for (let i = row.length - 1; i >= 0; i--) {
                     value += (row.charCodeAt(i) - 64) * factor;
                     factor *= 26;
                 }
-
-                // console.log(col - 1,value - 1, data[key])
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.value = data[key];
-
+                worksheet={...worksheet.worksheet._rows[col - 1].cells,[value-1]._value.model.value:data[key]}
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.type = 3;
                 if (data[key] == 'β') {
                     for (let i = col; i <= Number(col) + 5; i++) {
                         // console.log(i,col);
-                        delete worksheet._rows[i];
+                        //delete worksheet._rows[i];
                     }
                 }
             }
         }
         workbookData.worksheets[wkey] = worksheet;
-        setWorkbookData(workbookData);
+        //setWorkbookData(workbookData);
+        setWorkbookData( { ...workbookData.worksheet[wkey], [wkey]: worksheet});
+       
         // console.log(worksheet);
         setSheetName(worksheet.name);
     }
-    // console.log(workbookData)
-    // to get all the loadcombinations
     async function fetchLc() {
         const endpointsDataKeys = [
             { endpoint: "/db/lcom-gen", dataKey: "LCOM-GEN" },
@@ -755,18 +787,7 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
     function alert() {
         setCheck(true);
     }
-    const [ag, setAg] = useState('');
-    const [sg, setSg] = useState('');
-  
-    const handleAgChange = (event) => {
-      setAg(event.target.value);
-    };
-  
-    const handleSgChange = (event) => {
-      setSg(event.target.value);
-    };
-    console.log(ag);
-    console.log(sg);
+   
     return (
         <Panel width={520} height={420} marginTop={3} padding={2} variant="shadow2">
             <div >
@@ -999,4 +1020,3 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
     );
 
 }
-
