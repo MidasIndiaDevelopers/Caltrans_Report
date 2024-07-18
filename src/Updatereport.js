@@ -78,6 +78,7 @@ export const Updatereport = () => {
     };
     const [ag, setAg] = useState('');
     const [sg, setSg] = useState('');
+   
   
     const handleAgChange = (event) => {
       setAg(event.target.value);
@@ -119,6 +120,29 @@ export const Updatereport = () => {
         let Vc1;
         let dc;
         let storedValues = {};
+
+        const updateCellValue = (rowKey, cellIndex, value) => {
+            // Update the local rows structure
+            let cellAddress = indexToLetter(cellIndex) + (parseInt(rowKey) + 1);
+            if (!rows[rowKey]._cells[cellIndex]) {
+                // Create a dummy cell if it's missing
+                rows[rowKey]._cells[cellIndex] = {
+                    _value: {
+                        model: {
+                            value: value,
+                            address: cellAddress // Assign the value
+                        }
+                    },
+                    _address: cellAddress
+                };
+            } else {
+                // If the cell is present, update its value
+                rows[rowKey]._cells[cellIndex]._value.model.value = value;
+            }
+        
+            // Update the worksheet
+            worksheet.getCell(cellAddress).value = value;
+        };
 
         for (let key1 in rows) {           // to traverse all the rows of excel sheet 
 
@@ -323,20 +347,30 @@ export const Updatereport = () => {
         let Etm = (-1 * Number(Mmax) / Number(Sb) + Number(Nmax) / Number(Ag)) / Number(E);
         let Etn = (-1 * Number(Mmin) / Number(Sb) + Number(Nmin) / Number(Ag)) / Number(E);
         // console.log(Vu1,Vu2,fc)
-        let a1 = Number(Vu1) / Number(fc);
+        let a1 = Number(Vu1) / Number(fc);  
         let a2 = Number(Vu2) / Number(fc);
         let Exm = (Ecm + Etm) / 2; let Exn = (Ecn + Etn) / 2;
         // console.log(a1,a2, Exm * 1000, Exn * 1000)
         let value1 = ThetaBeta1(a1, Exm * 1000);
         let value2 = ThetaBeta1(a2, Exn * 1000);
         // console.log(value1,value2);
-        let theta1 = value1[0]; let theta2 = value2[0];
+        let theta1 = value1[0]; 
+        let theta2 = value2[0];
         beta1 = value1[1]; 
         let beta2 = value2[1];
         Vc1 = Vc / beta1;
         console.log(theta1, theta2, beta1, beta2); 
         let startBlanking = false;
-
+        let beta ;
+        function indexToLetter(index) {
+            // Convert a zero-based index to a letter (A, B, C, ..., Z, AA, AB, etc.)
+            let letter = '';
+            while (index >= 0) {
+                letter = String.fromCharCode((index % 26) + 65) + letter;
+                index = Math.floor(index / 26) - 1;
+            }
+            return letter;
+        }
         for (let key1 in rows) {    
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm') {
                 let add1 = rows[key1]._cells[2]._value.model.address;
@@ -395,41 +429,143 @@ export const Updatereport = () => {
         
             //         nextKey++;
             //     }
-            function indexToLetter(index) {
-                // Convert a zero-based index to a letter (A, B, C, ..., Z, AA, AB, etc.)
-                let letter = '';
-                while (index >= 0) {
-                    letter = String.fromCharCode((index % 26) + 65) + letter;
-                    index = Math.floor(index / 26) - 1;
-                }
-                return letter;
-            }
+          
             let cell;
             let add15value = dv < sg ? dv : sg;
+            let sxe = ((add15value*1.38)/(ag + 0.63))
+// if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+//     console.log(rows[key1]);
+   
+//     for (let i = 1; i <= 50; i++) {
+//         // Check if the cell is present
+//         if (!rows[key1]._cells[i]) {
+//             // Create a dummy cell if it's missing
+//             rows[key1]._cells[i] = {
+//                 _value: {model: {
+//                     value: 'dummy',
+//                     address: indexToLetter(i) + (parseInt(key1) + 1)// Assign a dummy value
+//                     // Add other necessary properties if required
+                    
+//                 }},
+                
+//                 _address : indexToLetter(i) + (parseInt(key1) + 1)
+//             };
+//         } else {
+//             // If the cell is present, clear its value
+//             cell = rows[key1]._cells[i];
+//             if (cell && cell.model) {
+//                 cell.model = {};
+//                 cell.model.value = ' ';   // Clear the value
+//             }
+//         }
+//     }
+
+//     // Run another while loop to make corresponding column cells empty until $$fpo is found
+//     let nextKey = parseInt(key1) + 1;
+//     while (rows[nextKey] !== undefined) {
+//         console.log(rows[nextKey]);
+//         if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
+//             break; // Stop the loop when $$fpo is found
+//         }
+//         // Blank all cells in the current row of the while loop
+//         for (let i = 1; i <= 50; i++) {
+//             // Check if the cell is present
+//             if (!rows[nextKey]._cells[i]) {
+//                 // Create a dummy cell if it's missing
+//                 rows[nextKey]._cells[i] = {
+//                     _value: {
+//                         model: {
+//                             value: 'dummy', // Assign a dummy value
+//                             address: indexToLetter(i) + (nextKey + 1)// Add other necessary properties if required
+//                         }
+//                     },                   
+//                     _address : indexToLetter(i) + (nextKey + 1)
+//                 };
+//             } else {
+//                 // If the cell is present, clear its value
+//                 cell = rows[nextKey]._cells[i];
+//                 if (cell && cell.model) {
+//                     cell.model = {};
+//                     cell.model.value = ' '; // Clear the value
+//                 }
+//             }
+//         }
+
+//         nextKey++;
+//     }
+// }
+// if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
+//     console.log(rows[key1]);
+   
+//     for (let i = 1; i <= 50; i++) {
+//         // Check if the cell is present
+//         if (!rows[key1]._cells[i]) {
+//             // Create a dummy cell if it's missing
+//             rows[key1]._cells[i] = {
+//                 _value: {model: {
+//                     value: 'dummy',
+//                     address: indexToLetter(i) + (parseInt(key1) + 1)// Assign a dummy value
+//                     // Add other necessary properties if required
+                    
+//                 }},
+                
+//                 _address : indexToLetter(i) + (parseInt(key1) + 1)
+//             };
+//         } else {
+//             // If the cell is present, clear its value
+//             cell = rows[key1]._cells[i];
+//             if (cell && cell.model) {
+//                 cell.model = {};
+//                 cell.model.value = ' ';   // Clear the value
+//             }
+//         }
+//     }
+
+//     // Run another while loop to make corresponding column cells empty until $$fpo is found
+//     let nextKey = parseInt(key1) + 1;
+//     while (rows[nextKey] !== undefined) {
+//         console.log(rows[nextKey]);
+//         if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
+//             break; // Stop the loop when $$fpo is found
+//         }
+//         // Blank all cells in the current row of the while loop
+//         for (let i = 1; i <= 50; i++) {
+//             // Check if the cell is present
+//             if (!rows[nextKey]._cells[i]) {
+//                 // Create a dummy cell if it's missing
+//                 rows[nextKey]._cells[i] = {
+//                     _value: {
+//                         model: {
+//                             value: 'dummy', // Assign a dummy value
+//                             address: indexToLetter(i) + (nextKey + 1)// Add other necessary properties if required
+//                         }
+//                     },                   
+//                     _address : indexToLetter(i) + (nextKey + 1)
+//                 };
+//             } else {
+//                 // If the cell is present, clear its value
+//                 cell = rows[nextKey]._cells[i];
+//                 if (cell && cell.model) {
+//                     cell.model = {};
+//                     cell.model.value = ' '; // Clear the value
+//                 }
+//             }
+//         }
+
+//         nextKey++;
+//     }
+// }
+
+
 if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
     console.log(rows[key1]);
-   
+
     for (let i = 1; i <= 50; i++) {
-        // Check if the cell is present
+        // Check if the cell is present and update its value
         if (!rows[key1]._cells[i]) {
-            // Create a dummy cell if it's missing
-            rows[key1]._cells[i] = {
-                _value: {model: {
-                    value: 'dummy',
-                    address: indexToLetter(i) + (parseInt(key1) + 1)// Assign a dummy value
-                    // Add other necessary properties if required
-                    
-                }},
-                
-                _address : indexToLetter(i) + key1
-            };
+            updateCellValue(key1, i, 'dummy');
         } else {
-            // If the cell is present, clear its value
-            cell = rows[key1]._cells[i];
-            if (cell && cell.model) {
-                cell.model = {};
-                cell.model.value = ' '; // Clear the value
-            }
+            updateCellValue(key1, i, ' ');
         }
     }
 
@@ -440,33 +576,20 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
         if (rows[nextKey]._cells[0] != undefined && rows[nextKey]._cells[0]._value.model.value == '$$fpo') {
             break; // Stop the loop when $$fpo is found
         }
-        // Blank all cells in the current row of the while loop
+
         for (let i = 1; i <= 50; i++) {
-            // Check if the cell is present
+            // Check if the cell is present and update its value
             if (!rows[nextKey]._cells[i]) {
-                // Create a dummy cell if it's missing
-                rows[nextKey]._cells[i] = {
-                    _value: {
-                        model: {
-                            value: 'dummy', // Assign a dummy value
-                            address: indexToLetter(i) + nextKey// Add other necessary properties if required
-                        }
-                    },                   
-                    _address : indexToLetter(i) + nextKey 
-                };
+                updateCellValue(nextKey, i, 'dummy');
             } else {
-                // If the cell is present, clear its value
-                cell = rows[nextKey]._cells[i];
-                if (cell && cell.model) {
-                    cell.model = {};
-                    cell.model.value = ' '; // Clear the value
-                }
+                updateCellValue(nextKey, i, ' ');
             }
         }
 
         nextKey++;
     }
 }
+
                 // let add1 = rows[key1]._cells[3]._value.model.address;
                 // let add2 = rows[key1]._cells[4]._value.model.address; 
                 // let add3 = rows[key1]._cells[5]._value.model.address;
@@ -498,7 +621,7 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
                     data = { ...data, [add11]: 'A' };
                 } else {
                     // Handle the case where _address is undefined or not available
-                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+                    console.error("Error: Unable to determine address for rows[key1]._cells[4]");  
                     // Handle this error scenario appropriately
                 }
                 let cell2 = rows[key1]._cells[6];
@@ -571,60 +694,108 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
                     console.error("Error: Unable to determine address for rows[key1]._cells[5]");
                     // Handle this error scenario appropriately
                 }
-                let cell3 = rows[key1]._cells[6];
+                let cell3 = rows[key1]._cells[33];
                 if (cell3 && cell3._address) {
                     let add13 = cell3._address;
                     // let add15value = dv < sg ? dv : sg;
-                    data = { ...data, [add13]: `Min| dv, maximum distance between the longitudinal r/f |  =  ${add15value}` };
+                    data = { ...data, [add13]: `Min| dv, maximum distance between the longitudinal r/f |  =  ${add15value}` };              
                 } else {
                     // Handle the case where _address is undefined or not available
-                    console.error("Error: Unable to determine address for rows[key1]._cells[6]")
+                    console.error("Error: Unable to determine address for rows[key1]._cells[33]")
                 }
                  let cell4 = rows[key1]._cells[26];
-                 //rows[key1]._cells[26]=42
-                 data={...data,[cell4._address]:'42'}
-                // if (cell4 && cell4._address) {
-                //     let add14 = cell4._address;
-                //     data = { ...data, [add14]: '=' };
-                // } else {
-                //     // Handle the case where _address is undefined or not available
-                //     console.error("Error: Unable to determine address for rows[key1]._cells[24]");
-                //     // Handle this error scenario appropriately
-                // }
-                // let cell5 = rows[key1]._cells[25];
-                // if (cell5 && cell5._address) {
-                //     let add15 = cell5._address;
-                //     let add15value = dv < sg ? dv : sg;
-                //     data = { ...data, [add15]: add15value};
-                // }else {
-                //     // Handle the case where _address is undefined or not available
-                //     console.error("Error: Unable to determine address for rows[key1]._cells[25]");
-                //     // Handle this error scenario appropriately
-                // }
-              let a=10
-
+                if (cell4 && cell4._address) {
+                    let add14 = cell4._address;
+                    data = { ...data, [add14]: '=' };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[24]");
+                    // Handle this error scenario appropriately
+                }
+                let cell5 = rows[key1]._cells[25];
+                if (cell5 && cell5._address) {
+                    let add15 = cell5._address;
+                    let add15value = dv < sg ? dv : sg;
+                    data = { ...data, [add15]: add15value};
+                }else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[25]");
+                    // Handle this error scenario appropriately
+                }
             }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sxe') {
-                let cell3 = rows[key1]._cells[3];
+                let cell3 = rows[key1]._cells[4];
                 if (cell3 && cell3._address) {
                  let add13 = cell3._address;
                  // let sxe = ((add15value*1.38)/(ag +0.63))
                  data ={ ...data, [add13]: 'sxe'}
                 }
-                let cell4 = rows[key1]._cells[4];
+                let cell4 = rows[key1]._cells[5];
                 if (cell4 && cell4._address) {
                  let add14 = cell4._address;
                  // let sxe = ((add15value*1.38)/(ag +0.63))
                  data ={ ...data, [add14]: '='}
                 }
-                let cell5 = rows[key1]._cells[5];
+                let cell5 = rows[key1]._cells[6];
                 if (cell5 && cell5._address) {
                  let add15 = cell5._address;
-                 let sxe = ((add15value*1.38)/(ag +0.63))
+                 
                  data ={ ...data, [add15]: sxe}
+                }               
+         }
+         if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$b') {
+            if (Av >= Avm) {
+                let cell7 = rows[key1]._cells[7];
+                if (cell7 && cell7._address) {
+                    let add17 = cell7._address;
+                    data = { ...data, [add17]: beta1 };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+                    // Handle this error scenario appropriately
                 }
-                
-               
+            }
+
+         }
+         if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$theta') {
+            if (Av >= Avm) {
+                let cell7 = rows[key1]._cells[7];
+                if (cell7 && cell7._address) {
+                    let add17 = cell7._address;
+                    data = { ...data, [add17]: theta1 };
+                } else {
+                    // Handle the case where _address is undefined or not available
+                    console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+                    // Handle this error scenario appropriately
+                }
+            }
+
+         }
+       
+         if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$beta') {
+            let cell9 = rows[key1]._cells[9];
+            if (cell9 && cell9._address) {
+                beta = cell9._value.model.value;
+            } else {
+                // Handle the case where _address is undefined or not available
+                console.error("Error: Unable to determine address for rows[key1]._cells[9]");
+                // Handle this error scenario appropriately
+            }
+         }
+         if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vc') {
+            let cell13 = rows[key1]._cells[13];
+            if (cell13 && cell13._address) {
+                // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+                let value13 = cell13._value.model.value;
+                let result = (value13 / beta) * beta1;
+        
+                // Store the result back in cell13 or handle it as needed
+                cell13._value.model.value = result;
+            } else {
+                // Handle the case where _address is undefined or not available
+                console.error("Error: Unable to determine address for rows[key1]._cells[13]");
+                // Handle this error scenario appropriately
+            }
          }
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn') {
@@ -671,19 +842,19 @@ if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value
                     factor *= 26;
                 }
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.value = data[key];
-                worksheet={...worksheet.worksheet._rows[col - 1].cells,[value-1]._value.model.value:data[key]}
+                // worksheet={...worksheet.worksheet._rows[col - 1].cells,[value-1]._value.model.value:data[key]}
                 worksheet._rows[col - 1]._cells[value - 1]._value.model.type = 3;
                 if (data[key] == 'β') {
                     for (let i = col; i <= Number(col) + 5; i++) {
                         // console.log(i,col);
-                        //delete worksheet._rows[i];
+                        delete worksheet._rows[i];
                     }
                 }
             }
         }
         workbookData.worksheets[wkey] = worksheet;
-        //setWorkbookData(workbookData);
-        setWorkbookData( { ...workbookData.worksheet[wkey], [wkey]: worksheet});
+        setWorkbookData(workbookData);
+        // setWorkbookData( { ...workbookData.worksheet[wkey], [wkey]: worksheet});
        
         // console.log(worksheet);
         setSheetName(worksheet.name);
