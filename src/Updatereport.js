@@ -446,6 +446,9 @@ export const Updatereport = () => {
         console.log(theta1, theta2, beta1, beta2);
         let startBlanking = false;
         let beta;
+        let half_finalResult;
+        let Vu;
+        let Vn;
         function indexToLetter(index) {
             // Convert a zero-based index to a letter (A, B, C, ..., Z, AA, AB, etc.)
             let letter = '';
@@ -530,7 +533,6 @@ export const Updatereport = () => {
                     nextKey++;
                 }
             }
-
 
             // if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strm1') {
             //     console.log(rows[key1]);
@@ -754,19 +756,16 @@ export const Updatereport = () => {
                     // Handle this error scenario appropriately
                 }
             }
-            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vc') {
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vc') {   
                 let cell13 = rows[key1]._cells[13];
                 if (cell13 && cell13._address) {
                     // Store the initial value globally
                     initialValue13 = cell13._value.model.value;
-
                     // Retrieve the value from cell13, divide it by beta, and multiply by beta1
                     let value13 = initialValue13;
                     let result = (value13 / beta) * beta1;
-
                     // Store the result back in cell13
                     cell13._value.model.value = result;
-
                     // Store the new value globally
                     newValue13 = result;
                 } else {
@@ -789,7 +788,8 @@ export const Updatereport = () => {
         
                     // Calculate the final result
                     let finalResult = cell11Value - ((pi * initialValue13) + (pi * newValue13));
-                    let half_finalResult = (finalResult/2);
+                    half_finalResult = (finalResult/2);
+                    Vu = rows[key1]._cells[20].value;
                     console.log(finalResult);
                     data = { ...data, [add11]: finalResult };
                     data = {...data, [add2]: half_finalResult };
@@ -801,6 +801,42 @@ export const Updatereport = () => {
                     console.error("Error: Unable to retrieve value for rows[key1]._cells[11]");
                 }
             }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$check ') { 
+                let cell2 = rows[key1]._cells[2];
+                let cell11 = rows[key1]._cells[11];
+                let cell12 = rows[key1]._cells[12];
+                let add2 = cell2._address; 
+                let add11 = cell11._address;
+                let add12 = cell12._address;
+                if (Math.abs(half_finalResult) > Vu) {
+                    data = { ...data,[add2] : ' Vu < 0.5Φ(Vc+Vp)'}
+                    data = { ...data,[add11] : '∴ '}
+                    data = { ...data,[add12] : 'No Shear reinforcing'}
+                }
+                else {
+                    data = { ...data,[add2]: 'Vu ≥ 0.5ΦVc'}
+                }
+
+            }
+            if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$sum') {
+                 let cell7 = rows[key1]._cells[7];
+                 let add7 = cell7._address;
+                 let sum = rows[key1]._cells[7].value;
+                 Vn = sum - initialValue13 + newValue13;
+                 data = { ...data,[add7] : Vn}
+                 
+             }
+             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vn') {
+                let cell11 = rows[key1]._cells[11];
+                let add11 = cell11._address;
+                data = { ...data,[add11] : Vn}
+             }
+             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vr') {
+                let cell8 = rows[key1]._cells[8];
+                let add8 = cell8._address;
+                let vr = pi * Vn;
+                data = { ...data,[add8] : vr}
+              }
 
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn') {
                 let add1 = rows[key1]._cells[2]._value.model.address;
@@ -862,6 +898,69 @@ export const Updatereport = () => {
 
         // console.log(worksheet);
         setSheetName(worksheet.name);
+    //     let startRow = null;
+    // let endRow = null;
+
+    // worksheet.eachRow((row, rowNumber) => {
+    //     if (row.getCell(1).value === '$$b-str') {
+    //         startRow = rowNumber;
+    //     } else if (row.getCell(1).value === '$$b-end') {
+    //         endRow = rowNumber;
+    //     }
+    // });
+
+    // if (startRow === null || endRow === null) {
+    //     // throw new Error(`Could not find the start or end markers`);
+    // }
+
+    // // Delete rows between startRow and endRow (inclusive of both markers)
+    // // for (let rowNumber = endRow; rowNumber >= startRow; rowNumber--) {
+    // //     worksheet.spliceRows(rowNumber, 1);
+    // // }
+    // // for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
+    // //     let row = worksheet.getRow(rowNumber);
+    // //     row.eachCell({ includeEmpty: true }, (cell) => {
+    // //         cell.value = null;
+    // //     });
+    // // }
+    // let rowsToDelete = [];
+    // for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
+    //     rowsToDelete.push(rowNumber);
+    // }
+
+    // // Delete rows in reverse order to prevent index shifting issues
+    // rowsToDelete.reverse().forEach(rowNumber => {
+    //     worksheet.spliceRows(rowNumber, 1);
+    // });
+    // let startRow = null;
+    // let endRow = null;
+
+    // worksheet.eachRow((row, rowNumber) => {
+    //     if (row.getCell(1).value === '$$b-str') {
+    //         startRow = rowNumber;
+    //     } else if (row.getCell(1).value === '$$b-end') {
+    //         endRow = rowNumber;
+    //     }
+    // });
+
+    // if (startRow === null || endRow === null) {
+    //     throw new Error(`Could not find the start or end markers ($$b-str or $$b-end)`);
+    // }
+
+    // // Instead of deleting the rows, set their values to null to avoid shifting
+    // for (let rowNumber = startRow; rowNumber <= endRow; rowNumber++) {
+    //     let row = worksheet.getRow(rowNumber);
+    //     row.eachCell({ includeEmpty: true }, (cell) => {
+    //         cell.value = null;
+    //     });
+    // }
+
+    //     workbookData.worksheets[wkey] = worksheet;
+    //     setWorkbookData(workbookData);
+    //     // setWorkbookData( { ...workbookData.worksheet[wkey], [wkey]: worksheet});
+
+    //     // console.log(worksheet);
+    //     setSheetName(worksheet.name);
     }
     async function fetchLc() {
         const endpointsDataKeys = [
