@@ -559,7 +559,7 @@ export const Updatereport = () => {
                 let cell = rows[key1]._cells[4];
                 if (cell && cell._address) {
                     let add11 = cell._address;
-                    data = { ...data, [add11]: 'Ex' };
+                    data = { ...data, [add11]: 'εx' };
                 } else {
                     // Handle the case where _address is undefined or not available
                     console.error("Error: Unable to determine address for rows[key1]._cells[4]");
