@@ -29,7 +29,7 @@ function ThetaBeta2(x,y) {
     const xValues2 = [-0.20, -0.1, -0.05, 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2.0];
     const yValues2 = [5, 10, 15, 20, 30, 40, 60, 80];
   return  bilinearInterpolation(x, y, xValues2, yValues2, table2)
-}
+}  
 
 
 function bilinearInterpolation(x, y, xValues, yValues, table) {
