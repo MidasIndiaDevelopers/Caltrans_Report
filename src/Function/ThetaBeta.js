@@ -33,6 +33,9 @@ function ThetaBeta2(x,y) {
 
 
 function bilinearInterpolation(x, y, xValues, yValues, table) {
+
+    x = Math.max(xValues[0], Math.min(xValues[xValues.length - 1], x));
+    y = Math.max(yValues[0], Math.min(yValues[yValues.length - 1], y));
     // Find the indices of the surrounding grid points
     const x1Index = findIndex(xValues, x);
     const x2Index = x1Index + 1;
@@ -74,9 +77,10 @@ function findIndex(values, value) {
             return i;
         }
     }
-    if(value<=values[0]) return 0;
-    if(value>=values [values.length - 1]) return values.length - 1;
+    // if(value<=values[0]) return 0;
+    // if(value>=values [values.length - 1]) return values.length - 1;
     // throw new Error('Value out of bounds');
+    return value <= values[0] ? 0 : values.length - 1;
 }
 
 export { ThetaBeta1, ThetaBeta2 }
