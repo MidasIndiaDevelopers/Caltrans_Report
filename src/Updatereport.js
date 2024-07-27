@@ -1,6 +1,6 @@
 import { DropList, Grid, Panel, Typography, VerifyUtil } from '@midasit-dev/moaui';
 import { Radio, RadioGroup } from "@midasit-dev/moaui";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Buttons from "./Components/Buttons";
 import ExcelJS from 'exceljs';
 import AlertDialogModal from './AlertDialogModal';
@@ -23,32 +23,52 @@ export const Updatereport = () => {
     const [lc, setLc] = useState({});
     const [item, setItem] = useState(new Map([['Select Load Combination', 1]]))
     const [check, setCheck] = useState(false);
+    const [selectedName, setSelectedName] = useState('');
+    let lcname;
+    // let items = new Map([]);
     function onChangeHandler(event) {
         setValue(event.target.value);
+        console.log(event.target.value);
+        // Find the name corresponding to the selected key
+        for (let [name, key] of item.entries()) {
+            if (key === event.target.value) {
+                setSelectedName(name);
+                lcname = name;
+                console.log(lcname);
+            }
+        }
     }
-    let items = new Map([]);
-
+   
+    let matchedParts = [];
     let worksheet;
     let worksheet2;
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         const reader = new FileReader();
         reader.onload = async (e) => {
-            await fetchLc();
+            // await fetchLc();
 
-            try {
+            try { 
                 let buffer = e.target.result;
                 let workbook = new ExcelJS.Workbook();
                 await workbook.xlsx.load(buffer);
+                const regex = /^([0-9]+)_([A-Z])$/;
+              
                 for (let key in workbook.worksheets) {
-                    const regex = /^[0-9]+_[A-Z]$/;
-                    if (regex.test(workbook.worksheets[key].name)) {
+                    let match = regex.exec(workbook.worksheets[key].name);
+                    if (match) {
+                        // match[1] contains the part that matches [0-9]+
+                        // match[2] contains the part that matches [A-Z]
+                        matchedParts.push({ numberPart: match[1], letterPart: match[2] });
+                
                         worksheet = workbook.worksheets[key];
-                        setWorksheet(prevstate => ({
-                            ...prevstate, [key]: workbook.worksheets[key]
+                        setWorksheet(prevState => ({
+                            ...prevState, [key]: workbook.worksheets[key]
                         }));
                     }
                 }
+                
+                console.log(matchedParts);
                 for (let key in workbook.worksheets) {
                     const lcb = 'StressAtLCB';
                     if (workbook.worksheets[key].name === lcb) {
@@ -133,10 +153,53 @@ export const Updatereport = () => {
                 const lastRowNumber = worksheet2.rowCount;
                 const newRowNumber = lastRowNumber + 1;
                 const newRow = worksheet2.getRow(newRowNumber);
-                // Enter your content in the new row  //Worksheet_data
-                newRow.getCell(1).value = 'New Content 1';
-                newRow.getCell(2).value = 'New Content 2';
+                
+                // Merge cells from column 1 to column 13
+                worksheet2.mergeCells(newRowNumber, 1, newRowNumber, 14);
+                
+                // Enter your content in the merged cell
+                newRow.getCell(1).value = 'Tensile Stress unit in Prestress concrete at Service after loss: No tension case';
                 newRow.commit(); // Commit the new row to the worksheet
+                const stresses = {
+                "Argument": {
+                    "TABLE_NAME": "BeamStress(PSC)",
+                    "TABLE_TYPE": "BEAMSTRESSPSC",
+                    "EXPORT_PATH": "C:\\MIDAS\\Result\\Output.JSON",
+                    "STYLES": {
+                        "FORMAT": "Fixed",
+                        "PLACE": 12
+                    },
+                    "COMPONENTS": [
+                        "Elem",
+                        "Load",
+                        "Part",
+                        "Axial",
+                        "Shear-y",
+                        "Shear-z",
+                        "Bend(+y)",
+                        "Bend(-y)",
+                        "Bend(+z)",
+                        "Bend(-z)",
+                        "Cb(min/max)",
+                        "Cb1(-y+z)",
+                        "Cb2(+y+z)",
+                        "Cb3(+y-z)",
+                        "Cb4(-y-z)"
+                    ],
+                    "NODE_ELEMS": {
+                        "KEYS": [
+                            1
+                        ]
+                    },
+                    "LOAD_CASE_NAMES": [
+                        "cLCB4"
+                    ],
+                    "PARTS": [
+                        "Part I",
+                        "Part J"
+                    ]
+                }
+            }
                 setWorkbookData(workbook);
                 setSheetName(worksheet.name);
             } catch (error) {
@@ -190,7 +253,7 @@ export const Updatereport = () => {
         let dc;
         let storedValues = {};
         let pi = null;
-        let pi_min= null;
+        let pi_min = null;
         let s_max;
         let s_min;
         let $$alpha;
@@ -847,10 +910,10 @@ export const Updatereport = () => {
                 let cell7 = rows[key1]._cells[6];
                 let add7 = cell7._address;
                 if (Av < Avm) {
-                    let b_value = ThetaBeta2(sxe,Etm * 1000);
+                    let b_value = ThetaBeta2(sxe, Etm * 1000);
                     let beta = b_value[0];
                     console.log(beta);
-                    data = { ...data,[add7] : beta};
+                    data = { ...data, [add7]: beta };
                     beta_new = beta;
                 }
                 else {
@@ -870,10 +933,10 @@ export const Updatereport = () => {
                 let cell7 = rows[key1]._cells[6];
                 let add7 = cell7._address;
                 if (Av < Avm) {
-                    let theta_value = ThetaBeta2(sxe,Etm * 1000);
-                    let theta = theta_value[1];  
+                    let theta_value = ThetaBeta2(sxe, Etm * 1000);
+                    let theta = theta_value[1];
                     console.log(theta);
-                    data = { ...data,[add7] : theta};
+                    data = { ...data, [add7]: theta };
                     theta_new = theta;
                 }
                 else {
@@ -1088,57 +1151,57 @@ export const Updatereport = () => {
                     }
                     else {
                         let key3 = parseInt(key1) + 2;
-                            // Insert five rows after key3
-                            // worksheet.spliceRows(key3 + 1, 0, [], [], [], [], []);
-                    
-                            // Update references after insertion
-                            key3 += 5;
-                    
-                            let cell19 = rows[key3]._cells[19]
-                            let add19 = cell19._address;
-                            data = { ...data, [add19]: 'Av,req1' }
-                            let cell20 = rows[key3]._cells[20];
-                            let add20 = cell20._address;
-                            data = { ...data, [add20]: '=' };
-                            let cell21 = rows[key3]._cells[21];
-                            let add21 = cell21._address;
-                            data = { ...data, [add21]: '{ Vu - Φ(Vc+Vp) }·s' }
-                            let cell21_n = rows[key3 + 1]._cells[21];
-                            let add21_n = cell21_n._address;
-                            data = { ...data, [add21_n]: 'Φ·fy·dv(cotθ+cotα)sinα' }
-                            let cell27 = rows[key3]._cells[27];
-                            let add27 = cell27._address;
-                            data = { ...data, [add27]: '=' }
-                            let cell28 = rows[key3]._cells[28];
-                            let add28 = cell28._address;
-                            let Av_extra;
-                            let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-                            data = { ...data, [add28]: Avr };
+                        // Insert five rows after key3
+                        // worksheet.spliceRows(key3 + 1, 0, [], [], [], [], []);
+
+                        // Update references after insertion
+                        key3 += 5;
+
+                        let cell19 = rows[key3]._cells[19]
+                        let add19 = cell19._address;
+                        data = { ...data, [add19]: 'Av,req1' }
+                        let cell20 = rows[key3]._cells[20];
+                        let add20 = cell20._address;
+                        data = { ...data, [add20]: '=' };
+                        let cell21 = rows[key3]._cells[21];
+                        let add21 = cell21._address;
+                        data = { ...data, [add21]: '{ Vu - Φ(Vc+Vp) }·s' }
+                        let cell21_n = rows[key3 + 1]._cells[21];
+                        let add21_n = cell21_n._address;
+                        data = { ...data, [add21_n]: 'Φ·fy·dv(cotθ+cotα)sinα' }
+                        let cell27 = rows[key3]._cells[27];
+                        let add27 = cell27._address;
+                        data = { ...data, [add27]: '=' }
+                        let cell28 = rows[key3]._cells[28];
+                        let add28 = cell28._address;
+                        let Av_extra;
+                        let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                        data = { ...data, [add28]: Avr };
                     }
-                    
+
                 }
                 else {
                     if (rows[key2]._cells[0] != undefined && rows[key2]._cells[0]._value.model.value == '$$Ar') {
                         for (let i = (key2 + 1); i <= worksheet.rowCount; i++) {
                             let nextRow = worksheet.getRow(i);
-            
+
                             if (nextRow.getCell(1).value === '$$A,v') {
                                 // First, make the cells blank
                                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
                                     cell.value = '';
                                 });
                                 break;
-                            // Blank the corresponding rows
-                            
-                        }
-                        nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                            cell.value = '';
-                        });
-                    }
-                }
+                                // Blank the corresponding rows
 
+                            }
+                            nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                                cell.value = '';
+                            });
+                        }
+                    }
+
+                }
             }
-        }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$t_new') {
                 let cell13 = rows[key1]._cells[13];
                 let add13 = cell13._address;
@@ -1158,11 +1221,11 @@ export const Updatereport = () => {
                 let add13 = cell13._address;
                 let add19 = cell19._address;
                 let value19 = cell19.value;
-                if ( Vn <= value19) {
-                    data = { ...data,[add13] : '≤'}
+                if (Vn <= value19) {
+                    data = { ...data, [add13]: '≤' }
                 }
                 else {
-                    data = { ...data,[add13] : '>'}
+                    data = { ...data, [add13]: '>' }
                 }
 
             }
@@ -1182,11 +1245,11 @@ export const Updatereport = () => {
                 let add16 = cell16._address;
                 if (vr < cell17_value) {
                     data = { ...data, [add16]: '<' };
-                    data ={ ...data, [add29] : 'NG'};
+                    data = { ...data, [add29]: 'NG' };
                 }
                 else {
                     data = { ...data, [add16]: '≥' };
-                    data = { ...data, [add29]: 'OK'};
+                    data = { ...data, [add29]: 'OK' };
                 }
                 data = { ...data, [add8]: parseFloat(vr.toFixed(2)) }
             }
@@ -1417,10 +1480,10 @@ export const Updatereport = () => {
                 let cell7 = rows[key1]._cells[6];
                 let add7 = cell7._address;
                 if (Av < Avm) {
-                    let b_value = ThetaBeta2(sxe,Etn * 1000);
+                    let b_value = ThetaBeta2(sxe, Etn * 1000);
                     let beta = parseFloat(b_value[0].toFixed(2));
                     console.log(beta);
-                    data = { ...data,[add7] : beta};
+                    data = { ...data, [add7]: beta };
                     beta_new_min = beta;
                 }
                 else {
@@ -1440,10 +1503,10 @@ export const Updatereport = () => {
                 let cell7 = rows[key1]._cells[6];
                 let add7 = cell7._address;
                 if (Av < Avm) {
-                    let theta_value = ThetaBeta2(sxe,Etn * 1000);
-                    let theta = parseFloat(theta_value[1].toFixed(2));  
+                    let theta_value = ThetaBeta2(sxe, Etn * 1000);
+                    let theta = parseFloat(theta_value[1].toFixed(2));
                     console.log(theta);
-                    data = { ...data,[add7] : theta};
+                    data = { ...data, [add7]: theta };
                     theta_new_min = theta;
                 }
                 else {
@@ -1519,7 +1582,7 @@ export const Updatereport = () => {
                     let cell2 = rows[key1]._cells[2];
                     let add11 = cell11._address;
                     let add2 = cell2._address;
-                    Vu_min = rows[key1]._cells[20].value;  
+                    Vu_min = rows[key1]._cells[20].value;
                     finalResult = (pi * (Vc_min + Vp));
                     half_finalResult = (finalResult / 2);
                     console.log(finalResult);
@@ -1595,52 +1658,52 @@ export const Updatereport = () => {
                     }
                     else {
                         let key3 = parseInt(key1) + 2;
-                         if (rows[key3]._cells[0] != undefined && rows[key3]._cells[0]._value.model.value == '$$vs_min') {
+                        if (rows[key3]._cells[0] != undefined && rows[key3]._cells[0]._value.model.value == '$$vs_min') {
                             let cell19 = rows[key3]._cells[19]
                             let add19 = cell19._address;
-                            data = { ...data,[add19] : 'Av,req1'}
+                            data = { ...data, [add19]: 'Av,req1' }
                             let cell20 = rows[key3]._cells[20];
                             let add20 = cell20._address;
-                            data = { ...data,[add20] : '='};
+                            data = { ...data, [add20]: '=' };
                             let cell21 = rows[key3]._cells[21];
                             let add21 = cell21._address;
-                            data = { ...data,[add21] : '{ Vu - Φ(Vc+Vp) }·s'}
+                            data = { ...data, [add21]: '{ Vu - Φ(Vc+Vp) }·s' }
                             let cell21_n = rows[key3 + 1]._cells[21];
                             let add21_n = cell21_n._address;
-                            data = { ...data,[add21_n] : 'Φ·fy·dv(cotθ+cotα)sinα'}
+                            data = { ...data, [add21_n]: 'Φ·fy·dv(cotθ+cotα)sinα' }
                             let cell27 = rows[key3]._cells[27];
                             let add27 = cell27._address;
-                            data = { ...data, [add27] : '='}
+                            data = { ...data, [add27]: '=' }
                             let cell28 = rows[key3]._cells[28];
                             let add28 = cell28._address;
                             let Av_extra;
                             let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-                            data = { ...data,[add28] : Avr};            
-                           }
+                            data = { ...data, [add28]: Avr };
+                        }
                     }
                 }
                 else {
                     if (rows[key2]._cells[0] != undefined && rows[key2]._cells[0]._value.model.value == '$$Ar_min') {
                         for (let i = (key2 + 1); i <= worksheet.rowCount; i++) {
                             let nextRow = worksheet.getRow(i);
-            
+
                             if (nextRow.getCell(1).value === '$$A,v') {
                                 // First, make the cells blank
                                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
                                     cell.value = '';
                                 });
                                 break;
-                            // Blank the corresponding rows
-                            
-                        }
-                        nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                            cell.value = '';
-                        });
-                    }
-                }
+                                // Blank the corresponding rows
 
+                            }
+                            nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                                cell.value = '';
+                            });
+                        }
+                    }
+
+                }
             }
-        }
             if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$t_new_min') {
                 let cell13 = rows[key1]._cells[13];
                 let add13 = cell13._address;
@@ -1660,11 +1723,11 @@ export const Updatereport = () => {
                 let add13 = cell13._address;
                 let add19 = cell19._address;
                 let value19 = cell19.value;
-                if ( Vn_min <= value19) {
-                    data = { ...data,[add13] : '≤'}
+                if (Vn_min <= value19) {
+                    data = { ...data, [add13]: '≤' }
                 }
                 else {
-                    data = { ...data,[add13] : '>'}
+                    data = { ...data, [add13]: '>' }
                 }
 
             }
@@ -1689,11 +1752,11 @@ export const Updatereport = () => {
                 let add16 = cell16._address;
                 if (vr < cell17_value) {
                     data = { ...data, [add16]: '<' };
-                    data ={ ...data, [add29] : 'NG'};
+                    data = { ...data, [add29]: 'NG' };
                 }
                 else {
                     data = { ...data, [add16]: '≥' };
-                    data = { ...data, [add29]: 'OK'};
+                    data = { ...data, [add29]: 'OK' };
                 }
                 data = { ...data, [add8]: parseFloat(vr.toFixed(2)) }
             }
@@ -1708,11 +1771,11 @@ export const Updatereport = () => {
                 let add16 = cell16._address;
                 if (vr_min < cell17_value) {
                     data = { ...data, [add16]: '<' };
-                    data ={ ...data, [add29] : 'NG'};
+                    data = { ...data, [add29]: 'NG' };
                 }
                 else {
                     data = { ...data, [add16]: '≥' };
-                    data = { ...data, [add29]: 'OK'};
+                    data = { ...data, [add29]: 'OK' };
                 }
                 data = { ...data, [add8]: parseFloat(vr_min.toFixed(2)) }
             }
@@ -1801,14 +1864,14 @@ export const Updatereport = () => {
 
                 break;
             }
-           
+
         }
         workbookData.worksheets[wkey] = worksheet;
         setWorkbookData(workbookData);
         setSheetName(worksheet.name);
     }
 
-    function updatedata2(wkey,worksheet2) {
+    function updatedata2(wkey, worksheet2) {
         if (!workbookData) return;
         if (!worksheet2) {
             throw new Error('No worksheets found in the uploaded file');
@@ -1863,57 +1926,57 @@ export const Updatereport = () => {
     // } // End fetching load combination
     async function fetchLc() {
         const endpointsDataKeys = [
-          { endpoint: "/db/lcom-gen", dataKey: "LCOM-GEN" },
-          { endpoint: "/db/lcom-conc", dataKey: "LCOM-CONC" },
-          { endpoint: "/db/lcom-src", dataKey: "LCOM-SRC" },
-          { endpoint: "/db/lcom-steel", dataKey: "LCOM-STEEL" },
-          { endpoint: "/db/lcom-stlcomp", dataKey: "LCOM-STLCOMP" },
+            { endpoint: "/db/lcom-gen", dataKey: "LCOM-GEN" },
+            { endpoint: "/db/lcom-conc", dataKey: "LCOM-CONC" },
+            { endpoint: "/db/lcom-src", dataKey: "LCOM-SRC" },
+            { endpoint: "/db/lcom-steel", dataKey: "LCOM-STEEL" },
+            { endpoint: "/db/lcom-stlcomp", dataKey: "LCOM-STLCOMP" },
         ];
         let allData = [];
         let check = false;
-    
+
         // try {
-          for (const { endpoint, dataKey } of endpointsDataKeys) {
+        for (const { endpoint, dataKey } of endpointsDataKeys) {
             const response = await midasAPI("GET", endpoint);
             console.log(response);
             if (response && !response.error) {
-              let responseData = response[dataKey];
-              if (responseData === undefined) {
-                console.warn(`Data from ${endpoint} is undefined, skipping.`);
-                continue;
-            }
-            if (!Array.isArray(responseData)) {
-                responseData = Object.values(responseData);
-            }
-              const keys = Object.keys(response[dataKey]);
-              const lastindex = parseInt(keys[keys.length - 1]);
-              console.log(lastindex);
-              responseData.forEach((item) => {
-                allData.push({ name: item.NAME, endpoint, lastindex: lastindex });
-              });
-              if (allData.length > 0) {
-                const lastElement = allData[0];
-                const lastNumber = Object.keys(lastElement).length - 1;
-                for (let index = 0; index < responseData.length; index++) {
-                  const item = responseData[index];
-                  item.someProperty = lastNumber + index + 1;
-                  allData.push(item);
-                  console.log(allData);
+                let responseData = response[dataKey];
+                if (responseData === undefined) {
+                    console.warn(`Data from ${endpoint} is undefined, skipping.`);
+                    continue;
                 }
-              } else {
-                allData = allData.concat(responseData);
-                console.log(allData);
-              }
-              check = true;
-              console.log(`Data from ${endpoint}:`, responseData);
+                if (!Array.isArray(responseData)) {
+                    responseData = Object.values(responseData);
+                }
+                const keys = Object.keys(response[dataKey]);
+                const lastindex = parseInt(keys[keys.length - 1]);
+                console.log(lastindex);
+                responseData.forEach((item) => {
+                    allData.push({ name: item.NAME, endpoint, lastindex: lastindex });
+                });
+                if (allData.length > 0) {
+                    const lastElement = allData[0];
+                    const lastNumber = Object.keys(lastElement).length - 1;
+                    for (let index = 0; index < responseData.length; index++) {
+                        const item = responseData[index];
+                        item.someProperty = lastNumber + index + 1;
+                        allData.push(item);
+                        console.log(allData);
+                    }
+                } else {
+                    allData = allData.concat(responseData);
+                    console.log(allData);
+                }
+                check = true;
+                console.log(`Data from ${endpoint}:`, responseData);
             }
-          }
-    
-          if (check) {
+        }
+
+        if (check) {
             setLc(allData);
             // return null;
-          }
-          showLc(allData);
+        }
+        showLc(allData);
         // } catch (error) {
         //   enqueueSnackbar("Unable to Fetch Data Check Connection", {
         //     variant: "error",
@@ -1922,34 +1985,46 @@ export const Updatereport = () => {
         //       horizontal: "center",
         //     },
         //   });
-          return null;
-        }
-        // if (combArray.length === 0) {
-        //   enqueueSnackbar("Please Define Load Combination", {
-        //     variant: "error",
-        //     anchorOrigin: {
-        //       vertical: "top",
-        //       horizontal: "center",
-        //     },
-        //     action,
-        //   });
-        //   return;
-        // }
-        // fetchElement();
-        function showLc(lc) {
-            console.log(lc);
-            items.delete('1'); // Make sure 'items' is defined in your context   
-            let newKey = 1; 
-            for (let key in lc) {
-                if (lc[key].ACTIVE === "SERVICE") {
-                    items.set(lc[key].NAME, newKey.toString());
-                    newKey++;
-                    // console.log(key, lc[key].NAME)
-                }
+        return null;
+    }
+    // if (combArray.length === 0) {
+    //   enqueueSnackbar("Please Define Load Combination", {
+    //     variant: "error",
+    //     anchorOrigin: {
+    //       vertical: "top",
+    //       horizontal: "center",
+    //     },
+    //     action,
+    //   });
+    //   return;
+    // }
+    // fetchElement();
+    function showLc(lc) {
+        console.log(lc);
+        item.delete('1'); // Make sure 'items' is defined in your context   
+        let newKey = 1;
+        for (let key in lc) {
+            if (lc[key].ACTIVE === "SERVICE") {
+                item.set(lc[key].NAME, newKey.toString());
+                newKey++;
+                // console.log(key, lc[key].NAME)
             }
-        
-            setItem(items);
         }
+
+        setItem(item);
+        // console.log(item);
+        // Set default selectedName based on key value 1
+        for (let [name, key] of item.entries()) {
+            if (key === '1') {
+                setSelectedName(name);
+                lcname = name;
+                console.log(lcname);
+                break;
+            }
+        }
+        console.log(item);
+    }
+    console.log(item);
 
     const handleFileDownload = async () => {
         // fetchLc();
@@ -1967,6 +2042,7 @@ export const Updatereport = () => {
         // console.log('load combinations', Lc)
         console.log(SelectWorksheets);
         console.log(SelectWorksheets2);
+        
 
         for (let wkey in SelectWorksheets) {
             updatedata(wkey, SelectWorksheets[wkey]);
@@ -1987,6 +2063,9 @@ export const Updatereport = () => {
         link.click();
         document.body.removeChild(link);
     };
+    useEffect(() => {
+        fetchLc();
+    }, []);
 
     const handleDataChange = (rowIndex, colIndex, value) => {
         const newData = [...sheetData];
