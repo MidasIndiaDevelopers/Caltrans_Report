@@ -330,12 +330,17 @@ import {
       let Vu_max;
       let Vu_min;
       let fy;
+      let vu_check;
+      let vu_check_min;
   
       for (let key1 in rows) {
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$type"
         ) {
+            let cell2 = rows[key1]._cells[2];
+            let add2 = cell2._address;
+            data = { ...data,[add2] : 'CALTRANS'}
           let cell17 = rows[key1]._cells[17];
           let add17 = cell17._address;
           let cell17Value = cell17.value !== undefined ? cell17.value : null;
@@ -352,11 +357,10 @@ import {
         ) {
           let location = rows[key1]._cells[19]._value.model.address;
           let value = rows[key1]._cells[19]._value.model.value;
+          value = parseFloat(value.toFixed(3));
           data = { ...data, [location]: value };
           mn = value;
         }
-  
-        // to get Phi row
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$Phi"
@@ -366,7 +370,6 @@ import {
             data = { ...data, [location]: 0.95 };
             phi = 0.95;
             let equ = rows[key1]._cells[22]._value.model.address;
-            // Retrieve the existing value from cell[22]
             let existingValue = rows[key1]._cells[22]._value.model.value;
             // Concatenate the existing value with the new string
             let concatenatedValue = '0.005 ≤εt  ' + ' (See CA- 5.5.4.2)';
@@ -384,9 +387,11 @@ import {
           let location = rows[key1]._cells[5]._value.model.address;
   
           let mu = rows[key1]._cells[17]._value.model.value;
+          let value5 = rows[key1]._cells[5]._value.model.value; 
           mu_pos = mu;
           mr_old_pos = rows[key1]._cells[5]._value.model.value;
-          mr = Math.round(Number(mn) * Number(phi) * 100) / 100;
+          mr = value5*phi;
+          mr = parseFloat(mr.toFixed(3));
           mr_new_pos = mr;
           data = { ...data, [location]: mr };
   
@@ -410,11 +415,10 @@ import {
         ) {
           let location = rows[key1]._cells[19]._value.model.address;
           let value = rows[key1]._cells[19]._value.model.value;
+          value = parseFloat(value.toFixed(3));
           data = { ...data, [location]: value };
           mn_neg = value;
         }
-  
-        // to get Phi row
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$Phi_min"
@@ -436,11 +440,12 @@ import {
           rows[key1]._cells[0]._value.model.value == "$$Mr_min"
         ) {
           let location = rows[key1]._cells[5]._value.model.address;
-  
+          let value5 = rows[key1]._cells[5]._value.model.value;
           let mu = rows[key1]._cells[17]._value.model.value;
           mu_neg =mu;
-          mr_neg = Math.round(Number(mn_neg) * Number(phi) * 100) / 100;
-          data = { ...data, [location]: mr };
+          mr_neg = value5 * phi;
+          mr_neg = parseFloat(mr_neg.toFixed(3));
+          data = { ...data, [location]: mr_neg };
   
           // location of oK
           if (mr_neg < Number(mu)) {
@@ -469,10 +474,16 @@ import {
           dv_min = rows[key1]._cells[4]._value.model.value;
         }
         if (
+            rows[key1]._cells[0] != undefined &&
+            rows[key1]._cells[0]._value.model.value == "$$vu"
+          ) {
+             vu_check = rows[key1]._cells[11]._value.model.value;
+          }
+        if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$sm"
         ) {
-          if (sp === "ca1") {
+          if (sp === "ca1" && vu_check == '<') {
             let add1 = rows[key1]._cells[6]._value.model.address;
             data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
             let add2 = rows[key1]._cells[13]._value.model.address;
@@ -481,6 +492,30 @@ import {
               data = { ...data, [add2]: 18 };
             } else {
               data = { ...data, [add2]: 0.8 * dv };
+            }
+          }
+          let add27 = rows[key1]._cells[27]._value.model.address;
+          data = { ...data,[add27] : '(See CA-5.7.2.6-1)'}
+        }
+        if (
+            rows[key1]._cells[0] != undefined &&
+            rows[key1]._cells[0]._value.model.value == "$$vu_min"
+          ) {
+             vu_check_min = rows[key1]._cells[11]._value.model.value;
+          }
+        if (
+          rows[key1]._cells[0] != undefined &&
+          rows[key1]._cells[0]._value.model.value == "$$sm_min"
+        ) {
+          if (sp === "ca1" && vu_check_min == '<') {
+            let add1 = rows[key1]._cells[6]._value.model.address;
+            data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
+            let add2 = rows[key1]._cells[13]._value.model.address;
+            // let val=rows[key1]._cells[13]._value.model.value;
+            if (0.8 * dv_min >= 18) {
+              data = { ...data, [add2]: 18 };
+            } else {
+              data = { ...data, [add2]: 0.8 * dv_min };
             }
           }
           let add27 = rows[key1]._cells[27]._value.model.address;
@@ -513,6 +548,7 @@ import {
           rows[key1]._cells[0]._value.model.value == "$$dc"
         ) {
           if (cvr === "ca2") {
+
             for (let col = 0; col < rows[key1]._cells.length; col++) {
               if (rows[key1]._cells[col] != undefined) {
                 let cellValue = rows[key1]._cells[col]._value.model.value;
@@ -568,6 +604,7 @@ import {
             }
             console.log(storedValues);
             val2_new = ((val2 + 3.6) * column15Value) / column15Value_new - 5;
+            val2_new = parseFloat(val2_new.toFixed(3));
   
             if (val2_new < 0) {
               val2_new = 0.0;
@@ -1440,16 +1477,17 @@ import {
               let Avr =
                 ((Vu_max - finalResult) * s_max) /
                 (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                Avr = parseFloat(Avr.toFixed(3));
               console.log(Avr);
               data = { ...data, [add13]: Avr };
               for (let i = key2; i <= worksheet.rowCount; i++) {
                 // console.log("Hello");
                 let nextRow = worksheet.getRow(i);
                 if (
-                  rows[nextRow]._cells[0] != undefined &&
-                  rows[key1]._cells[0]._value.model.value == "$$Av,req"
+                  rows[i]._cells[0] != undefined &&
+                  rows[i]._cells[0]._value.model.value == "$$Av,req"
                 ) {
-                  let cell12 = rows[nextRow]._cells[12];
+                  let cell12 = rows[i]._cells[12];
                   let add12 = cell12._address;
                   if (Avm > Avr) {
                     Av_extra = Avm;
@@ -1460,11 +1498,11 @@ import {
                   }
                 }
                 if (
-                  rows[nextRow]._cells[0] != undefined &&
-                  rows[key1]._cells[0]._value.model.value == "$$A,v"
+                  rows[i]._cells[0] != undefined &&
+                  rows[i]._cells[0]._value.model.value == "$$A,v"
                 ) {
-                  let cell11 = rows[nextRow]._cells[11];
-                  let cell29 = rows[nextRow]._cells[29];
+                  let cell11 = rows[i]._cells[11];
+                  let cell29 = rows[i]._cells[29];
                   let add11 = cell11._address;
                   let add29 = cell29._address;
                   if (Av >= Av_extra) {
@@ -1483,10 +1521,6 @@ import {
               }
             } else {
               let key3 = parseInt(key1) + 2;
-              // Insert five rows after key3
-              // worksheet.spliceRows(key3 + 1, 0, [], [], [], [], []);
-  
-              // Update references after insertion
               key3 += 5;
   
               let cell19 = rows[key3]._cells[19];
@@ -1526,7 +1560,6 @@ import {
                     cell.value = "";
                   });
                   break;
-                  // Blank the corresponding rows
                 }
                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
                   cell.value = "";
@@ -1607,31 +1640,6 @@ import {
           let add12 = rows[key1]._cells[12]._value.model.address;
           data = { ...data,[add12] : '(See CA - 5.7.3.4)'}
         }
-        // if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$strn1') {
-        //     let add1 = rows[key1]._cells[3]._value.model.address;
-        //     let add2 = rows[key1]._cells[4]._value.model.address; let add3 = rows[key1]._cells[5]._value.model.address;
-        //     data = { ...data, [add1]: 'β' };
-        //     data = { ...data, [add2]: '=' };
-        //     data = { ...data, [add3]: beta2.toFixed(3) };
-  
-        //     let add4 = rows[key1]._cells[8]._value.model.address;
-        //     let add5 = rows[key1]._cells[9]._value.model.address;
-        //     let add6 = rows[key1]._cells[10]._value.model.address;
-        //     data = { ...data, [add4]: 'θ' };
-        //     data = { ...data, [add5]: '=' };
-        //     data = { ...data, [add6]: theta2.toFixed(3) };
-  
-        //     let add7 = rows[key1]._cells[13]._value.model.address;
-        //     let add8 = rows[key1]._cells[14]._value.model.address;
-        //     let add9 = rows[key1]._cells[15]._value.model.address;
-        //     data = { ...data, [add7]: 'εₓ' };
-        //     data = { ...data, [add8]: '=' };
-        //     data = { ...data, [add9]: Exn.toFixed(8) };
-        // }
-        // if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == '$$vc') {
-        //     let add1 = rows[key1]._cells[9]._value.model.address;
-        //     data = { ...data, [add1]: Vc1 };
-        // }
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$A_min"
@@ -2213,6 +2221,7 @@ import {
           let cal =
             (Av * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha)) /
             s_max;
+            cal = parseFloat(cal.toFixed(3));
           data = { ...data, [add13]: cal };
           Vs = cal;
         }
@@ -2229,6 +2238,7 @@ import {
               (cot(theta_new_min) + cot($$alpha_min)) *
               Math.sin($$alpha_min)) /
             s_min;
+            cal = parseFloat(cal.toFixed(3));
           data = { ...data, [add13]: cal };
           Vs_min = cal;
         }
@@ -2278,7 +2288,7 @@ import {
             }
           }
           // Remove the old references
-          worksheet._rows.length -= rownumber;
+        //   worksheet._rows.length -= rownumber;
   
           break;
         }
@@ -2340,7 +2350,7 @@ import {
             }
           }
           // Remove the old references
-          worksheet._rows.length -= rownumber;
+        //   worksheet._rows.length -= rownumber;
   
           break;
         }
@@ -2374,7 +2384,7 @@ import {
         // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
         
       }
-      for (let i = 0; i < rows.length; i++) {
+      for (let i = 0; i < (rows.length + 15); i++) {
             if (rows[i] && rows[i]._cells && rows[i]._cells[0]) {
             const cellValue = rows[i]._cells[0]?._value?.model?.value;
         
@@ -2645,8 +2655,14 @@ import {
       let numberPart = parseInt(matchedParts[0].numberPart, 10); // Extract numberPart from matchParts
       let letterPart = matchedParts[0].letterPart;
       console.log(selectedName)
-      const concatenatedValue = `${selectedName}(CBC)`;
-      const concatenatedValue_max = `${selectedName}(CBC:max)`;
+      const concatenatedValue_cbc = `${selectedName}(CBC)`;
+      const concatenatedValue_cbc_max = `${selectedName}(CBC:max)`;
+      const concatenatedValue_cb = `${selectedName}(CB)`;
+      const concatenatedValue_cd_max = `${selectedName}(CB:max)`;
+      const concatenatedValue_cbr = `${selectedName}(CBR)`;
+      const concatenatedValue_cbr_max = `${selectedName}(CBR:max)`;
+      const concatenatedValue_cbsc = `${selectedName}(CBSC)`;
+      const concatenatedValue_cbsc_max = `${selectedName}(CBSC:max)`;
       let stresses = {
         "Argument": {
             "TABLE_NAME": "BeamStress",
@@ -2684,8 +2700,14 @@ import {
             },
             "LOAD_CASE_NAMES": [
                 selectedName,
-                concatenatedValue,
-                concatenatedValue_max
+                concatenatedValue_cbc,
+                concatenatedValue_cbc_max,
+                concatenatedValue_cb,
+                concatenatedValue_cd_max,
+                concatenatedValue_cbr,
+                concatenatedValue_cbr_max,
+                concatenatedValue_cbsc,
+                concatenatedValue_cbsc_max
             ],
             "PARTS": [
                   `Part ${letterPart}`
