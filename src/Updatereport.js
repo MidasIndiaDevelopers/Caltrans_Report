@@ -98,6 +98,7 @@ export const Updatereport = () => {
         let buffer = e.target.result;
         let workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(buffer);
+        
         let newMatchedParts = [];
         const summaryWorkbook = await fetchAndProcessExcelFile();
       const summarySheet = summaryWorkbook.getWorksheet('Sheet1');
@@ -119,6 +120,19 @@ export const Updatereport = () => {
               ...prevState,
               [key]: workbook.worksheets[key],
             }));
+            const addRichText = (cell) => {
+              if (cell && cell.richText) {
+                  // Your logic for handling richText
+                  console.log('Processing cell with richText:', cell.richText);
+              }
+          };
+  
+          // Iterate through each row and cell in the worksheet
+          worksheet.eachRow((row) => {
+              row.eachCell((cell) => {
+                  addRichText(cell);
+              });
+          });
           }
           setMatchedParts(newMatchedParts); 
           console.log(matchedParts);
@@ -158,40 +172,39 @@ export const Updatereport = () => {
           return letter;
         };
 
-        let startRowNumber1 = null;
-        let endRowNumber1 = null;
-        let startRowNumber2 = null;
-        let endRowNumber2 = null;
+        let startRowNumbers = [];
+        let endRowNumbers = [];
 
-        // Find start and end rows based on values in the first cell
+        // Find all start and end rows based on values in the first cell
         worksheet.eachRow((row, rowNumber) => {
           if (row.getCell(1).value === "$$strm1") {
-            startRowNumber1 = rowNumber;
+            startRowNumbers.push(rowNumber);
           } else if (row.getCell(1).value === "$$fpo") {
-            endRowNumber1 = rowNumber;
-          }
-        });
-        worksheet.eachRow((row, rowNumber) => {
-          if (row.getCell(1).value === "$$strn1") {
-            startRowNumber2 = rowNumber;
-          } else if (row.getCell(1).value === "$$fpo_min") {
-            endRowNumber2 = rowNumber;
+            endRowNumbers.push(rowNumber);
           }
         });
 
-        if (
-          (startRowNumber1 === null || endRowNumber1 === null) &&
-          (startRowNumber2 === null || endRowNumber2 === null)
-        ) {
+        if (startRowNumbers.length === 0 || endRowNumbers.length === 0) {
           throw new Error(
-            "Could not find the start or end markers ($$strm1/$$strn1 or $$fpo/$$fpo_min)"
+            "Could not find the start or end markers ($$strm1 or $$fpo)"
           );
         }
-        // Process rows between startRowNumber and endRowNumber
-        if (startRowNumber1 !== null && endRowNumber1 !== null) {
+
+        // Ensure we have matching start and end markers
+        if (startRowNumbers.length !== endRowNumbers.length) {
+          throw new Error(
+            "Mismatched number of start ($$strm1) and end ($$fpo) markers."
+          );
+        }
+
+        // Process rows between each startRowNumber and endRowNumber pair
+        for (let i = 0; i < startRowNumbers.length; i++) {
+          let startRowNumber = startRowNumbers[i];
+          let endRowNumber = endRowNumbers[i];
+
           for (
-            let rowNumber = startRowNumber1 + 1;
-            rowNumber < endRowNumber1;
+            let rowNumber = startRowNumber + 1;
+            rowNumber < endRowNumber;
             rowNumber++
           ) {
             let row = worksheet.getRow(rowNumber);
@@ -205,23 +218,17 @@ export const Updatereport = () => {
             });
           }
         }
-        if (startRowNumber2 !== null && endRowNumber2 !== null) {
-          for (
-            let rowNumber = startRowNumber2 + 1;
-            rowNumber < endRowNumber2;
-            rowNumber++
-          ) {
-            let row = worksheet.getRow(rowNumber);
-            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-              if (colNumber !== 1) {
-                let colLetter = indexToLetter(colNumber - 1); // Adjusting index for 1-based column numbering
-                let address = colLetter + rowNumber;
-                row.getCell(colNumber).value = null; // Set cell value to null
-                row.getCell(colNumber)._address = address;
-              }
-            });
-          }
-        }
+
+        // Function to convert column index to letter
+      //   function indexToLetter(index) {
+      //     let letter = "";
+      //     while (index >= 0) {
+      //       letter = String.fromCharCode((index % 26) + 65) + letter;
+      //       index = Math.floor(index / 26) - 1;
+      //     }
+      //     return letter;
+      //   }
+
         const lastRowNumber = worksheet2.rowCount;
         const newRowNumber = lastRowNumber + 1;
         const newRow = worksheet2.getRow(newRowNumber);
@@ -269,6 +276,10 @@ export const Updatereport = () => {
 
     reader.readAsArrayBuffer(file);
   };
+  function cot(angle) {
+      return 1 / Math.tan(angle);
+  }
+    
   console.log(matchedParts);
   const [ag, setAg] = useState("");
   const [sg, setSg] = useState("");
@@ -351,6 +362,7 @@ export const Updatereport = () => {
     let vp_i = 0;
     let Vc_i = 0;
     let a_i = 0;
+    let A_i = 0;
     let e_i = 0;
     let sx_i = 0;
     let sxe_i = 0;
@@ -862,6 +874,7 @@ export const Updatereport = () => {
     let theta_new_min;
     let beta_new;
     let beta_new_min;
+    let sxe;
     function indexToLetter(index) {
       let letter = "";
       while (index >= 0) {
@@ -876,1434 +889,2009 @@ export const Updatereport = () => {
     let strm1_i =0;
     let strm_i = 0;
     let fpo_i = 0;
-
-
-    for (let key1 in rows) {
-        if (rows[key1]._cells[0] != undefined && rows[key1]._cells[0]._value.model.value == "Design Condition") {
-            // let add1 = rows[key1]._cells[2]._value.model.address;
-            // let add2 = rows[key1]._cells[8]._value.model.address;
-            // data = { ...data, [add1]: "Calculation for β and θ" };
-            // data = { ...data, [add2]: "" };
-            let add1 = rows[key1]._cells[0]._value.model.address;
-            data = { ...data ,[add1] : 'Design Condition for Caltrans Amendment As per AASHTO LRFD Bridge Design'}
-          }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$strm"
-      ) {
-        strm_i = strm_i + 1;
-        if (strm_i == 1){
-        let add1 = rows[key1]._cells[2]._value.model.address;
-        let add2 = rows[key1]._cells[8]._value.model.address;
-        data = { ...data, [add1]: "Calculation for β and θ  (See CA - 5.7.3.4)"};
-        data = { ...data, [add2]: "" };
-        // let add12 = rows[key1]._cells[12]._value.model.address;
-        // data = { ...data, [add12] : '(See CA - 5.7.3.4)'}
+    function getSafeCell(row, index) {
+      if (row._cells && row._cells[index] && row._cells[index]._value && row._cells[index]._value.model) {
+        return row._cells[index];
       }
-      if (strm_i == 2) {
-        let add1 = rows[key1]._cells[2]._value.model.address;
-        let add2 = rows[key1]._cells[8]._value.model.address;
-        data = { ...data, [add1]: "Calculation for β and θ" };
-        data = { ...data, [add2]: "" };
-        let add12 = rows[key1]._cells[12]._value.model.address;
-        data = { ...data,[add12] : '(See CA - 5.7.3.4)'}
+      return null;
+    }
+    
+    // Processing rows
+    for (let key1 in rows) {
+      let row = rows[key1];
+    
+      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "Design Condition") {
+        let add1 = getSafeCell(row, 0)._value.model.address;
+        data = { ...data, [add1]: 'Design Condition for Caltrans Amendment As per AASHTO LRFD Bridge Design' };
+      }
+    
+      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm") {
+        strm_i += 1;
+        let add1, add2, add12;
+        
+        if (strm_i === 1) {
+          add1 = getSafeCell(row, 2)._value.model.address;
+          add2 = getSafeCell(row, 8)._value.model.address;
+          data = { ...data, [add1]: "Calculation for β and θ  (See CA - 5.7.3.4)" };
+          data = { ...data, [add2]: "" };
+        }
+    
+        if (strm_i === 2) {
+          add1 = getSafeCell(row, 2)._value.model.address;
+          add2 = getSafeCell(row, 8)._value.model.address;
+          add12 = getSafeCell(row, 12)._value.model.address;
+          data = { ...data, [add1]: "Calculation for β and θ" };
+          data = { ...data, [add2]: "" };
+          data = { ...data, [add12]: '(See CA - 5.7.3.4)' };
+        }
+      }
+    
+      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm1") {
+        strm1_i += 1;
+        if (strm1_i === 1) {
+          for (let i = 1; i <= 50; i++) {
+            let cell = getSafeCell(row, i);
+            if (cell) {
+              cell._value.model = { value: " " };
+            } else {
+              row._cells[i] = {
+                _value: {
+                  model: {
+                    value: "dummy",
+                    address: indexToLetter(i) + (parseInt(key1) + 1),
+                  },
+                },
+                _address: indexToLetter(i) + (parseInt(key1) + 1),
+              };
+            }
+          }
+    
+          let nextKey = parseInt(key1) + 1;
+          while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$fpo") {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                };
+              }
+            }
+            nextKey++;
+          }
+        }
+    
+        if (strm1_i === 2) {
+          for (let i = 1; i <= 50; i++) {
+            let cell = getSafeCell(row, i);
+            if (cell) {
+              cell._value.model = { value: " " };
+            } else {
+              row._cells[i] = {
+                _value: {
+                  model: {
+                    value: "dummy",
+                    address: indexToLetter(i) + (parseInt(key1) + 1),
+                  },
+                },
+                _address: indexToLetter(i) + (parseInt(key1) + 1),
+              };
+            }
+          }
+    
+          let nextKey = parseInt(key1) + 1;
+          while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$fpo") {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                };
+              }
+            }
+            nextKey++;
+          }
+        }
+      }
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$A") {
+        A_i = A_i + 1;
+        if (A_i == 1) {
+        console.log(rows[key1]._cells);
+      
+        let cell = getSafeCell(rows[key1], 4);
+        if (cell) {
+          data = { ...data, [cell._address]: "A" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+        }
+      
+        let cell2 = getSafeCell(rows[key1], 6);
+        if (cell2) {
+          data = { ...data, [cell2._address]: "Aₘᵢₙ" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+        }
+      
+        let cell3 = getSafeCell(rows[key1], 5);
+        if (cell3) {
+          let comparisonSymbol = Av >= Avm ? "≥" : "<";
+          data = { ...data, [cell3._address]: comparisonSymbol };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+        }
+      }
+      if (A_i == 2) {
+        console.log(rows[key1]._cells);
+
+        let cell = getSafeCell(rows[key1], 4);
+        if (cell) {
+          data = { ...data, [cell._address]: "A" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+        }
+      
+        let cell2 = getSafeCell(rows[key1], 6);
+        if (cell2) {
+          data = { ...data, [cell2._address]: "Aₘᵢₙ" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+        }
+      
+        let cell3 = getSafeCell(rows[key1], 5);
+        if (cell3) {
+          let comparisonSymbol = Av >= Avm ? "≥" : "<";
+          data = { ...data, [cell3._address]: comparisonSymbol };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+        }
+      }
+      }
+    
+      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$pi") {
+        pi_i = pi_i + 1;
+        if (pi_i == 1){
+        pi = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
+        }
+        if (pi_i == 2){
+          pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
+        }
+      }
+    
+      // if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$pi_min") {
+      //   pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
+      // }
+    
+      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$e") {
+        e_i = e_i + 1;
+        if (e_i == 1){
+        let cell = getSafeCell(row, 4);
+        if (cell) {
+          data = { ...data, [cell._address]: "εx" };
+        }
+        let cell2 = getSafeCell(row, 5);
+        if (cell2) {
+          data = { ...data, [cell2._address]: "=" };
+        }
+        let cell3 = getSafeCell(row, 6);
+        if (cell3) {
+          let cell3Value = Av >= Avm ? Exm : Etm;
+          data = { ...data, [cell3._address]: cell3Value };
+        }
+      }
+      if (e_i == 2){
+        console.log(rows[key1]._cells);
+
+        let cell = getSafeCell(rows[key1], 4);
+        if (cell) {
+          data = { ...data, [cell._address]: "εx" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+        }
+
+        let cell2 = getSafeCell(rows[key1], 5);
+        if (cell2) {
+          data = { ...data, [cell2._address]: "=" };
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+        }
+
+        let cell3 = getSafeCell(rows[key1], 6);
+        if (cell3) {
+          let cell3Value = Av >= Avm ? Exn : Etn;
+          data = { ...data, [cell3._address]: cell3Value };
+        }
+      }
+      }
+      
+
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$sx") {
+        sx_i = sx_i + 1;
+        if (sx_i === 1) {
+          rows[key1]._cells = rows[key1]._cells.map((cell) =>
+            cell === "" ? undefined : cell
+          );
+          console.log(rows[key1]._cells);
+      
+          let cell = getSafeCell(rows[key1], 4);
+          if (cell) {
+            data = { ...data, [cell._address]: "sx" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell2 = getSafeCell(rows[key1], 5);
+          if (cell2) {
+            data = { ...data, [cell2._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let startCol = 7;
+          let endCol = 17;
+          let rowNumber = getSafeCell(rows[key1], startCol).row;
+          try {
+            let mergeRange = worksheet.getCell(
+              `${worksheet.getColumn(startCol).letter}${rowNumber}:${worksheet.getColumn(endCol).letter}${rowNumber}`
+            );
+            if (!mergeRange.isMerged) {
+              worksheet.mergeCells(rowNumber, startCol, rowNumber, endCol);
+            }
+          } catch (error) {
+            console.error("Error merging cells: ", error);
+          }
+      
+          let cell3 = worksheet.getCell(rowNumber, startCol);
+          if (cell3) {
+            let add13 = cell3._address;
+            if (Av < Avm) {
+              data = {
+                ...data,
+                [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
+              };
+      
+              let cell4 = getSafeCell(rows[key1], 18);
+              if (cell4) {
+                data = { ...data, [cell4._address]: "=" };
+              } else {
+                console.error("Error: Unable to determine address for rows[key1]._cells[18]");
+              }
+      
+              let cell5 = getSafeCell(rows[key1], 19);
+              if (cell5) {
+                let add15 = cell5._address;
+                let add15value = dv < sg ? dv : sg;
+                data = { ...data, [add15]: add15value };
+              } else {
+                console.error("Error: Unable to determine address for rows[key1]._cells[19]");
+              }
+            } else {
+              data = { ...data, [add13]: `Not Required` };
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+          }
+        }
+      
+        if (sx_i === 2) {
+          rows[key1]._cells = rows[key1]._cells.map((cell) =>
+            cell === "" ? undefined : cell
+          );
+          console.log(rows[key1]._cells);
+      
+          let cell = getSafeCell(rows[key1], 4);
+          if (cell) {
+            data = { ...data, [cell._address]: "sx" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell2 = getSafeCell(rows[key1], 5);
+          if (cell2) {
+            data = { ...data, [cell2._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let startCol = 7;
+          let endCol = 17;
+          let rowNumber = getSafeCell(rows[key1], startCol).row;
+          try {
+            let mergeRange = worksheet.getCell(
+              `${worksheet.getColumn(startCol).letter}${rowNumber}:${worksheet.getColumn(endCol).letter}${rowNumber}`
+            );
+            if (!mergeRange.isMerged) {
+              worksheet.mergeCells(rowNumber, startCol, rowNumber, endCol);
+            }
+          } catch (error) {
+            console.error("Error merging cells: ", error);
+          }
+      
+          let cell3 = worksheet.getCell(rowNumber, startCol);
+          if (cell3) {
+            let add13 = cell3._address;
+            if (Av < Avm) {
+              data = {
+                ...data,
+                [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
+              };
+      
+              let cell4 = getSafeCell(rows[key1], 18);
+              if (cell4) {
+                data = { ...data, [cell4._address]: "=" };
+              } else {
+                console.error("Error: Unable to determine address for rows[key1]._cells[18]");
+              }
+      
+              let cell5 = getSafeCell(rows[key1], 19);
+              if (cell5) {
+                let add15 = cell5._address;
+                let add15value = dv < sg ? dv : sg;
+                data = { ...data, [add15]: add15value };
+              } else {
+                console.error("Error: Unable to determine address for rows[key1]._cells[19]");
+              }
+            } else {
+              data = { ...data, [add13]: `Not Required` };
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+          }
+        }
+      }
+      
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$sxe") {
+        sxe_i = sxe_i + 1;
+        
+        let cell5 = getSafeCell(rows[key1], 19);
+        if (cell5) {
+          let add15 = cell5._address;
+          let add15value = dv < sg ? dv : sg;
+          // data = { ...data, [add15]: add15value };
+          sxe = (add15value * 1.38) / (ag + 0.63); 
+        } else {
+          console.error("Error: Unable to determine address for rows[key1]._cells[19]");
+        }
+        if (sxe_i === 1) {
+          let cell3 = getSafeCell(rows[key1], 4);
+          if (cell3) {
+            data = { ...data, [cell3._address]: "sxe" };
+          }
+      
+          let cell4 = getSafeCell(rows[key1], 5);
+          if (cell4) {
+            data = { ...data, [cell4._address]: "=" };
+          }
+      
+          let mergeStartCol = 7;
+          let mergeEndCol = 16;
+          let mergeRowNumber = getSafeCell(rows[key1], mergeStartCol).row;
+          try {
+            let mergeRange = worksheet.getCell(
+              `${worksheet.getColumn(mergeStartCol).letter}${mergeRowNumber}:${worksheet.getColumn(mergeEndCol).letter}${mergeRowNumber}`
+            );
+            if (!mergeRange.isMerged) {
+              worksheet.mergeCells(mergeRowNumber, mergeStartCol, mergeRowNumber, mergeEndCol);
+            }
+          } catch (error) {
+            console.error("Error merging cells: ", error);
+          }
+      
+          let cell5 = worksheet.getCell(mergeRowNumber, mergeStartCol);
+          if (cell5) {
+            let add15 = cell5._address;
+            if (Av < Avm) {
+              data = { ...data, [add15]: sxe };
+            } else {
+              data = { ...data, [add15]: "Not required" };
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+          }
+        }
+      
+        if (sxe_i === 2) {
+          let cell3 = getSafeCell(rows[key1], 4);
+          if (cell3) {
+            data = { ...data, [cell3._address]: "sxe" };
+          }
+      
+          let cell4 = getSafeCell(rows[key1], 5);
+          if (cell4) {
+            data = { ...data, [cell4._address]: "=" };
+          }
+      
+          let mergeStartCol = 7;
+          let mergeEndCol = 16;
+          let mergeRowNumber = getSafeCell(rows[key1], mergeStartCol).row;
+          try {
+            let mergeRange = worksheet.getCell(
+              `${worksheet.getColumn(mergeStartCol).letter}${mergeRowNumber}:${worksheet.getColumn(mergeEndCol).letter}${mergeRowNumber}`
+            );
+            if (!mergeRange.isMerged) {
+              worksheet.mergeCells(mergeRowNumber, mergeStartCol, mergeRowNumber, mergeEndCol);
+            }
+          } catch (error) {
+            console.error("Error merging cells: ", error);
+          }
+      
+          let cell5 = worksheet.getCell(mergeRowNumber, mergeStartCol);
+          if (cell5) {
+            let add15 = cell5._address;
+            if (Av < Avm) {
+              data = { ...data, [add15]: sxe };
+            } else {
+              data = { ...data, [add15]: "Not required" };
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[7]");
+          }
+        }
+      }
+      // function getSafeCell(row, cellIndex) {
+      //   if (row && row._cells && row._cells[cellIndex]) {
+      //     return row._cells[cellIndex];
+      //   }
+      //   return undefined;
+      // }
+      
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$b") {
+        b_i = b_i + 1;
+        if (b_i === 1) {
+          let cell5 = getSafeCell(rows[key1], 4);
+          if (cell5) {
+            data = { ...data, [cell5._address]: "β" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell6 = getSafeCell(rows[key1], 5);
+          if (cell6) {
+            data = { ...data, [cell6._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let cell7 = getSafeCell(rows[key1], 6);
+          if (cell7) {
+            if (Av < Avm) {
+              let b_value = ThetaBeta2(sxe, Etm * 1000);
+              let beta = b_value[0];
+              console.log(beta);
+              data = { ...data, [cell7._address]: beta };
+              beta_new = beta;
+            } else {
+              data = { ...data, [cell7._address]: parseFloat(beta1.toFixed(2)) };
+              beta_new = parseFloat(beta1.toFixed(2));
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+          }
+      
+          let cell15 = getSafeCell(rows[key1], 15);
+          if (cell15) {
+            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          }
+        }
+      
+        if (b_i === 2) {
+          let cell5 = getSafeCell(rows[key1], 4);
+          if (cell5) {
+            data = { ...data, [cell5._address]: "β" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell6 = getSafeCell(rows[key1], 5);
+          if (cell6) {
+            data = { ...data, [cell6._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let cell7 = getSafeCell(rows[key1], 6);
+          if (cell7) {
+            if (Av < Avm) {
+              let b_value = ThetaBeta2(sxe, Etn * 1000);
+              let beta = parseFloat(b_value[0].toFixed(2));
+              console.log(beta);
+              data = { ...data, [cell7._address]: beta };
+              beta_new_min = beta;
+            } else {
+              data = { ...data, [cell7._address]: parseFloat(beta2.toFixed(2)) };
+              beta_new_min = parseFloat(beta2.toFixed(2));
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+          }
+      
+          let cell15 = getSafeCell(rows[key1], 15);
+          if (cell15) {
+            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          }
+        }
+      }
+      
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$theta_max") {
+        theta_i = theta_i + 1;
+        if (theta_i === 1) {
+          let cell5 = getSafeCell(rows[key1], 4);
+          if (cell5) {
+            data = { ...data, [cell5._address]: "θ" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell6 = getSafeCell(rows[key1], 5);
+          if (cell6) {
+            data = { ...data, [cell6._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let cell7 = getSafeCell(rows[key1], 6);
+          if (cell7) {
+            if (Av < Avm) {
+              let theta_value = ThetaBeta2(sxe, Etm * 1000);
+              let theta = theta_value[1];
+              console.log(theta);
+              data = { ...data, [cell7._address]: theta };
+              theta_new = theta;
+            } else {
+              data = { ...data, [cell7._address]: parseFloat(theta1.toFixed(2)) };
+              theta_new = parseFloat(theta1.toFixed(2));
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+          }
+      
+          let cell15 = getSafeCell(rows[key1], 15);
+          if (cell15) {
+            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          }
+        }
+      
+        if (theta_i === 2) {
+          let cell5 = getSafeCell(rows[key1], 4);
+          if (cell5) {
+            data = { ...data, [cell5._address]: "θ" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          }
+      
+          let cell6 = getSafeCell(rows[key1], 5);
+          if (cell6) {
+            data = { ...data, [cell6._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+      
+          let cell7 = getSafeCell(rows[key1], 6);
+          if (cell7) {
+            if (Av < Avm) {
+              let theta_value = ThetaBeta2(sxe, Etn * 1000);
+              let theta = parseFloat(theta_value[1].toFixed(2));
+              console.log(theta);
+              data = { ...data, [cell7._address]: theta };
+              theta_new_min = theta;
+            } else {
+              data = { ...data, [cell7._address]: parseFloat(theta2.toFixed(2)) };
+              theta_new_min = parseFloat(theta2.toFixed(2));
+            }
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+          }
+      
+          let cell15 = getSafeCell(rows[key1], 15);
+          if (cell15) {
+            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          }
+        }
+      }
+      
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$beta") {
+        beta_i = beta_i + 1;
+        if (beta_i === 1) {
+          let cell9 = getSafeCell(rows[key1], 9);
+          if (cell9) {
+            beta = cell9._value.model.value;
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[9]");
+          }
+        }
+      
+        if (beta_i === 2) {
+          let cell9 = getSafeCell(rows[key1], 9);
+          if (cell9) {
+            beta_min = cell9._value.model.value;
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[9]");
+          }
+        }
+      }
+      
+    if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$vc") {
+      vc_i = vc_i + 1;
+      if (vc_i == 1) {
+      let cell13 = getSafeCell(rows[key1], 13);
+      let cell9 = getSafeCell(rows[key1], 9);
+      let cell5 = getSafeCell(rows[key1], 5);
+    
+      if (cell5 && cell9 && cell13) {
+        let add5 = cell5._address;
+        let add9 = cell9._address;
+        data = { ...data, [add5]: "0.0316" };
+    
+        console.log(cell9._value.model.value);
+        console.log(rows[key1]);
+    
+        if (cell13._address) {
+          let add13 = cell13._address;
+          let initialValue13 = cell13._value.model.value;
+    
+          let result;
+          if (type === "Composite") {
+            result = (initialValue13 / beta) * beta1;
+          } else {
+            result = (initialValue13 / K) * beta1;
+          }
+    
+          cell13._value.model.value = result;
+          data = { ...data, [add9]: "β √f'c bvdv" };
+          data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+    
+          Vc = result; // new Vc value
+        } else {
+          console.error("Error: Unable to determine address for cell13");
+        }
+      } else {
+        console.error("Error: Unable to determine address for cells[5], [9], or [13]");
       }
     }
-      let cell;
-      let add15value = dv < sg ? dv : sg;
-      let sxe = (add15value * 1.38) / (ag + 0.63);
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$strm1"
-      ) {
-        console.log(rows[key1]);
-
-        for (let i = 1; i <= 50; i++) {
-          // Check if the cell is present
-          if (!rows[key1]._cells[i]) {
-            // Create a dummy cell if it's missing
-            rows[key1]._cells[i] = {
-              _value: {
-                model: {
-                  value: "dummy",
-                  address: indexToLetter(i) + (parseInt(key1) + 1), // Assign a dummy value
-                  // Add other necessary properties if required
-                },
-              },
-
-              _address: indexToLetter(i) + (parseInt(key1) + 1),
-            };
-          } else {
-            // If the cell is present, clear its value
-            cell = rows[key1]._cells[i];
-            if (cell && cell.model) {
-              cell.model = {};
-              cell.model.value = " "; // Clear the value
-            }
-          }
-        }
-
-        // Run another while loop to make corresponding column cells empty until $$fpo is found
-        let nextKey = parseInt(key1) + 1;
-        while (rows[nextKey] !== undefined) {
-          console.log(rows[nextKey]);
-          if (
-            rows[nextKey]._cells[0] != undefined &&
-            rows[nextKey]._cells[0]._value.model.value == "$$fpo"
-          ) {
-            break; // Stop the loop when $$fpo is found
-          }
-          // Blank all cells in the current row of the while loop
-          for (let i = 1; i <= 50; i++) {
-            // Check if the cell is present
-            if (!rows[nextKey]._cells[i]) {
-              // Create a dummy cell if it's missing
-              rows[nextKey]._cells[i] = {
-                _value: {
-                  model: {
-                    value: "dummy", // Assign a dummy value
-                    address: indexToLetter(i) + (nextKey + 1), // Add other necessary properties if required
-                  },
-                },
-                _address: indexToLetter(i) + (nextKey + 1),
-              };
-            } else {
-              // If the cell is present, clear its value
-              cell = rows[nextKey]._cells[i];
-              if (cell && cell.model) {
-                cell.model = {};
-                cell.model.value = " "; // Clear the value
-              }
-            }
-          }
-
-          nextKey++;
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$strn1"
-      ) {
-        console.log(rows[key1]);
-
-        for (let i = 1; i <= 50; i++) {
-          // Check if the cell is present
-          if (!rows[key1]._cells[i]) {
-            // Create a dummy cell if it's missing
-            rows[key1]._cells[i] = {
-              _value: {
-                model: {
-                  value: "dummy",
-                  address: indexToLetter(i) + (parseInt(key1) + 1), // Assign a dummy value
-                  // Add other necessary properties if required
-                },
-              },
-
-              _address: indexToLetter(i) + (parseInt(key1) + 1),
-            };
-          } else {
-            // If the cell is present, clear its value
-            cell = rows[key1]._cells[i];
-            if (cell && cell.model) {
-              cell.model = {};
-              cell.model.value = " "; // Clear the value
-            }
-          }
-        }
-
-        // Run another while loop to make corresponding column cells empty until $$fpo is found
-        let nextKey = parseInt(key1) + 1;
-        while (rows[nextKey] !== undefined) {
-          console.log(rows[nextKey]);
-          if (
-            rows[nextKey]._cells[0] != undefined &&
-            rows[nextKey]._cells[0]._value.model.value == "$$fpo_min"
-          ) {
-            break; // Stop the loop when $$fpo is found
-          }
-          // Blank all cells in the current row of the while loop
-          for (let i = 1; i <= 50; i++) {
-            // Check if the cell is present
-            if (!rows[nextKey]._cells[i]) {
-              // Create a dummy cell if it's missing
-              rows[nextKey]._cells[i] = {
-                _value: {
-                  model: {
-                    value: "dummy", // Assign a dummy value
-                    address: indexToLetter(i) + (nextKey + 1), // Add other necessary properties if required
-                  },
-                },
-                _address: indexToLetter(i) + (nextKey + 1),
-              };
-            } else {
-              // If the cell is present, clear its value
-              cell = rows[nextKey]._cells[i];
-              if (cell && cell.model) {
-                cell.model = {};
-                cell.model.value = " "; // Clear the value
-              }
-            }
-          }
-
-          nextKey++;
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$pi"
-      ) {
-        if (
-          rows[key1]._cells[15] &&
-          rows[key1]._cells[15].value !== undefined
-        ) {
-          pi = rows[key1]._cells[15].value;
-        } else {
-          console.error(
-            "Error: Unable to retrieve value for rows[key1]._cells[15]"
-          );
-        }
-      }
-      console.log("Value of pi:", pi);
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$pi_min"
-      ) {
-        if (
-          rows[key1]._cells[15] &&
-          rows[key1]._cells[15].value !== undefined
-        ) {
-          pi_min = rows[key1]._cells[15].value;
-        } else {
-          console.error(
-            "Error: Unable to retrieve value for rows[key1]._cells[15]"
-          );
-        }
-      }
-      console.log("Value of pi:", pi);
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$A"
-      ) {
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "A" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-        let cell2 = rows[key1]._cells[6];
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "Aₘᵢₙ" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-        let cell3 = rows[key1]._cells[5];
-        let comparisonSymbol = Av >= Avm ? "≥" : "<";
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          data = { ...data, [add13]: comparisonSymbol };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$e"
-      ) {
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "εx" };
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-          // Handle this error scenario appropriately
-        }
-        let cell2 = rows[key1]._cells[5];
-
-        // Check if cell and its properties are defined
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "=" };
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-          // Handle this error scenario appropriately
-        }
-        let cell3 = rows[key1]._cells[6];
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          let cell3Value = Av >= Avm ? Exm : Etm;
-          data = { ...data, [add13]: cell3Value };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sx"
-      ) {
-        rows[key1]._cells = rows[key1]._cells.map((cell) =>
-          cell === "" ? undefined : cell
-        );
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "sx" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-
-        let cell2 = rows[key1]._cells[5];
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "=" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[5]"
-          );
-        }
-
-        let startCol = 7;
-        let endCol = 17;
-        let rowNumber = rows[key1]._cells[startCol].row;
-        try {
-          let mergeRange = worksheet.getCell(
-            `${worksheet.getColumn(startCol).letter}${rowNumber}:${
-              worksheet.getColumn(endCol).letter
-            }${rowNumber}`
-          );
-          if (!mergeRange.isMerged) {
-            worksheet.mergeCells(rowNumber, startCol, rowNumber, endCol);
-          }
-        } catch (error) {
-          console.error("Error merging cells: ", error);
-        }
-
-        let cell3 = worksheet.getCell(rowNumber, startCol);
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-
-          if (Av < Avm) {
-            data = {
-              ...data,
-              [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
-            };
-            let cell4 = rows[key1]._cells[18];
-            if (cell4 && cell4._address) {
-              let add14 = cell4._address;
-              data = { ...data, [add14]: "=" };
-            } else {
-              console.error(
-                "Error: Unable to determine address for rows[key1]._cells[24]"
-              );
-            }
-
-            let cell5 = rows[key1]._cells[19];
-            if (cell5 && cell5._address) {
-              let add15 = cell5._address;
-              let add15value = dv < sg ? dv : sg;
-              data = { ...data, [add15]: add15value };
-            } else {
-              console.error(
-                "Error: Unable to determine address for rows[key1]._cells[25]"
-              );
-            }
-          } else {
-            data = { ...data, [add13]: `Not Required` };
-          }
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[24]"
-          );
-        }
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sxe"
-      ) {
-        let cell3 = rows[key1]._cells[4];
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          // let sxe = ((add15value*1.38)/(ag +0.63))
-          data = { ...data, [add13]: "sxe" };
-        }
-        let cell4 = rows[key1]._cells[5];
-        if (cell4 && cell4._address) {
-          let add14 = cell4._address;
-          // let sxe = ((add15value*1.38)/(ag +0.63))
-          data = { ...data, [add14]: "=" };
-        }
-        let mergeStartCol = 7;
-        let mergeEndCol = 16;
-        let mergeRowNumber = rows[key1]._cells[mergeStartCol].row;
-
-        // Check if the range is already merged
-        try {
-          let mergeRange = worksheet.getCell(
-            `${worksheet.getColumn(mergeStartCol).letter}${mergeRowNumber}:${
-              worksheet.getColumn(mergeEndCol).letter
-            }${mergeRowNumber}`
-          );
-          if (!mergeRange.isMerged) {
-            worksheet.mergeCells(
-              mergeRowNumber,
-              mergeStartCol,
-              mergeRowNumber,
-              mergeEndCol
-            );
-          }
-        } catch (error) {
-          console.error("Error merging cells: ", error);
-        }
-
-        // After merging, the cell5 should refer to the merged cell
-        let cell5 = worksheet.getCell(mergeRowNumber, mergeStartCol);
-
-        if (cell5 && cell5._address) {
-          let add15 = cell5._address;
-
-          if (Av < Avm) {
-            data = { ...data, [add15]: sxe };
-          } else {
-            data = { ...data, [add15]: "Not required" };
-          }
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[6]"
-          );
-        }
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$b"
-      ) {
-        let cell5 = rows[key1]._cells[4];
-        let add5 = cell5._address;
-        data = { ...data, [add5]: "β" };
-        let cell6 = rows[key1]._cells[5];
-        let add6 = cell6._address;
-        data = { ...data, [add6]: "=" };
-        let cell7 = rows[key1]._cells[6];
-        let add7 = cell7._address;
-        if (Av < Avm) {
-          let b_value = ThetaBeta2(sxe, Etm * 1000);
-          let beta = b_value[0];
-          console.log(beta);
-          data = { ...data, [add7]: beta };
-          beta_new = beta;
-        } else {
-          data = { ...data, [add7]: parseFloat(beta1.toFixed(2)) };
-          beta_new = parseFloat(beta1.toFixed(2));
-        }
-        let cell15 = rows[key1]._cells[15];
-        let add15 = cell15._address;
-        data = { ...data,[add15] : '(See CA-5.7.3.4)'}
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$theta_max"
-      ) {
-        let cell5 = rows[key1]._cells[4];
-        let add5 = cell5._address;
-        data = { ...data, [add5]: "θ" };
-        let cell6 = rows[key1]._cells[5];
-        let add6 = cell6._address;
-        data = { ...data, [add6]: "=" };
-        let cell7 = rows[key1]._cells[6];
-        let add7 = cell7._address;
-        if (Av < Avm) {
-          let theta_value = ThetaBeta2(sxe, Etm * 1000);
-          let theta = theta_value[1];
-          console.log(theta);
-          data = { ...data, [add7]: theta };
-          theta_new = theta;
-        } else {
-          data = { ...data, [add7]: parseFloat(theta1.toFixed(2)) };
-          theta_new = parseFloat(theta1.toFixed(2));
-          let cell15 = rows[key1]._cells[15];
-          let add15 = cell15._address;
-          data = { ...data,[add15] : '(See CA-5.7.3.4)'}
-        }
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$beta"
-      ) {
-        let cell9 = rows[key1]._cells[9];
-        if (cell9 && cell9._address) {
-          beta = cell9._value.model.value;
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[9]"
-          );
-          // Handle this error scenario appropriately
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$beta_min"
-      ) {
-        let cell9 = rows[key1]._cells[9];
-        if (cell9 && cell9._address) {
-          beta_min = cell9._value.model.value;
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[9]"
-          );
-          // Handle this error scenario appropriately
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vc"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let cell9 = rows[key1]._cells[9];
-        let cell5 = rows[key1]._cells[5];
+    if (vc_i == 2) {
+      let cell13 = getSafeCell(rows[key1], 13);
+      let cell9 = getSafeCell(rows[key1], 9);
+      let cell5 = getSafeCell(rows[key1], 5);
+    
+      if (cell5 && cell9 && cell13) {
         let add5 = cell5._address;
         let add9 = cell9._address;
         data = { ...data, [add5]: "0.0316" };
-        console.log(rows[key1]._cells[9].value);
+    
+        console.log(cell9._value.model.value);
         console.log(rows[key1]);
-        if (cell13 && cell13._address) {
-          if (type == "Composite") {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            initialValue13 = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let value13 = initialValue13;
-            let result = (value13 / beta) * beta1;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            newValue13 = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
-            Vc = newValue13;
+    
+        if (cell13._address) {
+          let add13 = cell13._address;
+          let initialValue13 = cell13._value.model.value;
+    
+          let result;
+          if (type === "Composite") {
+            result = (initialValue13 / beta_min) * beta2;
           } else {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            initialValue13 = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let value13 = initialValue13;
-            let result = (value13 / K) * beta1;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            newValue13 = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
-            Vc = newValue13;
+            result = (initialValue13 / K) * beta2;
           }
+    
+          cell13._value.model.value = result;
+          data = { ...data, [add9]: "β √f'c bvdv" };
+          data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+    
+          Vc_min = result; // new Vc_min value
         } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[13]"
-          );
-          // Handle this error scenario appropriately
+          console.error("Error: Unable to determine address for cell13");
         }
+      } else {
+        console.error("Error: Unable to determine address for cells[5], [9], or [13]");
       }
-      console.log("Initial Value:", initialValue13);
-      console.log("New Value:", newValue13);
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vc_min"
-      ) {
-        let vc_o;
-        let cell13 = rows[key1]._cells[13];
-        vc_o = cell13.value;
-        let vc_n;
-        let cell9 = rows[key1]._cells[9];
-        let cell5 = rows[key1]._cells[5];
-        let add5 = cell5._address;
-        let add9 = cell9._address;
-        data = { ...data, [add5]: "0.0316" };
-        console.log(rows[key1]._cells[9].value);
-        console.log(rows[key1]);
-        if (cell13 && cell13._address) {
-          if (type == "Composite") {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            vc_o = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let result = (vc_o / beta_min) * beta2;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            vc_n = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(vc_n.toFixed(2)) };
-            Vc_min = newValue13;
-          } else {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            vc_o = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let value13 = vc_o;
-            let result = (value13 / K) * beta2;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            vc_n = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(vc_n.toFixed(2)) };
-            Vc_min = vc_n;
-          }
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[13]"
-          );
-          // Handle this error scenario appropriately
-        }
-      }
-      console.log("Initial Value:", initialValue13);
-      console.log("New Value:", newValue13);
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$(vc+vp)"
-      ) {
-        if (
-          rows[key1]._cells[11] &&
-          rows[key1]._cells[11].value !== undefined
-        ) {
-          let cell11Value = rows[key1]._cells[11].value;
-          let cell11 = rows[key1]._cells[11];
-          let cell2 = rows[key1]._cells[2];
-          let add11 = cell11._address;
-          let add2 = cell2._address;
-          Vu_max = rows[key1]._cells[20].value;
+    }
+    }
+    
+    console.log("Initial Value:", initialValue13);
+    console.log("New Value:", Vc);
+    if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$(vc+vp)") {
+      vcvp_i += 1;
+      
+      if (vcvp_i === 1) {
+        let cell11 = getSafeCell(rows[key1], 11);
+        let cell2 = getSafeCell(rows[key1], 2);
+    
+        if (cell11 && cell11._value.model.value !== undefined) {
+          Vu_max = getSafeCell(rows[key1], 20)._value.model.value;
           finalResult = pi * (newValue13 + Vp);
           half_finalResult = finalResult / 2;
           console.log(finalResult);
-          data = { ...data, [add11]: parseFloat(finalResult.toFixed(2)) };
-          data = { ...data, [add2]: parseFloat(half_finalResult.toFixed(2)) };
+          data = { ...data, [cell11._address]: parseFloat(finalResult.toFixed(2)) };
+          data = { ...data, [cell2._address]: parseFloat(half_finalResult.toFixed(2)) };
         } else {
-          console.error(
-            "Error: Unable to retrieve value for rows[key1]._cells[11]"
-          );
+          console.error("Error: Unable to retrieve value for rows[key1]._cells[11]");
         }
       }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$check"
-      ) {
-        let cell2 = rows[key1]._cells[2];
-        let cell11 = rows[key1]._cells[11];
-        let cell12 = rows[key1]._cells[12];
-        let add2 = cell2._address;
-        let add11 = cell11._address;
-        let add12 = cell12._address;
-        let cell2Value;
-        if (Math.abs(half_finalResult) > Vu_max) {
-          cell2Value = "Vu < 0.5Φ(Vc+Vp)";
-          data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
-          data = { ...data, [add11]: "∴" };
-          data = { ...data, [add12]: "No Shear reinforcing" };
-        } else {
-          cell2Value = "Vu ≥ 0.5ΦVc";
-          data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
-        }
-        let key2 = parseInt(key1) + 1;
-
-        // Check if rows[key2]._cells[0] value is '$$A,req'
-        if (cell2Value == "Vu ≥ 0.5ΦVc") {
-          if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar"
-          ) {
-            let cell13 = rows[key2]._cells[13];
-            let add13 = cell13._address;
-            let Av_extra;
-            let Avr =
-              ((Vu_max - finalResult) * s_max) /
-              (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-              Avr = parseFloat(Avr.toFixed(3));
-            console.log(Avr);
-            data = { ...data, [add13]: Avr };
-            for (let i = key2; i <= worksheet.rowCount; i++) {
-              // console.log("Hello");
-              let nextRow = worksheet.getRow(i);
-              if (
-                rows[i]._cells[0] != undefined &&
-                rows[i]._cells[0]._value.model.value == "$$Av,req"
-              ) {
-                let cell12 = rows[i]._cells[12];
-                let add12 = cell12._address;
-                if (Avm > Avr) {
-                  Av_extra = Avm;
-                  data = { ...data, [add12]: Av };
-                } else {
-                  Av_extra = Avr;
-                  data = { ...data, [add12]: Avr };
-                }
-              }
-              if (
-                rows[i]._cells[0] != undefined &&
-                rows[i]._cells[0]._value.model.value == "$$A,v"
-              ) {
-                let cell11 = rows[i]._cells[11];
-                let cell29 = rows[i]._cells[29];
-                let add11 = cell11._address;
-                let add29 = cell29._address;
-                if (Av >= Av_extra) {
-                  data = { ...data, [add11]: "≥" };
-                  data = { ...data, [add29]: "OK" };
-                } else {
-                  data = { ...data, [add11]: "<" };
-                  data = { ...data, [add29]: "NG" };
-                }
-              }
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // Found $$A,v, break the loop
-                break;
-              }
-              // Perform your desired operations within the loop here
-            }
-          } else {
-            let key3 = parseInt(key1) + 2;
-            key3 += 5;
-
-            let cell19 = rows[key3]._cells[19];
-            let add19 = cell19._address;
-            data = { ...data, [add19]: "Av,req1" };
-            let cell20 = rows[key3]._cells[20];
-            let add20 = cell20._address;
-            data = { ...data, [add20]: "=" };
-            let cell21 = rows[key3]._cells[21];
-            let add21 = cell21._address;
-            data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
-            let cell21_n = rows[key3 + 1]._cells[21];
-            let add21_n = cell21_n._address;
-            data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
-            let cell27 = rows[key3]._cells[27];
-            let add27 = cell27._address;
-            data = { ...data, [add27]: "=" };
-            let cell28 = rows[key3]._cells[28];
-            let add28 = cell28._address;
-            let Av_extra;
-            let Avr =
-              ((Vu_max - finalResult) * s_max) /
-              (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-            data = { ...data, [add28]: Avr };
-          }
-        } else {
-          if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar"
-          ) {
-            for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
-              let nextRow = worksheet.getRow(i);
-
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // First, make the cells blank
-                nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                  cell.value = "";
-                });
-                break;
-              }
-              nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                cell.value = "";
-              });
-            }
-          }
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$t_new"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let add13 = cell13._address;
-        data = { ...data, [add13]: theta_new };
-        let cell8 = rows[key1]._cells[8];
-        let add8 = cell8._address;
-        data = { ...data, [add8]: "########" };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sum"
-      ) {
-        let cell7 = rows[key1]._cells[7];
-        let add7 = cell7._address;
-        let sum = Vp + Vc + Vs;
-        Vn = sum;
-        data = { ...data, [add7]: parseFloat(Vn.toFixed(2)) };
-        let cell13 = rows[key1]._cells[13];
-        let cell19 = rows[key1]._cells[19];
-        let add13 = cell13._address;
-        let add19 = cell19._address;
-        let value19 = cell19.value;
-        if (Vn <= value19) {
-          data = { ...data, [add13]: "≤" };
-        } else {
-          data = { ...data, [add13]: ">" };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vn"
-      ) {
-        let cell11 = rows[key1]._cells[11];
-        let add11 = cell11._address;
-        data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vr"
-      ) {
-        let cell8 = rows[key1]._cells[8];
-        let cell17_value = rows[key1]._cells[17].value;
-        let cell29 = rows[key1]._cells[29];
-        let add29 = cell29._address;
-        let add8 = cell8._address;
-        let vr = pi * Vn;
-        let cell16 = rows[key1]._cells[16];
-        let add16 = cell16._address;
-        if (vr < cell17_value) {
-          data = { ...data, [add16]: "<" };
-          data = { ...data, [add29]: "NG" };
-        } else {
-          data = { ...data, [add16]: "≥" };
-          data = { ...data, [add29]: "OK" };
-        }
-        data = { ...data, [add8]: parseFloat(vr.toFixed(2)) };
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$strn"
-      ) {
-        let add1 = rows[key1]._cells[2]._value.model.address;
-        let add2 = rows[key1]._cells[8]._value.model.address;
-        data = { ...data, [add1]: "Calculation for β and θ" };
-        data = { ...data, [add2]: "" };
-        let add12 = rows[key1]._cells[12]._value.model.address;
-        data = { ...data,[add12] : '(See CA - 5.7.3.4)'}
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$A_min"
-      ) {
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "A" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-        let cell2 = rows[key1]._cells[6];
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "Aₘᵢₙ" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-        let cell3 = rows[key1]._cells[5];
-        let comparisonSymbol = Av >= Avm ? "≥" : "<";
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          data = { ...data, [add13]: comparisonSymbol };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$e_min"
-      ) {
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "εx" };
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-          // Handle this error scenario appropriately
-        }
-        let cell2 = rows[key1]._cells[5];
-
-        // Check if cell and its properties are defined
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "=" };
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-          // Handle this error scenario appropriately
-        }
-        let cell3 = rows[key1]._cells[6];
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          let cell3Value = Av >= Avm ? Exn : Etn;
-          data = { ...data, [add13]: cell3Value };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sx_min"
-      ) {
-        rows[key1]._cells = rows[key1]._cells.map((cell) =>
-          cell === "" ? undefined : cell
-        );
-        console.log(rows[key1]._cells);
-        let cell = rows[key1]._cells[4];
-        if (cell && cell._address) {
-          let add11 = cell._address;
-          data = { ...data, [add11]: "sx" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[4]"
-          );
-        }
-
-        let cell2 = rows[key1]._cells[5];
-        if (cell2 && cell2._address) {
-          let add12 = cell2._address;
-          data = { ...data, [add12]: "=" };
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[5]"
-          );
-        }
-
-        let startCol = 7;
-        let endCol = 17;
-        let rowNumber = rows[key1]._cells[startCol].row;
-        try {
-          let mergeRange = worksheet.getCell(
-            `${worksheet.getColumn(startCol).letter}${rowNumber}:${
-              worksheet.getColumn(endCol).letter
-            }${rowNumber}`
-          );
-          if (!mergeRange.isMerged) {
-            worksheet.mergeCells(rowNumber, startCol, rowNumber, endCol);
-          }
-        } catch (error) {
-          console.error("Error merging cells: ", error);
-        }
-
-        let cell3 = worksheet.getCell(rowNumber, startCol);
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-
-          if (Av < Avm) {
-            data = {
-              ...data,
-              [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
-            };
-            let cell4 = rows[key1]._cells[18];
-            if (cell4 && cell4._address) {
-              let add14 = cell4._address;
-              data = { ...data, [add14]: "=" };
-            } else {
-              console.error(
-                "Error: Unable to determine address for rows[key1]._cells[24]"
-              );
-            }
-
-            let cell5 = rows[key1]._cells[19];
-            if (cell5 && cell5._address) {
-              let add15 = cell5._address;
-              let add15value = dv < sg ? dv : sg;
-              data = { ...data, [add15]: add15value };
-            } else {
-              console.error(
-                "Error: Unable to determine address for rows[key1]._cells[25]"
-              );
-            }
-          } else {
-            data = { ...data, [add13]: `Not Required` };
-          }
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[24]"
-          );
-        }
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sxe_min"
-      ) {
-        let cell3 = rows[key1]._cells[4];
-        if (cell3 && cell3._address) {
-          let add13 = cell3._address;
-          // let sxe = ((add15value*1.38)/(ag +0.63))
-          data = { ...data, [add13]: "sxe" };
-        }
-        let cell4 = rows[key1]._cells[5];
-        if (cell4 && cell4._address) {
-          let add14 = cell4._address;
-          // let sxe = ((add15value*1.38)/(ag +0.63))
-          data = { ...data, [add14]: "=" };
-        }
-        let mergeStartCol = 7;
-        let mergeEndCol = 16;
-        let mergeRowNumber = rows[key1]._cells[mergeStartCol].row;
-
-        // Check if the range is already merged
-        try {
-          let mergeRange = worksheet.getCell(
-            `${worksheet.getColumn(mergeStartCol).letter}${mergeRowNumber}:${
-              worksheet.getColumn(mergeEndCol).letter
-            }${mergeRowNumber}`
-          );
-          if (!mergeRange.isMerged) {
-            worksheet.mergeCells(
-              mergeRowNumber,
-              mergeStartCol,
-              mergeRowNumber,
-              mergeEndCol
-            );
-          }
-        } catch (error) {
-          console.error("Error merging cells: ", error);
-        }
-
-        // After merging, the cell5 should refer to the merged cell
-        let cell5 = worksheet.getCell(mergeRowNumber, mergeStartCol);
-
-        if (cell5 && cell5._address) {
-          let add15 = cell5._address;
-
-          if (Av < Avm) {
-            data = { ...data, [add15]: sxe };
-          } else {
-            data = { ...data, [add15]: "Not required" };
-          }
-        } else {
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[6]"
-          );
-        }
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$b_min"
-      ) {
-        let cell5 = rows[key1]._cells[4];
-        let add5 = cell5._address;
-        data = { ...data, [add5]: "β" };
-        let cell6 = rows[key1]._cells[5];
-        let add6 = cell6._address;
-        data = { ...data, [add6]: "=" };
-        let cell7 = rows[key1]._cells[6];
-        let add7 = cell7._address;
-        if (Av < Avm) {
-          let b_value = ThetaBeta2(sxe, Etn * 1000);
-          let beta = parseFloat(b_value[0].toFixed(2));
-          console.log(beta);
-          data = { ...data, [add7]: beta };
-          beta_new_min = beta;
-        } else {
-          data = { ...data, [add7]: parseFloat(beta2.toFixed(2)) };
-          beta_new_min = parseFloat(beta2.toFixed(2));
-        }
-        let cell15 = rows[key1]._cells[15];
-        let add15 = cell15._address;
-        data = { ...data,[add15] : '(See CA-5.7.3.4)'}
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$theta_min"
-      ) {
-        let cell5 = rows[key1]._cells[4];
-        let add5 = cell5._address;
-        data = { ...data, [add5]: "θ" };
-        let cell6 = rows[key1]._cells[5];
-        let add6 = cell6._address;
-        data = { ...data, [add6]: "=" };
-        let cell7 = rows[key1]._cells[6];
-        let add7 = cell7._address;
-        if (Av < Avm) {
-          let theta_value = ThetaBeta2(sxe, Etn * 1000);
-          let theta = parseFloat(theta_value[1].toFixed(2));
-          console.log(theta);
-          data = { ...data, [add7]: theta };
-          theta_new_min = theta;
-        } else {
-          data = { ...data, [add7]: parseFloat(theta2.toFixed(2)) };
-          theta_new_min = parseFloat(theta2.toFixed(2));
-        }
-        let cell15 = rows[key1]._cells[15];
-        let add15 = cell15._address;
-        data = { ...data,[add15] : '(See CA-5.7.3.4)'}
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$beta_min"
-      ) {
-        let cell9 = rows[key1]._cells[9];
-        if (cell9 && cell9._address) {
-          beta = cell9._value.model.value;
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[9]"
-          );
-          // Handle this error scenario appropriately
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vc_min"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let cell9 = rows[key1]._cells[9];
-        let cell5 = rows[key1]._cells[5];
-        let add5 = cell5._address;
-        let add9 = cell9._address;
-        data = { ...data, [add5]: "0.0316" };
-        console.log(rows[key1]._cells[9].value);
-        console.log(rows[key1]);
-        if (cell13 && cell13._address) {
-          if (type == "Composite") {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            initialValue13 = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let value13 = initialValue13;
-            let result = (value13 / beta) * beta1;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            newValue13 = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
-            Vc_min = newValue13;
-          } else {
-            let add13 = cell13._address;
-            // Store the initial value globally
-            initialValue13 = cell13._value.model.value;
-            // Retrieve the value from cell13, divide it by beta, and multiply by beta1
-            let value13 = initialValue13;
-            let result = (value13 / K) * beta1;
-            // Store the result back in cell13
-            cell13._value.model.value = result;
-            // Store the new value globally
-            newValue13 = result; //new Vc value
-            data = { ...data, [add9]: "β √f'c bvdv" };
-            data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
-            Vc_min = newValue13;
-          }
-        } else {
-          // Handle the case where _address is undefined or not available
-          console.error(
-            "Error: Unable to determine address for rows[key1]._cells[13]"
-          );
-          // Handle this error scenario appropriately
-        }
-      }
-      // console.log("Initial Value:", initialValue13);
-      // console.log("New Value:", newValue13);
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$(vc+vp)_min"
-      ) {
-        if (
-          rows[key1]._cells[11] &&
-          rows[key1]._cells[11].value !== undefined
-        ) {
-          let cell11Value = rows[key1]._cells[11].value;
-          let cell11 = rows[key1]._cells[11];
-          let cell2 = rows[key1]._cells[2];
-          let add11 = cell11._address;
-          let add2 = cell2._address;
-          Vu_min = rows[key1]._cells[20].value;
+      
+      if (vcvp_i === 2) {
+        let cell11 = getSafeCell(rows[key1], 11);
+        let cell2 = getSafeCell(rows[key1], 2);
+    
+        if (cell11 && cell11._value.model.value !== undefined) {
+          Vu_min = getSafeCell(rows[key1], 20)._value.model.value;
           finalResult = pi * (Vc_min + Vp);
           half_finalResult = finalResult / 2;
           console.log(finalResult);
-          data = { ...data, [add11]: parseFloat(finalResult.toFixed(2)) };
-          data = { ...data, [add2]: parseFloat(half_finalResult.toFixed(2)) };
+          data = { ...data, [cell11._address]: parseFloat(finalResult.toFixed(2)) };
+          data = { ...data, [cell2._address]: parseFloat(half_finalResult.toFixed(2)) };
         } else {
-          console.error(
-            "Error: Unable to retrieve value for rows[key1]._cells[11]"
-          );
+          console.error("Error: Unable to retrieve value for rows[key1]._cells[11]");
         }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$check_min"
-      ) {
-        let cell2 = rows[key1]._cells[2];
-        let cell11 = rows[key1]._cells[11];
-        let cell12 = rows[key1]._cells[12];
-        let add2 = cell2._address;
-        let add11 = cell11._address;
-        let add12 = cell12._address;
-        let cell2Value;
-        if (Math.abs(half_finalResult) > Vu_min) {
-          data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
-          data = { ...data, [add11]: "∴" };
-          data = { ...data, [add12]: "No Shear reinforcing" };
-        } else {
-          data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
-        }
-        let key2 = parseInt(key1) + 1;
-
-        // Check if rows[key2]._cells[0] value is '$$A,req'
-        if (cell2Value == "Vu ≥ 0.5ΦVc") {
-          if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar_min"
-          ) {
-            let cell13 = rows[key2]._cells[13];
-            let add13 = cell13._address;
-            let Av_extra;
-            let Avr =
-              ((Vu_min - finalResult) * s_min) /
-              (pi * fy * dv_min * (cot(theta_new_min) + cot(a)) * Math.sin(a));
-            console.log(Avr);
-            data = { ...data, [add13]: Avr };
-            for (let i = key2; i <= worksheet.rowCount; i++) {
-              // console.log("Hello");
-              let nextRow = worksheet.getRow(i);
-              if (
-                rows[nextRow]._cells[0] != undefined &&
-                rows[key1]._cells[0]._value.model.value == "$$Av,req_min"
-              ) {
-                let cell12 = rows[nextRow]._cells[12];
-                let add12 = cell12._address;
-                if (Avm > Avr) {
-                  Av_extra = Avm;
-                  data = { ...data, [add12]: Av };
-                } else {
-                  Av_extra = Avr;
-                  data = { ...data, [add12]: Avr };
-                }
-              }
-              if (
-                rows[nextRow]._cells[0] != undefined &&
-                rows[key1]._cells[0]._value.model.value == "$$A,v_min"
-              ) {
-                let cell11 = rows[nextRow]._cells[11];
-                let cell29 = rows[nextRow]._cells[29];
-                let add11 = cell11._address;
-                let add29 = cell29._address;
-                if (Av >= Av_extra) {
-                  data = { ...data, [add11]: "≥" };
-                  data = { ...data, [add29]: "OK" };
-                } else {
-                  data = { ...data, [add11]: "<" };
-                  data = { ...data, [add29]: "NG" };
-                }
-              }
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // Found $$A,v, break the loop
-                break;
-              }
-              // Perform your desired operations within the loop here
-            }
-          } else {
-            let key3 = parseInt(key1) + 2;
-            if (
-              rows[key3]._cells[0] != undefined &&
-              rows[key3]._cells[0]._value.model.value == "$$vs_min"
-            ) {
-              let cell19 = rows[key3]._cells[19];
-              let add19 = cell19._address;
-              data = { ...data, [add19]: "Av,req1" };
-              let cell20 = rows[key3]._cells[20];
-              let add20 = cell20._address;
-              data = { ...data, [add20]: "=" };
-              let cell21 = rows[key3]._cells[21];
-              let add21 = cell21._address;
-              data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
-              let cell21_n = rows[key3 + 1]._cells[21];
-              let add21_n = cell21_n._address;
-              data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
-              let cell27 = rows[key3]._cells[27];
-              let add27 = cell27._address;
-              data = { ...data, [add27]: "=" };
-              let cell28 = rows[key3]._cells[28];
-              let add28 = cell28._address;
-              let Av_extra;
-              let Avr =
-                ((Vu_max - finalResult) * s_max) /
-                (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-              data = { ...data, [add28]: Avr };
-            }
-          }
-        } else {
-          if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar_min"
-          ) {
-            for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
-              let nextRow = worksheet.getRow(i);
-
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // First, make the cells blank
-                nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                  cell.value = "";
-                });
-                break;
-                // Blank the corresponding rows
-              }
-              nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                cell.value = "";
-              });
-            }
-          }
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$t_new_min"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let add13 = cell13._address;
-        data = { ...data, [add13]: theta_new_min };
-        let cell8 = rows[key1]._cells[8];
-        let add8 = cell8._address;
-        data = { ...data, [add8]: "########" };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$sum_min"
-      ) {
-        let cell7 = rows[key1]._cells[7];
-        let add7 = cell7._address;
-        let sum = Vp_min + Vc_min + Vs_min;
-        Vn_min = sum;
-        data = { ...data, [add7]: parseFloat(Vn_min.toFixed(2)) };
-        let cell13 = rows[key1]._cells[13];
-        let cell19 = rows[key1]._cells[19];
-        let add13 = cell13._address;
-        let add19 = cell19._address;
-        let value19 = cell19.value;
-        if (Vn_min <= value19) {
-          data = { ...data, [add13]: "≤" };
-        } else {
-          data = { ...data, [add13]: ">" };
-        }
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vn"
-      ) {
-        let cell11 = rows[key1]._cells[11];
-        let add11 = cell11._address;
-        data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vn_min"
-      ) {
-        let cell11 = rows[key1]._cells[11];
-        let add11 = cell11._address;
-        data = { ...data, [add11]: parseFloat(Vn_min.toFixed(2)) };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vr"
-      ) {
-        let cell8 = rows[key1]._cells[8];
-        let cell17_value = rows[key1]._cells[17].value;
-        let cell29 = rows[key1]._cells[29];
-        let add29 = cell29._address;
-        let add8 = cell8._address;
-        let vr = pi * Vn;
-        let cell16 = rows[key1]._cells[16];
-        let add16 = cell16._address;
-        if (vr < cell17_value) {
-          data = { ...data, [add16]: "<" };
-          data = { ...data, [add29]: "NG" };
-        } else {
-          data = { ...data, [add16]: "≥" };
-          data = { ...data, [add29]: "OK" };
-        }
-        data = { ...data, [add8]: parseFloat(vr.toFixed(2)) };
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vr_min"
-      ) {
-        let cell8 = rows[key1]._cells[8];
-        let cell17_value = rows[key1]._cells[17].value;
-        let cell29 = rows[key1]._cells[29];
-        let add29 = cell29._address;
-        let add8 = cell8._address;
-        let vr_min = pi_min * Vn_min;
-        let cell16 = rows[key1]._cells[16];
-        let add16 = cell16._address;
-        if (vr_min < cell17_value) {
-          data = { ...data, [add16]: "<" };
-          data = { ...data, [add29]: "NG" };
-        } else {
-          data = { ...data, [add16]: "≥" };
-          data = { ...data, [add29]: "OK" };
-        }
-        data = { ...data, [add8]: parseFloat(vr_min.toFixed(2)) };
-      }
-      function cot(angle) {
-        return 1 / Math.tan(angle);
-      }
-
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vs"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let add13 = cell13._address;
-        let cal =
-          (Av * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha)) /
-          s_max;
-          cal = parseFloat(cal.toFixed(3));
-        data = { ...data, [add13]: cal };
-        Vs = cal;
-      }
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$vs_min"
-      ) {
-        let cell13 = rows[key1]._cells[13];
-        let add13 = cell13._address;
-        let cal =
-          (Av *
-            fy *
-            dv_min *
-            (cot(theta_new_min) + cot($$alpha_min)) *
-            Math.sin($$alpha_min)) /
-          s_min;
-          cal = parseFloat(cal.toFixed(3));
-        data = { ...data, [add13]: cal };
-        Vs_min = cal;
       }
     }
+    
+    // Update check_i handling
+    // if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$check") {
+    //   check_i += 1;
+    //   let Av_extra;
+    //   if (check_i === 1) {
+    //     let cell2 = getSafeCell(rows[key1], 2);
+    //     let cell11 = getSafeCell(rows[key1], 11);
+    //     let cell12 = getSafeCell(rows[key1], 12);
+    
+    //     if (Math.abs(half_finalResult) > Vu_max) {
+    //       data = { ...data, [cell2._address]: "Vu < 0.5Φ(Vc+Vp)" };
+    //       data = { ...data, [cell11._address]: "∴" };
+    //       data = { ...data, [cell12._address]: "No Shear reinforcing" };
+    //     } else {
+    //       data = { ...data, [cell2._address]: "Vu ≥ 0.5ΦVc" };
+    //     }
+    
+    //     let key2 = parseInt(key1) + 1;
+    
+    //     if (data[cell2._address] === "Vu ≥ 0.5ΦVc") {
+    //       if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
+    //         let cell13 = getSafeCell(rows[key2], 13);
+            
+    //         let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+    //         Avr = parseFloat(Avr.toFixed(3));
+    //         console.log(Avr);
+    //         data = { ...data, [cell13._address]: Avr };
+    
+    //         for (let i = key2; i <= worksheet.rowCount; i++) {
+    //           let nextRow = worksheet.getRow(i);
+              
+    //           if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$Av,req") {
+    //             let cell12 = getSafeCell(rows[i], 12);
+    //             if (Avm > Avr) {
+    //               Av_extra = Avm;
+    //               data = { ...data, [cell12._address]: Av };
+    //             } else {
+    //               Av_extra = Avr;
+    //               data = { ...data, [cell12._address]: Avr };
+    //             }
+    //           }
+    
+    //           if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$A,v") {
+    //             let cell11 = getSafeCell(rows[i], 11);
+    //             let cell29 = getSafeCell(rows[i], 29);
+    //             if (Av >= Av_extra) {
+    //               data = { ...data, [cell11._address]: "≥" };
+    //               data = { ...data, [cell29._address]: "OK" };
+    //             } else {
+    //               data = { ...data, [cell11._address]: "<" };
+    //               data = { ...data, [cell29._address]: "NG" };
+    //             }
+    //           }
+    
+    //           if (nextRow.getCell(1).value === "$$A,v") {
+    //             break;
+    //           }
+    //         }
+    //       } else {
+    //         let key3 = parseInt(key1) + 2 + 5;
+    
+    //         if (getSafeCell(rows[key3], 0) && getSafeCell(rows[key3], 0)._value.model.value === "$$vs_min") {
+    //           let cell19 = getSafeCell(rows[key3], 19);
+    //           data = { ...data, [cell19._address]: "Av,req1" };
+    
+    //           let cell20 = getSafeCell(rows[key3], 20);
+    //           data = { ...data, [cell20._address]: "=" };
+    
+    //           let cell21 = getSafeCell(rows[key3], 21);
+    //           data = { ...data, [cell21._address]: "{ Vu - Φ(Vc+Vp) }·s" };
+    
+    //           let cell21_n = getSafeCell(rows[key3 + 1], 21);
+    //           data = { ...data, [cell21_n._address]: "Φ·fy·dv(cotθ+cotα)sinα" };
+    
+    //           let cell27 = getSafeCell(rows[key3], 27);
+    //           data = { ...data, [cell27._address]: "=" };
+    
+    //           let cell28 = getSafeCell(rows[key3], 28);
+    //           let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+    //           data = { ...data, [cell28._address]: Avr };
+    //         }
+    //       }
+    //     } else {
+    //       if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
+    //         for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
+    //           let nextRow = worksheet.getRow(i);
+    
+    //           if (nextRow.getCell(1).value === "$$A,v") {
+    //             nextRow.eachCell({ includeEmpty: true }, (cell) => {
+    //               cell.value = "";
+    //             });
+    //             break;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    
+    //   if (check_i === 2) {
+    //     let cell2 = getSafeCell(rows[key1], 2);
+    //     let cell11 = getSafeCell(rows[key1], 11);
+    //     let cell12 = getSafeCell(rows[key1], 12);
+    
+    //     if (Math.abs(half_finalResult) > Vu_min) {
+    //       data = { ...data, [cell2._address]: "Vu < 0.5Φ(Vc+Vp)" };
+    //       data = { ...data, [cell11._address]: "∴" };
+    //       data = { ...data, [cell12._address]: "No Shear reinforcing" };
+    //     } else {
+    //       data = { ...data, [cell2._address]: "Vu ≥ 0.5ΦVc" };
+    //     }
+    
+    //     let key2 = parseInt(key1) + 1;
+    
+    //     if (data[cell2._address] === "Vu ≥ 0.5ΦVc") {
+    //       if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar_min") {
+    //         let cell13 = getSafeCell(rows[key2], 13);
+    //         let Avr = ((Vu_min - finalResult) * s_min) / (pi * fy * dv_min * (cot(theta_new_min) + cot(a)) * Math.sin(a));
+    //         Avr = parseFloat(Avr.toFixed(3));
+    //         console.log(Avr);
+    //         data = { ...data, [cell13._address]: Avr };
+    
+    //         for (let i = key2; i <= worksheet.rowCount; i++) {
+    //           let nextRow = worksheet.getRow(i);
+    
+    //           if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$Av,req_min") {
+    //             let cell12 = getSafeCell(rows[i], 12);
+    //             if (Avm > Avr) {
+    //               Av_extra = Avm;
+    //               data = { ...data, [cell12._address]: Av };
+    //             } else {
+    //               Av_extra = Avr;
+    //               data = { ...data, [cell12._address]: Avr };
+    //             }
+    //           }
+    
+    //           if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$A,v_min") {
+    //             let cell11 = getSafeCell(rows[i], 11);
+    //             let cell29 = getSafeCell(rows[i], 29);
+    //             if (Av >= Av_extra) {
+    //               data = { ...data, [cell11._address]: "≥" };
+    //               data = { ...data, [cell29._address]: "OK" };
+    //             } else {
+    //               data = { ...data, [cell11._address]: "<" };
+    //               data = { ...data, [cell29._address]: "NG" };
+    //             }
+    //           }
+    
+    //           if (nextRow.getCell(1).value === "$$A,v") {
+    //             break;
+    //           }
+    //         }
+    //       } 
+    //       // else {
+    //       //   let key3 = parseInt(key1) + 2;
+    
+    //       //   if (getSafeCell(rows[key3], 0) && getSafeCell(rows[key3], 0)._value.model.value === "$$vs_min") {
+    //       //     let cell19 = getSafeCell(rows[key3], 19);
+    //       //     data = { ...data, [cell19._address]: "Av,req1" };
+    
+    //       //     let cell20 = getSafeCell(rows[key3], 20);
+    //       //     data = { ...data, [cell20._address]: "=" };
+    
+    //       //     let cell21 = getSafeCell(rows[key3], 21);
+    //       //     data = { ...data, [cell21._address]: "{ Vu - Φ(Vc+Vp) }·s" };
+    
+    //       //     let cell21_n = getSafeCell(rows[key3 + 1], 21);
+    //       //     data = { ...data, [cell21_n._address]: "Φ·fy·dv(cotθ+cotα)sinα" };
+    
+    //       //     let cell27 = getSafeCell(rows[key3], 27);
+    //       //     data = { ...data, [cell27._address]: "=" };
+    
+    //       //     let cell28 = getSafeCell(rows[key3], 28);
+    //       //     let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+    //       //     data = { ...data, [cell28._address]: Avr };
+    //       //   }
+    //       // }
+    //     } else {
+    //       if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar_min") {
+    //         for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
+    //           let nextRow = worksheet.getRow(i);
+    
+    //           if (nextRow.getCell(1).value === "$$A,v") {
+    //             nextRow.eachCell({ includeEmpty: true }, (cell) => {
+    //               cell.value = "";
+    //             });
+    //             break;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    
+    // Handle $$t_new cases
+    // if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$t_new") {
+    //   t_i += 1;
+      
+    //   if (t_i === 1) {
+    //     let cell13 = getSafeCell(rows[key1], 13);
+    //     data = { ...data, [cell13._address]: theta_new };
+    
+    //     let cell8 = getSafeCell(rows[key1], 8);
+    //     data = { ...data, [cell8._address]: "########" };
+    //   }
+    
+    //   if (t_i === 2) {
+    //     let cell13 = getSafeCell(rows[key1], 13);
+    //     data = { ...data, [cell13._address]: theta_new_min };
+    
+    //     let cell8 = getSafeCell(rows[key1], 8);
+    //     data = { ...data, [cell8._address]: "########" };
+    //   }
+    // }
+    
+  }
+    // if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$vc_min") {
+    //   let cell13 = getSafeCell(rows[key1], 13);
+    //   let cell9 = getSafeCell(rows[key1], 9);
+    //   let cell5 = getSafeCell(rows[key1], 5);
+    
+    //   if (cell5 && cell9 && cell13) {
+    //     let add5 = cell5._address;
+    //     let add9 = cell9._address;
+    //     data = { ...data, [add5]: "0.0316" };
+    
+    //     console.log(cell9._value.model.value);
+    //     console.log(rows[key1]);
+    
+    //     if (cell13._address) {
+    //       let add13 = cell13._address;
+    //       let initialValue13 = cell13._value.model.value;
+    
+    //       let result;
+    //       if (type === "Composite") {
+    //         result = (initialValue13 / beta_min) * beta2;
+    //       } else {
+    //         result = (initialValue13 / K) * beta2;
+    //       }
+    
+    //       cell13._value.model.value = result;
+    //       data = { ...data, [add9]: "β √f'c bvdv" };
+    //       data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+    
+    //       Vc_min = result; // new Vc_min value
+    //     } else {
+    //       console.error("Error: Unable to determine address for cell13");
+    //     }
+    //   } else {
+    //     console.error("Error: Unable to determine address for cells[5], [9], or [13]");
+    //   }
+    // }
+    
+    // console.log("Initial Value:", initialValue13);
+    // console.log("New Value:", Vc_min);
+
+//           rows[key1]._cells[0]._value.model.value == "$$theta_max"
+//         ) {
+//           let cell5 = rows[key1]._cells[4];
+//           let add5 = cell5._address;
+//           data = { ...data, [add5]: "θ" };
+//           let cell6 = rows[key1]._cells[5];
+//           let add6 = cell6._address;
+//           data = { ...data, [add6]: "=" };
+//           let cell7 = rows[key1]._cells[6];
+//           let add7 = cell7._address;
+//           if (Av < Avm) {
+//             let theta_value = ThetaBeta2(sxe, Etm * 1000);
+//             let theta = theta_value[1];
+//             console.log(theta);
+//             data = { ...data, [add7]: theta };
+//             theta_new = theta;
+//           } else {
+//             data = { ...data, [add7]: parseFloat(theta1.toFixed(2)) };
+//             theta_new = parseFloat(theta1.toFixed(2));
+//             let cell15 = rows[key1]._cells[15];
+//             let add15 = cell15._address;
+//             data = { ...data,[add15] : '(See CA-5.7.3.4)'}
+//           }
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$beta"
+//         ) {
+//           let cell9 = rows[key1]._cells[9];
+//           if (cell9 && cell9._address) {
+//             beta = cell9._value.model.value;
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[9]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$beta_min"
+//         ) {
+//           let cell9 = rows[key1]._cells[9];
+//           if (cell9 && cell9._address) {
+//             beta_min = cell9._value.model.value;
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[9]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vc"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let cell9 = rows[key1]._cells[9];
+//           let cell5 = rows[key1]._cells[5];
+//           let add5 = cell5._address;
+//           let add9 = cell9._address;
+//           data = { ...data, [add5]: "0.0316" };
+//           console.log(rows[key1]._cells[9].value);
+//           console.log(rows[key1]);
+//           if (cell13 && cell13._address) {
+//             if (type == "Composite") {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               initialValue13 = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let value13 = initialValue13;
+//               let result = (value13 / beta) * beta1;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               newValue13 = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+//               Vc = newValue13;
+//             } else {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               initialValue13 = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let value13 = initialValue13;
+//               let result = (value13 / K) * beta1;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               newValue13 = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+//               Vc = newValue13;
+//             }
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[13]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         console.log("Initial Value:", initialValue13);
+//         console.log("New Value:", newValue13);
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vc_min"
+//         ) {
+//           let vc_o;
+//           let cell13 = rows[key1]._cells[13];
+//           vc_o = cell13.value;
+//           let vc_n;
+//           let cell9 = rows[key1]._cells[9];
+//           let cell5 = rows[key1]._cells[5];
+//           let add5 = cell5._address;
+//           let add9 = cell9._address;
+//           data = { ...data, [add5]: "0.0316" };
+//           console.log(rows[key1]._cells[9].value);
+//           console.log(rows[key1]);
+//           if (cell13 && cell13._address) {
+//             if (type == "Composite") {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               vc_o = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let result = (vc_o / beta_min) * beta2;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               vc_n = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(vc_n.toFixed(2)) };
+//               Vc_min = newValue13;
+//             } else {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               vc_o = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let value13 = vc_o;
+//               let result = (value13 / K) * beta2;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               vc_n = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(vc_n.toFixed(2)) };
+//               Vc_min = vc_n;
+//             }
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[13]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         console.log("Initial Value:", initialValue13);
+//         console.log("New Value:", newValue13);
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$(vc+vp)"
+//         ) {
+//           if (
+//             rows[key1]._cells[11] &&
+//             rows[key1]._cells[11].value !== undefined
+//           ) {
+//             let cell11Value = rows[key1]._cells[11].value;
+//             let cell11 = rows[key1]._cells[11];
+//             let cell2 = rows[key1]._cells[2];
+//             let add11 = cell11._address;
+//             let add2 = cell2._address;
+//             Vu_max = rows[key1]._cells[20].value;
+//             finalResult = pi * (newValue13 + Vp);
+//             half_finalResult = finalResult / 2;
+//             console.log(finalResult);
+//             data = { ...data, [add11]: parseFloat(finalResult.toFixed(2)) };
+//             data = { ...data, [add2]: parseFloat(half_finalResult.toFixed(2)) };
+//           } else {
+//             console.error(
+//               "Error: Unable to retrieve value for rows[key1]._cells[11]"
+//             );
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$check"
+//         ) {
+//           let cell2 = rows[key1]._cells[2];
+//           let cell11 = rows[key1]._cells[11];
+//           let cell12 = rows[key1]._cells[12];
+//           let add2 = cell2._address;
+//           let add11 = cell11._address;
+//           let add12 = cell12._address;
+//           let cell2Value;
+//           if (Math.abs(half_finalResult) > Vu_max) {
+//             cell2Value = "Vu < 0.5Φ(Vc+Vp)";
+//             data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
+//             data = { ...data, [add11]: "∴" };
+//             data = { ...data, [add12]: "No Shear reinforcing" };
+//           } else {
+//             cell2Value = "Vu ≥ 0.5ΦVc";
+//             data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
+//           }
+//           let key2 = parseInt(key1) + 1;
+
+//           // Check if rows[key2]._cells[0] value is '$$A,req'
+//           if (cell2Value == "Vu ≥ 0.5ΦVc") {
+//             if (
+//               rows[key2]._cells[0] != undefined &&
+//               rows[key2]._cells[0]._value.model.value == "$$Ar"
+//             ) {
+//               let cell13 = rows[key2]._cells[13];
+//               let add13 = cell13._address;
+//               let Av_extra;
+//               let Avr =
+//                 ((Vu_max - finalResult) * s_max) /
+//                 (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+//                 Avr = parseFloat(Avr.toFixed(3));
+//               console.log(Avr);
+//               data = { ...data, [add13]: Avr };
+//               for (let i = key2; i <= worksheet.rowCount; i++) {
+//                 // console.log("Hello");
+//                 let nextRow = worksheet.getRow(i);
+//                 if (
+//                   rows[i]._cells[0] != undefined &&
+//                   rows[i]._cells[0]._value.model.value == "$$Av,req"
+//                 ) {
+//                   let cell12 = rows[i]._cells[12];
+//                   let add12 = cell12._address;
+//                   if (Avm > Avr) {
+//                     Av_extra = Avm;
+//                     data = { ...data, [add12]: Av };
+//                   } else {
+//                     Av_extra = Avr;
+//                     data = { ...data, [add12]: Avr };
+//                   }
+//                 }
+//                 if (
+//                   rows[i]._cells[0] != undefined &&
+//                   rows[i]._cells[0]._value.model.value == "$$A,v"
+//                 ) {
+//                   let cell11 = rows[i]._cells[11];
+//                   let cell29 = rows[i]._cells[29];
+//                   let add11 = cell11._address;
+//                   let add29 = cell29._address;
+//                   if (Av >= Av_extra) {
+//                     data = { ...data, [add11]: "≥" };
+//                     data = { ...data, [add29]: "OK" };
+//                   } else {
+//                     data = { ...data, [add11]: "<" };
+//                     data = { ...data, [add29]: "NG" };
+//                   }
+//                 }
+//                 if (nextRow.getCell(1).value === "$$A,v") {
+//                   // Found $$A,v, break the loop
+//                   break;
+//                 }
+//                 // Perform your desired operations within the loop here
+//               }
+//             } else {
+//               let key3 = parseInt(key1) + 2;
+//               key3 += 5;
+
+//               let cell19 = rows[key3]._cells[19];
+//               let add19 = cell19._address;
+//               data = { ...data, [add19]: "Av,req1" };
+//               let cell20 = rows[key3]._cells[20];
+//               let add20 = cell20._address;
+//               data = { ...data, [add20]: "=" };
+//               let cell21 = rows[key3]._cells[21];
+//               let add21 = cell21._address;
+//               data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
+//               let cell21_n = rows[key3 + 1]._cells[21];
+//               let add21_n = cell21_n._address;
+//               data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
+//               let cell27 = rows[key3]._cells[27];
+//               let add27 = cell27._address;
+//               data = { ...data, [add27]: "=" };
+//               let cell28 = rows[key3]._cells[28];
+//               let add28 = cell28._address;
+//               let Av_extra;
+//               let Avr =
+//                 ((Vu_max - finalResult) * s_max) /
+//                 (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+//               data = { ...data, [add28]: Avr };
+//             }
+//           } else {
+//             if (
+//               rows[key2]._cells[0] != undefined &&
+//               rows[key2]._cells[0]._value.model.value == "$$Ar"
+//             ) {
+//               for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
+//                 let nextRow = worksheet.getRow(i);
+
+//                 if (nextRow.getCell(1).value === "$$A,v") {
+//                   // First, make the cells blank
+//                   nextRow.eachCell({ includeEmpty: true }, (cell) => {
+//                     cell.value = "";
+//                   });
+//                   break;
+//                 }
+//                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
+//                   cell.value = "";
+//                 });
+//               }
+//             }
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$t_new"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let add13 = cell13._address;
+//           data = { ...data, [add13]: theta_new };
+//           let cell8 = rows[key1]._cells[8];
+//           let add8 = cell8._address;
+//           data = { ...data, [add8]: "########" };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$sum"
+//         ) {
+//           let cell7 = rows[key1]._cells[7];
+//           let add7 = cell7._address;
+//           let sum = Vp + Vc + Vs;
+//           Vn = sum;
+//           data = { ...data, [add7]: parseFloat(Vn.toFixed(2)) };
+//           let cell13 = rows[key1]._cells[13];
+//           let cell19 = rows[key1]._cells[19];
+//           let add13 = cell13._address;
+//           let add19 = cell19._address;
+//           let value19 = cell19.value;
+//           if (Vn <= value19) {
+//             data = { ...data, [add13]: "≤" };
+//           } else {
+//             data = { ...data, [add13]: ">" };
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vn"
+//         ) {
+//           let cell11 = rows[key1]._cells[11];
+//           let add11 = cell11._address;
+//           data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vr"
+//         ) {
+//           let cell8 = rows[key1]._cells[8];
+//           let cell17_value = rows[key1]._cells[17].value;
+//           let cell29 = rows[key1]._cells[29];
+//           let add29 = cell29._address;
+//           let add8 = cell8._address;
+//           let vr = pi * Vn;
+//           let cell16 = rows[key1]._cells[16];
+//           let add16 = cell16._address;
+//           if (vr < cell17_value) {
+//             data = { ...data, [add16]: "<" };
+//             data = { ...data, [add29]: "NG" };
+//           } else {
+//             data = { ...data, [add16]: "≥" };
+//             data = { ...data, [add29]: "OK" };
+//           }
+//           data = { ...data, [add8]: parseFloat(vr.toFixed(2)) };
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$strn"
+//         ) {
+//           let add1 = rows[key1]._cells[2]._value.model.address;
+//           let add2 = rows[key1]._cells[8]._value.model.address;
+//           data = { ...data, [add1]: "Calculation for β and θ" };
+//           data = { ...data, [add2]: "" };
+//           let add12 = rows[key1]._cells[12]._value.model.address;
+//           data = { ...data,[add12] : '(See CA - 5.7.3.4)'}
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$A_min"
+//         ) {
+//           console.log(rows[key1]._cells);
+//           let cell = rows[key1]._cells[4];
+//           if (cell && cell._address) {
+//             let add11 = cell._address;
+//             data = { ...data, [add11]: "A" };
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[4]"
+//             );
+//           }
+//           let cell2 = rows[key1]._cells[6];
+//           if (cell2 && cell2._address) {
+//             let add12 = cell2._address;
+//             data = { ...data, [add12]: "Aₘᵢₙ" };
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[4]"
+//             );
+//           }
+//           let cell3 = rows[key1]._cells[5];
+//           let comparisonSymbol = Av >= Avm ? "≥" : "<";
+//           if (cell3 && cell3._address) {
+//             let add13 = cell3._address;
+//             data = { ...data, [add13]: comparisonSymbol };
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$e_min"
+//         ) {
+//           console.log(rows[key1]._cells);
+//           let cell = rows[key1]._cells[4];
+//           if (cell && cell._address) {
+//             let add11 = cell._address;
+//             data = { ...data, [add11]: "εx" };
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[4]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//           let cell2 = rows[key1]._cells[5];
+
+//           // Check if cell and its properties are defined
+//           if (cell2 && cell2._address) {
+//             let add12 = cell2._address;
+//             data = { ...data, [add12]: "=" };
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[4]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//           let cell3 = rows[key1]._cells[6];
+//           if (cell3 && cell3._address) {
+//             let add13 = cell3._address;
+//             let cell3Value = Av >= Avm ? Exn : Etn;
+//             data = { ...data, [add13]: cell3Value };
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$sx_min"
+//         ) {
+//           rows[key1]._cells = rows[key1]._cells.map((cell) =>
+//             cell === "" ? undefined : cell
+//           );
+//           console.log(rows[key1]._cells);
+//           let cell = rows[key1]._cells[4];
+//           if (cell && cell._address) {
+//             let add11 = cell._address;
+//             data = { ...data, [add11]: "sx" };
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[4]"
+//             );
+//           }
+
+//           let cell2 = rows[key1]._cells[5];
+//           if (cell2 && cell2._address) {
+//             let add12 = cell2._address;
+//             data = { ...data, [add12]: "=" };
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[5]"
+//             );
+//           }
+
+//           let startCol = 7;
+//           let endCol = 17;
+//           let rowNumber = rows[key1]._cells[startCol].row;
+//           try {
+//             let mergeRange = worksheet.getCell(
+//               `${worksheet.getColumn(startCol).letter}${rowNumber}:${
+//                 worksheet.getColumn(endCol).letter
+//               }${rowNumber}`
+//             );
+//             if (!mergeRange.isMerged) {
+//               worksheet.mergeCells(rowNumber, startCol, rowNumber, endCol);
+//             }
+//           } catch (error) {
+//             console.error("Error merging cells: ", error);
+//           }
+
+//           let cell3 = worksheet.getCell(rowNumber, startCol);
+//           if (cell3 && cell3._address) {
+//             let add13 = cell3._address;
+
+//             if (Av < Avm) {
+//               data = {
+//                 ...data,
+//                 [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
+//               };
+//               let cell4 = rows[key1]._cells[18];
+//               if (cell4 && cell4._address) {
+//                 let add14 = cell4._address;
+//                 data = { ...data, [add14]: "=" };
+//               } else {
+//                 console.error(
+//                   "Error: Unable to determine address for rows[key1]._cells[24]"
+//                 );
+//               }
+
+//               let cell5 = rows[key1]._cells[19];
+//               if (cell5 && cell5._address) {
+//                 let add15 = cell5._address;
+//                 let add15value = dv < sg ? dv : sg;
+//                 data = { ...data, [add15]: add15value };
+//               } else {
+//                 console.error(
+//                   "Error: Unable to determine address for rows[key1]._cells[25]"
+//                 );
+//               }
+//             } else {
+//               data = { ...data, [add13]: `Not Required` };
+//             }
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[24]"
+//             );
+//           }
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$sxe_min"
+//         ) {
+//           let cell3 = rows[key1]._cells[4];
+//           if (cell3 && cell3._address) {
+//             let add13 = cell3._address;
+//             // let sxe = ((add15value*1.38)/(ag +0.63))
+//             data = { ...data, [add13]: "sxe" };
+//           }
+//           let cell4 = rows[key1]._cells[5];
+//           if (cell4 && cell4._address) {
+//             let add14 = cell4._address;
+//             // let sxe = ((add15value*1.38)/(ag +0.63))
+//             data = { ...data, [add14]: "=" };
+//           }
+//           let mergeStartCol = 7;
+//           let mergeEndCol = 16;
+//           let mergeRowNumber = rows[key1]._cells[mergeStartCol].row;
+
+//           // Check if the range is already merged
+//           try {
+//             let mergeRange = worksheet.getCell(
+//               `${worksheet.getColumn(mergeStartCol).letter}${mergeRowNumber}:${
+//                 worksheet.getColumn(mergeEndCol).letter
+//               }${mergeRowNumber}`
+//             );
+//             if (!mergeRange.isMerged) {
+//               worksheet.mergeCells(
+//                 mergeRowNumber,
+//                 mergeStartCol,
+//                 mergeRowNumber,
+//                 mergeEndCol
+//               );
+//             }
+//           } catch (error) {
+//             console.error("Error merging cells: ", error);
+//           }
+
+//           // After merging, the cell5 should refer to the merged cell
+//           let cell5 = worksheet.getCell(mergeRowNumber, mergeStartCol);
+
+//           if (cell5 && cell5._address) {
+//             let add15 = cell5._address;
+
+//             if (Av < Avm) {
+//               data = { ...data, [add15]: sxe };
+//             } else {
+//               data = { ...data, [add15]: "Not required" };
+//             }
+//           } else {
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[6]"
+//             );
+//           }
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$b_min"
+//         ) {
+//           let cell5 = rows[key1]._cells[4];
+//           let add5 = cell5._address;
+//           data = { ...data, [add5]: "β" };
+//           let cell6 = rows[key1]._cells[5];
+//           let add6 = cell6._address;
+//           data = { ...data, [add6]: "=" };
+//           let cell7 = rows[key1]._cells[6];
+//           let add7 = cell7._address;
+//           if (Av < Avm) {
+//             let b_value = ThetaBeta2(sxe, Etn * 1000);
+//             let beta = parseFloat(b_value[0].toFixed(2));
+//             console.log(beta);
+//             data = { ...data, [add7]: beta };
+//             beta_new_min = beta;
+//           } else {
+//             data = { ...data, [add7]: parseFloat(beta2.toFixed(2)) };
+//             beta_new_min = parseFloat(beta2.toFixed(2));
+//           }
+//           let cell15 = rows[key1]._cells[15];
+//           let add15 = cell15._address;
+//           data = { ...data,[add15] : '(See CA-5.7.3.4)'}
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$theta_min"
+//         ) {
+//           let cell5 = rows[key1]._cells[4];
+//           let add5 = cell5._address;
+//           data = { ...data, [add5]: "θ" };
+//           let cell6 = rows[key1]._cells[5];
+//           let add6 = cell6._address;
+//           data = { ...data, [add6]: "=" };
+//           let cell7 = rows[key1]._cells[6];
+//           let add7 = cell7._address;
+//           if (Av < Avm) {
+//             let theta_value = ThetaBeta2(sxe, Etn * 1000);
+//             let theta = parseFloat(theta_value[1].toFixed(2));
+//             console.log(theta);
+//             data = { ...data, [add7]: theta };
+//             theta_new_min = theta;
+//           } else {
+//             data = { ...data, [add7]: parseFloat(theta2.toFixed(2)) };
+//             theta_new_min = parseFloat(theta2.toFixed(2));
+//           }
+//           let cell15 = rows[key1]._cells[15];
+//           let add15 = cell15._address;
+//           data = { ...data,[add15] : '(See CA-5.7.3.4)'}
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$beta_min"
+//         ) {
+//           let cell9 = rows[key1]._cells[9];
+//           if (cell9 && cell9._address) {
+//             beta = cell9._value.model.value;
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[9]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vc_min"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let cell9 = rows[key1]._cells[9];
+//           let cell5 = rows[key1]._cells[5];
+//           let add5 = cell5._address;
+//           let add9 = cell9._address;
+//           data = { ...data, [add5]: "0.0316" };
+//           console.log(rows[key1]._cells[9].value);
+//           console.log(rows[key1]);
+//           if (cell13 && cell13._address) {
+//             if (type == "Composite") {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               initialValue13 = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let value13 = initialValue13;
+//               let result = (value13 / beta) * beta1;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               newValue13 = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+//               Vc_min = newValue13;
+//             } else {
+//               let add13 = cell13._address;
+//               // Store the initial value globally
+//               initialValue13 = cell13._value.model.value;
+//               // Retrieve the value from cell13, divide it by beta, and multiply by beta1
+//               let value13 = initialValue13;
+//               let result = (value13 / K) * beta1;
+//               // Store the result back in cell13
+//               cell13._value.model.value = result;
+//               // Store the new value globally
+//               newValue13 = result; //new Vc value
+//               data = { ...data, [add9]: "β √f'c bvdv" };
+//               data = { ...data, [add13]: parseFloat(result.toFixed(2)) };
+//               Vc_min = newValue13;
+//             }
+//           } else {
+//             // Handle the case where _address is undefined or not available
+//             console.error(
+//               "Error: Unable to determine address for rows[key1]._cells[13]"
+//             );
+//             // Handle this error scenario appropriately
+//           }
+//         }
+//         // console.log("Initial Value:", initialValue13);
+//         // console.log("New Value:", newValue13);
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$(vc+vp)_min"
+//         ) {
+//           if (
+//             rows[key1]._cells[11] &&
+//             rows[key1]._cells[11].value !== undefined
+//           ) {
+//             let cell11Value = rows[key1]._cells[11].value;
+//             let cell11 = rows[key1]._cells[11];
+//             let cell2 = rows[key1]._cells[2];
+//             let add11 = cell11._address;
+//             let add2 = cell2._address;
+//             Vu_min = rows[key1]._cells[20].value;
+//             finalResult = pi * (Vc_min + Vp);
+//             half_finalResult = finalResult / 2;
+//             console.log(finalResult);
+//             data = { ...data, [add11]: parseFloat(finalResult.toFixed(2)) };
+//             data = { ...data, [add2]: parseFloat(half_finalResult.toFixed(2)) };
+//           } else {
+//             console.error(
+//               "Error: Unable to retrieve value for rows[key1]._cells[11]"
+//             );
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$check_min"
+//         ) {
+//           let cell2 = rows[key1]._cells[2];
+//           let cell11 = rows[key1]._cells[11];
+//           let cell12 = rows[key1]._cells[12];
+//           let add2 = cell2._address;
+//           let add11 = cell11._address;
+//           let add12 = cell12._address;
+//           let cell2Value;
+//           if (Math.abs(half_finalResult) > Vu_min) {
+//             data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
+//             data = { ...data, [add11]: "∴" };
+//             data = { ...data, [add12]: "No Shear reinforcing" };
+//           } else {
+//             data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
+//           }
+//           let key2 = parseInt(key1) + 1;
+
+//           // Check if rows[key2]._cells[0] value is '$$A,req'
+//           if (cell2Value == "Vu ≥ 0.5ΦVc") {
+//             if (
+//               rows[key2]._cells[0] != undefined &&
+//               rows[key2]._cells[0]._value.model.value == "$$Ar_min"
+//             ) {
+//               let cell13 = rows[key2]._cells[13];
+//               let add13 = cell13._address;
+//               let Av_extra;
+//               let Avr =
+//                 ((Vu_min - finalResult) * s_min) /
+//                 (pi * fy * dv_min * (cot(theta_new_min) + cot(a)) * Math.sin(a));
+//               console.log(Avr);
+//               data = { ...data, [add13]: Avr };
+//               for (let i = key2; i <= worksheet.rowCount; i++) {
+//                 // console.log("Hello");
+//                 let nextRow = worksheet.getRow(i);
+//                 if (
+//                   rows[nextRow]._cells[0] != undefined &&
+//                   rows[key1]._cells[0]._value.model.value == "$$Av,req_min"
+//                 ) {
+//                   let cell12 = rows[nextRow]._cells[12];
+//                   let add12 = cell12._address;
+//                   if (Avm > Avr) {
+//                     Av_extra = Avm;
+//                     data = { ...data, [add12]: Av };
+//                   } else {
+//                     Av_extra = Avr;
+//                     data = { ...data, [add12]: Avr };
+//                   }
+//                 }
+//                 if (
+//                   rows[nextRow]._cells[0] != undefined &&
+//                   rows[key1]._cells[0]._value.model.value == "$$A,v_min"
+//                 ) {
+//                   let cell11 = rows[nextRow]._cells[11];
+//                   let cell29 = rows[nextRow]._cells[29];
+//                   let add11 = cell11._address;
+//                   let add29 = cell29._address;
+//                   if (Av >= Av_extra) {
+//                     data = { ...data, [add11]: "≥" };
+//                     data = { ...data, [add29]: "OK" };
+//                   } else {
+//                     data = { ...data, [add11]: "<" };
+//                     data = { ...data, [add29]: "NG" };
+//                   }
+//                 }
+//                 if (nextRow.getCell(1).value === "$$A,v") {
+//                   // Found $$A,v, break the loop
+//                   break;
+//                 }
+//                 // Perform your desired operations within the loop here
+//               }
+//             } else {
+//               let key3 = parseInt(key1) + 2;
+//               if (
+//                 rows[key3]._cells[0] != undefined &&
+//                 rows[key3]._cells[0]._value.model.value == "$$vs_min"
+//               ) {
+//                 let cell19 = rows[key3]._cells[19];
+//                 let add19 = cell19._address;
+//                 data = { ...data, [add19]: "Av,req1" };
+//                 let cell20 = rows[key3]._cells[20];
+//                 let add20 = cell20._address;
+//                 data = { ...data, [add20]: "=" };
+//                 let cell21 = rows[key3]._cells[21];
+//                 let add21 = cell21._address;
+//                 data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
+//                 let cell21_n = rows[key3 + 1]._cells[21];
+//                 let add21_n = cell21_n._address;
+//                 data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
+//                 let cell27 = rows[key3]._cells[27];
+//                 let add27 = cell27._address;
+//                 data = { ...data, [add27]: "=" };
+//                 let cell28 = rows[key3]._cells[28];
+//                 let add28 = cell28._address;
+//                 let Av_extra;
+//                 let Avr =
+//                   ((Vu_max - finalResult) * s_max) /
+//                   (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+//                 data = { ...data, [add28]: Avr };
+//               }
+//             }
+//           } else {
+//             if (
+//               rows[key2]._cells[0] != undefined &&
+//               rows[key2]._cells[0]._value.model.value == "$$Ar_min"
+//             ) {
+//               for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
+//                 let nextRow = worksheet.getRow(i);
+
+//                 if (nextRow.getCell(1).value === "$$A,v") {
+//                   // First, make the cells blank
+//                   nextRow.eachCell({ includeEmpty: true }, (cell) => {
+//                     cell.value = "";
+//                   });
+//                   break;
+//                   // Blank the corresponding rows
+//                 }
+//                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
+//                   cell.value = "";
+//                 });
+//               }
+//             }
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$t_new_min"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let add13 = cell13._address;
+//           data = { ...data, [add13]: theta_new_min };
+//           let cell8 = rows[key1]._cells[8];
+//           let add8 = cell8._address;
+//           data = { ...data, [add8]: "########" };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$sum_min"
+//         ) {
+//           let cell7 = rows[key1]._cells[7];
+//           let add7 = cell7._address;
+//           let sum = Vp_min + Vc_min + Vs_min;
+//           Vn_min = sum;
+//           data = { ...data, [add7]: parseFloat(Vn_min.toFixed(2)) };
+//           let cell13 = rows[key1]._cells[13];
+//           let cell19 = rows[key1]._cells[19];
+//           let add13 = cell13._address;
+//           let add19 = cell19._address;
+//           let value19 = cell19.value;
+//           if (Vn_min <= value19) {
+//             data = { ...data, [add13]: "≤" };
+//           } else {
+//             data = { ...data, [add13]: ">" };
+//           }
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vn"
+//         ) {
+//           let cell11 = rows[key1]._cells[11];
+//           let add11 = cell11._address;
+//           data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vn_min"
+//         ) {
+//           let cell11 = rows[key1]._cells[11];
+//           let add11 = cell11._address;
+//           data = { ...data, [add11]: parseFloat(Vn_min.toFixed(2)) };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vr"
+//         ) {
+//           let cell8 = rows[key1]._cells[8];
+//           let cell17_value = rows[key1]._cells[17].value;
+//           let cell29 = rows[key1]._cells[29];
+//           let add29 = cell29._address;
+//           let add8 = cell8._address;
+//           let vr = pi * Vn;
+//           let cell16 = rows[key1]._cells[16];
+//           let add16 = cell16._address;
+//           if (vr < cell17_value) {
+//             data = { ...data, [add16]: "<" };
+//             data = { ...data, [add29]: "NG" };
+//           } else {
+//             data = { ...data, [add16]: "≥" };
+//             data = { ...data, [add29]: "OK" };
+//           }
+//           data = { ...data, [add8]: parseFloat(vr.toFixed(2)) };
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vr_min"
+//         ) {
+//           let cell8 = rows[key1]._cells[8];
+//           let cell17_value = rows[key1]._cells[17].value;
+//           let cell29 = rows[key1]._cells[29];
+//           let add29 = cell29._address;
+//           let add8 = cell8._address;
+//           let vr_min = pi_min * Vn_min;
+//           let cell16 = rows[key1]._cells[16];
+//           let add16 = cell16._address;
+//           if (vr_min < cell17_value) {
+//             data = { ...data, [add16]: "<" };
+//             data = { ...data, [add29]: "NG" };
+//           } else {
+//             data = { ...data, [add16]: "≥" };
+//             data = { ...data, [add29]: "OK" };
+//           }
+//           data = { ...data, [add8]: parseFloat(vr_min.toFixed(2)) };
+//         }
+//         function cot(angle) {
+//           return 1 / Math.tan(angle);
+//         }
+
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vs"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let add13 = cell13._address;
+//           let cal =
+//             (Av * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha)) /
+//             s_max;
+//             cal = parseFloat(cal.toFixed(3));
+//           data = { ...data, [add13]: cal };
+//           Vs = cal;
+//         }
+//         if (
+//           rows[key1]._cells[0] != undefined &&
+//           rows[key1]._cells[0]._value.model.value == "$$vs_min"
+//         ) {
+//           let cell13 = rows[key1]._cells[13];
+//           let add13 = cell13._address;
+//           let cal =
+//             (Av *
+//               fy *
+//               dv_min *
+//               (cot(theta_new_min) + cot($$alpha_min)) *
+//               Math.sin($$alpha_min)) /
+//             s_min;
+//             cal = parseFloat(cal.toFixed(3));
+//           data = { ...data, [add13]: cal };
+//           Vs_min = cal;
+//         }
+//       }
+//     } catch (error) {
+//         console.error("Error encountered:", error);
+//         // Handle or log the error as needed
+//       }
 
     for (let key in data) {
       let match = key.match(/^([A-Za-z]+)(\d+)$/);
@@ -2353,6 +2941,7 @@ export const Updatereport = () => {
 
         break;
       }
+    }
       // if (
       //   rows[key1]._cells[0] != undefined &&
       //   rows[key1]._cells[0]._value.model.value == "$$b_str_min"
@@ -2382,7 +2971,6 @@ export const Updatereport = () => {
       // }
       // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
       
-    }
     for (let key1 in rows) {
       if (
         rows[key1]._cells[0] != undefined &&
