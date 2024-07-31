@@ -180,20 +180,21 @@ export const Updatereport = () => {
           if (row.getCell(1).value === "$$strm1") {
             startRowNumbers.push(rowNumber);
           } else if (row.getCell(1).value === "$$theta_max") {
-            endRowNumbers.push(rowNumber + 1);
+            rowNumber = rowNumber + 1;
+            endRowNumbers.push(rowNumber);
           }
         });
 
         if (startRowNumbers.length === 0 || endRowNumbers.length === 0) {
           throw new Error(
-            "Could not find the start or end markers ($$strm1 or $$theta_max)"
+            "Could not find the start or end markers ($$strm1 or $$fpo)"
           );
         }
 
         // Ensure we have matching start and end markers
         if (startRowNumbers.length !== endRowNumbers.length) {
           throw new Error(
-            "Mismatched number of start ($$strm1) and end ($$theta_max) markers."
+            "Mismatched number of start ($$strm1) and end ($$fpo) markers."
           );
         }
 
@@ -209,7 +210,7 @@ export const Updatereport = () => {
           ) {
             let row = worksheet.getRow(rowNumber);
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-              if (colNumber > 1) {
+              if (!cell.value) {
                 let colLetter = indexToLetter(colNumber - 1); // Adjusting index for 1-based column numbering
                 let address = colLetter + rowNumber;
                 row.getCell(colNumber).value = "";
@@ -886,7 +887,7 @@ export const Updatereport = () => {
     let initialValue13 = null;
     let newValue13 = null;
 
-    let strm1_i = 0;
+    let strm1_i =0;
     let strm_i = 0;
     let fpo_i = 0;
     function getSafeCell(row, index) {
@@ -929,42 +930,65 @@ export const Updatereport = () => {
       if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm1") {
         strm1_i += 1;
         if (strm1_i === 1) {
-          for (let i = 1; i <= 50; i++) {
-            let cell = getSafeCell(row, i);
-            if (cell) {
-              cell._value.model = { value: " " };
-            } else {
-              row._cells[i] = {
-                _value: {
-                  model: {
-                    value: "dummy",
-                    address: indexToLetter(i) + (parseInt(key1) + 1),
-                  },
-                },
-                _address: indexToLetter(i) + (parseInt(key1) + 1),
-              };
-            }
-          }
-    
-          let nextKey = parseInt(key1) + 1;
-          while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
+          if (strm1_i === 1 || strm1_i === 2) {
+            // Replace cells in the current row, skipping the first cell
             for (let i = 1; i <= 50; i++) {
-              let cell = getSafeCell(rows[nextKey], i);
+              let cell = getSafeCell(rows[key1], i);
               if (cell) {
-                cell._value.model = { value: " " };
+                rows[key1]._cells.splice(i, 1, {
+                  _value: {
+                    model: {
+                      value: " ",
+                      address: indexToLetter(i) + (parseInt(key1) + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (parseInt(key1) + 1),
+                });
               } else {
-                rows[nextKey]._cells[i] = {
+                rows[key1]._cells.splice(i, 0, {
                   _value: {
                     model: {
                       value: "dummy",
-                      address: indexToLetter(i) + (nextKey + 1),
+                      address: indexToLetter(i) + (parseInt(key1) + 1),
                     },
                   },
-                  _address: indexToLetter(i) + (nextKey + 1),
-                };
+                  _address: indexToLetter(i) + (parseInt(key1) + 1),
+                });
               }
             }
-            nextKey++;
+      
+            let nextKey = parseInt(key1) + 1;
+            while (
+              rows[nextKey] &&
+              getSafeCell(rows[nextKey], 0) &&
+              getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max"
+            ) {
+              for (let i = 1; i <= 50; i++) {
+                let cell = getSafeCell(rows[nextKey], i);
+                if (cell) {
+                  rows[nextKey]._cells.splice(i, 1, {
+                    _value: {
+                      model: {
+                        value: " ",
+                        address: indexToLetter(i) + (nextKey + 1),
+                      },
+                    },
+                    _address: indexToLetter(i) + (nextKey + 1),
+                  });
+                } else {
+                  rows[nextKey]._cells.splice(i, 0, {
+                    _value: {
+                      model: {
+                        value: "dummy",
+                        address: indexToLetter(i) + (nextKey + 1),
+                      },
+                    },
+                    _address: indexToLetter(i) + (nextKey + 1),
+                  });
+                }
+              }
+              nextKey++;
+            }
           }
         }
     
@@ -2175,44 +2199,45 @@ if (vn_i == 2){
           value += (row.charCodeAt(i) - 64) * factor;
           factor *= 26;
         }
-        console.log(data[key])
         worksheet._rows[col - 1]._cells[value - 1]._value.model.value =
           data[key];
         worksheet._rows[col - 1]._cells[value - 1]._value.model.type = 3;
       }
     }
-    for (let key1 in rows) {
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$b_str"
-      ) {
-        // Store the starting index for deletion
-        let startIdx = parseInt(key1);
-        let rownumber = 0;
-        let endIdx;
-    
-        // Loop through rows starting from the next row after '$$b_str'
-        for (let i = startIdx + 1; i < rows.length; i++) {
-          // Check if the current row has the value '$$b_end'
-          if (
-            rows[i] &&
-            rows[i]._cells[0] &&
-            rows[i]._cells[0]._value.model.value == "$$b_end"
-          ) {
-            // Store the ending index for deletion
-            endIdx = i;
-            // Calculate the number of rows to delete
-            rownumber = endIdx - startIdx + 1;
-            // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-            worksheet._rows.splice(startIdx, rownumber);
-            break;
-          }
-        }
-        break;
-      }
-    }
-    
-      // // if (
+    // for (let key1 in rows) {
+    //   if (
+    //     rows[key1]._cells[0] != undefined &&
+    //     rows[key1]._cells[0]._value.model.value == "$$b_str"  
+    //   ) {
+    //     // Store the starting index for deletion
+    //     let startIdx = parseInt(key1);
+    //     let rownumber = 0;
+    //     let endIdx;
+
+    //     // Loop through rows starting from the next row after '$$b_str'
+    //     for (let i = startIdx; i < rows.length; i++) {
+    //       // Check if the current row has the value '$$b_end'
+    //       if (
+    //         rows[i] &&
+    //         rows[i]._cells[0] &&
+    //         rows[i]._cells[0]._value.model.value == "$$b_end"
+    //       ) {
+    //         // Store the ending index for deletion
+    //         endIdx = i;
+    //         // Calculate the number of rows to delete
+    //         rownumber = endIdx - startIdx + 1;
+    //         // Delete rows between '$$b_str' and '$$b_end' (inclusive)
+    //         worksheet._rows.splice(startIdx, rownumber);
+    //         break;
+    //       }
+    //     }
+    //     // Remove the old references
+    //   //   worksheet._rows.length -= rownumber;
+
+    //     break;
+    //   }
+    // }
+    //   // if (
       //   rows[key1]._cells[0] != undefined &&
       //   rows[key1]._cells[0]._value.model.value == "$$b_str_min"
       // ) {
@@ -2239,7 +2264,7 @@ if (vn_i == 2){
       //     }
       //   }
       // }
-      // Regular expression to match '$$' followed by any characters   
+      // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
       
     // for (let key1 in rows) {
     //   if (
@@ -2273,36 +2298,36 @@ if (vn_i == 2){
 
     //     break;
     //   }
-    //   if (
-    //     rows[key1]._cells[0] != undefined &&
-    //     rows[key1]._cells[0]._value.model.value == "$$b_str_min"
-    //   ) {
-    //     // Store the starting index for deletion
-    //     let startIdx = parseInt(key1);
-    //     let rownumber = 0;
-    //     let endIdx;
+      // if (
+      //   rows[key1]._cells[0] != undefined &&
+      //   rows[key1]._cells[0]._value.model.value == "$$b_str_min"
+      // ) {
+      //   // Store the starting index for deletion
+      //   let startIdx = parseInt(key1);
+      //   let rownumber = 0;
+      //   let endIdx;
 
-    //     // Loop through rows starting from the next row after '$$b_str'
-    //     for (let i = startIdx; i < rows.length; i++) {
-    //       // Check if the current row has the value '$$b_end'
-    //       if (
-    //         rows[i] &&
-    //         rows[i]._cells[0] &&
-    //         rows[i]._cells[0]._value.model.value == "$$b_end_min"
-    //       ) {
-    //         // Store the ending index for deletion
-    //         endIdx = i;
-    //         // Calculate the number of rows to delete
-    //         rownumber = endIdx - startIdx + 1;
-    //         // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-    //         worksheet._rows.splice(startIdx, rownumber);
-    //         break;
-    //       }
-    //     }
-    //   }
-    //   const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
+      //   // Loop through rows starting from the next row after '$$b_str'
+      //   for (let i = startIdx; i < rows.length; i++) {
+      //     // Check if the current row has the value '$$b_end'
+      //     if (
+      //       rows[i] &&
+      //       rows[i]._cells[0] &&
+      //       rows[i]._cells[0]._value.model.value == "$$b_end_min"
+      //     ) {
+      //       // Store the ending index for deletion
+      //       endIdx = i;
+      //       // Calculate the number of rows to delete
+      //       rownumber = endIdx - startIdx + 1;
+      //       // Delete rows between '$$b_str' and '$$b_end' (inclusive)
+      //       worksheet._rows.splice(startIdx, rownumber);
+      //       break;
+      //     }
+      //   }
+      // }
+      // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
       
-    // }
+    }
     for (let i = 0; i < (rows.length + 15); i++) {
           if (rows[i] && rows[i]._cells && rows[i]._cells[0]) {
           const cellValue = rows[i]._cells[0]?._value?.model?.value;
@@ -2331,7 +2356,6 @@ if (vn_i == 2){
     setWorkbookData(workbookData);
     setSheetName(worksheet.name);
   }
-}
 
   function updatedata2(wkey, worksheet2,beamStresses) {
     if (!workbookData) return;
