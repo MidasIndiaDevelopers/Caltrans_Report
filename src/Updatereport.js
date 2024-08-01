@@ -330,6 +330,7 @@ export const Updatereport = () => {
     let storedValues = {};
     let pi = null;
     let pi_min = null;
+    let s ;
     let s_max;
     let s_min;
     let $$alpha;
@@ -377,7 +378,9 @@ export const Updatereport = () => {
     let vn_i = 0;
     let vr_i = 0;
     let check_i = 0;
-
+    let bv;
+    
+   
     for (let key1 in rows) {
       if (
         rows[key1]._cells[0] != undefined &&
@@ -694,21 +697,22 @@ export const Updatereport = () => {
       }
       console.log(fy);
 
-      if (
-        rows[key1]._cells[0] != undefined &&
-        rows[key1]._cells[0]._value.model.value == "$$Avm"
-      ) {
-        if (type == "Composite") {
-          Avm = rows[key1]._cells[12]._value.model.value;
-        } else {
-          Avm = rows[key1]._cells[17]._value.model.value;
-        }
-      }
+      // if (
+      //   rows[key1]._cells[0] != undefined &&
+      //   rows[key1]._cells[0]._value.model.value == "$$Avm"
+      // ) {
+      //   if (type == "Composite") {
+      //     Avm = rows[key1]._cells[12]._value.model.value;
+      //   } else {
+      //     Avm = rows[key1]._cells[17]._value.model.value;
+      //   }
+      // }
       if (
         rows[key1]._cells[0] != undefined &&
         rows[key1]._cells[0]._value.model.value == "$$Av"
       ) {
-        Av = rows[key1]._cells[5]._value.model.value;
+        Av = rows[key1]._cells[16]._value.model.value;
+        s = rows[key1]._cells[20]._value.model.value;
       }
       if (
         rows[key1]._cells[0] != undefined &&
@@ -789,6 +793,12 @@ export const Updatereport = () => {
       }
       if (
         rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$bv"
+      ) {
+        bv = rows[key1]._cells[4]._value.model.value;
+      }
+      if (
+        rows[key1]._cells[0] != undefined &&
         rows[key1]._cells[0]._value.model.value == "$$alpha"
       ) {
         alpha_i = alpha_i + 1;
@@ -824,7 +834,7 @@ export const Updatereport = () => {
     console.log(St);
     console.log(E);
     console.log(fc);
-    console.log(Avm);
+    // console.log(Avm);
     console.log(Av);
     console.log(Mmax);
     console.log(Mmin);
@@ -861,6 +871,8 @@ export const Updatereport = () => {
     beta1 = value1[1];
     let beta2 = value2[1];
     Vc1 = Vc / beta1;
+    Avm = (0.0316 * Math.sqrt(fc) * s * bv) / fy;
+    console.log(Avm);
     console.log(theta1, theta2, beta1, beta2);
     let startBlanking = false;
     let beta;
@@ -891,8 +903,12 @@ export const Updatereport = () => {
     let strm_i = 0;
     let fpo_i = 0;
     function getSafeCell(row, index) {
-      if (row._cells && row._cells[index] && row._cells[index]._value && row._cells[index]._value.model) {
-        return row._cells[index];
+      try {
+        if (row && row._cells && row._cells[index] && row._cells[index]._value && row._cells[index]._value.model) {
+          return row._cells[index];
+        }
+      } catch (error) {
+        console.error(`Error accessing cell at index ${index}:`, error);
       }
       return null;
     }
@@ -929,68 +945,45 @@ export const Updatereport = () => {
     
       if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm1") {
         strm1_i += 1;
-        if (strm1_i === 1) {
-          if (strm1_i === 1 || strm1_i === 2) {
-            // Replace cells in the current row, skipping the first cell
-            for (let i = 1; i <= 50; i++) {
-              let cell = getSafeCell(rows[key1], i);
-              if (cell) {
-                rows[key1]._cells.splice(i, 1, {
-                  _value: {
-                    model: {
-                      value: " ",
-                      address: indexToLetter(i) + (parseInt(key1) + 1),
-                    },
-                  },
-                  _address: indexToLetter(i) + (parseInt(key1) + 1),
-                });
-              } else {
-                rows[key1]._cells.splice(i, 0, {
-                  _value: {
-                    model: {
-                      value: "dummy",
-                      address: indexToLetter(i) + (parseInt(key1) + 1),
-                    },
-                  },
-                  _address: indexToLetter(i) + (parseInt(key1) + 1),
-                });
-              }
-            }
-      
-            let nextKey = parseInt(key1) + 1;
-            while (
-              rows[nextKey] &&
-              getSafeCell(rows[nextKey], 0) &&
-              getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max"
-            ) {
-              for (let i = 1; i <= 50; i++) {
-                let cell = getSafeCell(rows[nextKey], i);
-                if (cell) {
-                  rows[nextKey]._cells.splice(i, 1, {
-                    _value: {
-                      model: {
-                        value: " ",
-                        address: indexToLetter(i) + (nextKey + 1),
-                      },
-                    },
-                    _address: indexToLetter(i) + (nextKey + 1),
-                  });
-                } else {
-                  rows[nextKey]._cells.splice(i, 0, {
-                    _value: {
-                      model: {
-                        value: "dummy",
-                        address: indexToLetter(i) + (nextKey + 1),
-                      },
-                    },
-                    _address: indexToLetter(i) + (nextKey + 1),
-                  });
-                }
-              }
-              nextKey++;
-            }
+        if (strm1_i == 1) {
+        for (let i = 1; i <= 50; i++) {
+          let cell = getSafeCell(row, i);
+          if (cell) {
+            cell._value.model = { value: " " };
+          } else {
+            row._cells[i] = {
+              _value: {
+                model: {
+                  value: "dummy",
+                  address: indexToLetter(i) + (parseInt(key1) + 1),
+                },
+              },
+              _address: indexToLetter(i) + (parseInt(key1) + 1),
+            };
           }
         }
+  
+        let nextKey = parseInt(key1) + 1;
+        while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
+          for (let i = 1; i <= 50; i++) {
+            let cell = getSafeCell(rows[nextKey], i);
+            if (cell) {
+              cell._value.model = { value: " " };
+            } else {
+              rows[nextKey]._cells[i] = {
+                _value: {
+                  model: {
+                    value: "dummy",
+                    address: indexToLetter(i) + (nextKey + 1),
+                  },
+                },
+                _address: indexToLetter(i) + (nextKey + 1),
+              };
+            }
+          }
+          nextKey++;
+        }
+      }
     
         if (strm1_i === 2) {
           for (let i = 1; i <= 50; i++) {
@@ -1032,6 +1025,28 @@ export const Updatereport = () => {
           }
         }
       }
+      if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$strm1") { 
+        let cell6 = getSafeCell(rows[key1],6);
+        let add6 = cell6._address;
+        data = { ...data, [add6] : 'Av'};
+        let cell7 = getSafeCell(rows[key1],7);
+        let add7 = cell7._address;
+        data = { ...data, [add7] : '='};
+        let cell8 = getSafeCell(rows[key1],8);
+        let add8 = cell8._address;
+        data = { ...data, [add8] : Av};
+        let cell10 = getSafeCell(rows[key1],10);
+        let add10 = cell10._address;
+        data = { ...data, [add10] : 'Avm'};
+        let cell11 = getSafeCell(rows[key1],11);
+        let add11 = cell11._address;
+        data = { ...data, [add11] : '='};
+        let cell12 = getSafeCell(rows[key1],12);
+        let add12 = cell12._address;
+        data = { ...data, [add12] : Avm};
+
+      }
+
       if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$A") {
         A_i = A_i + 1;
         if (A_i == 1) {
@@ -1486,6 +1501,14 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[6]");
           }
+          for (let i = 7; i <= 14; i++) {
+            let cell = getSafeCell(rows[key1], i);
+            if (cell) {
+                data = { ...data, [cell._address]: "" };
+            } else {
+                console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
+            }
+        }
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
@@ -1493,6 +1516,7 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
+
         }
       
         if (theta_i === 2) {
@@ -1525,6 +1549,14 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[6]");
           }
+          for (let i = 7; i <= 14; i++) {
+            let cell = getSafeCell(rows[key1], i);
+            if (cell) {
+                data = { ...data, [cell._address]: "" };
+            } else {
+                console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
+            }
+        }
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
@@ -1774,25 +1806,27 @@ export const Updatereport = () => {
           data = { ...data, [add28]: Avr };
         }
       } else {
-        if (
-          rows[key2]._cells[0] != undefined &&
-          rows[key2]._cells[0]._value.model.value == "$$Ar"
-        ) {
-          for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
-            let nextRow = worksheet.getRow(i);
-
-            if (nextRow.getCell(1).value === "$$A,v") {
-              // First, make the cells blank
-              nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                cell.value = "";
-              });
-              break;
+          if (
+              getSafeCell(rows[key2], 0) &&
+              getSafeCell(rows[key2], 0)._value.model.value === "$$Ar"
+            ) {
+              for (let i = parseInt(key2) + 1; i <= worksheet.rowCount; i++) {
+                let nextRow = worksheet.getRow(i);
+                let cell1 = nextRow.getCell(1);
+                
+                if (cell1 && cell1.value === "$$A,v") {
+                  // First, make the cells blank
+                  nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                    cell.value = "";
+                  });
+                  break;
+                }
+                
+                nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                  cell.value = "";
+                });
+              }
             }
-            nextRow.eachCell({ includeEmpty: true }, (cell) => {
-              cell.value = "";
-            });
-          }
-        }
       }
     }
     if (check_i == 2){
@@ -1815,57 +1849,26 @@ export const Updatereport = () => {
         // Check if rows[key2]._cells[0] value is '$$A,req'
         if (cell2Value == "Vu ≥ 0.5ΦVc") {
           if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar"
-          ) {
-            let cell13 = rows[key2]._cells[13];
-            let add13 = cell13._address;
-            let Av_extra;
-            let Avr =
-              ((Vu_min - finalResult) * s_min) /
-              (pi * fy * dv_min * (cot(theta_new_min) + cot(a)) * Math.sin(a));
-            console.log(Avr);
-            data = { ...data, [add13]: Avr };
-            for (let i = key2; i <= worksheet.rowCount; i++) {
-              // console.log("Hello");
-              let nextRow = worksheet.getRow(i);
-              if (
-                rows[nextRow]._cells[0] != undefined &&
-                rows[key1]._cells[0]._value.model.value == "$$Av,req"
-              ) {
-                let cell12 = rows[nextRow]._cells[12];
-                let add12 = cell12._address;
-                if (Avm > Avr) {
-                  Av_extra = Avm;
-                  data = { ...data, [add12]: Av };
-                } else {
-                  Av_extra = Avr;
-                  data = { ...data, [add12]: Avr };
+              getSafeCell(rows[key2], 0) &&
+              getSafeCell(rows[key2], 0)._value.model.value === "$$Ar"
+            ) {
+              for (let i = parseInt(key2) + 1; i <= worksheet.rowCount; i++) {
+                let nextRow = worksheet.getRow(i);
+                let cell1 = nextRow.getCell(1);
+                
+                if (cell1 && cell1.value === "$$A,v") {
+                  // First, make the cells blank
+                  nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                    cell.value = "";
+                  });
+                  break;
                 }
+                
+                nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                  cell.value = "";
+                });
               }
-              if (
-                rows[nextRow]._cells[0] != undefined &&
-                rows[key1]._cells[0]._value.model.value == "$$A,v"
-              ) {
-                let cell11 = rows[nextRow]._cells[11];
-                let cell29 = rows[nextRow]._cells[29];
-                let add11 = cell11._address;
-                let add29 = cell29._address;
-                if (Av >= Av_extra) {
-                  data = { ...data, [add11]: "≥" };
-                  data = { ...data, [add29]: "OK" };
-                } else {
-                  data = { ...data, [add11]: "<" };
-                  data = { ...data, [add29]: "NG" };
-                }
-              }
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // Found $$A,v, break the loop
-                break;
-              }
-              // Perform your desired operations within the loop here
-            }
-          } else {
+            } else {
             let key3 = parseInt(key1) + 2;
             if (
               rows[key3]._cells[0] != undefined &&
@@ -1896,26 +1899,24 @@ export const Updatereport = () => {
             }
           }
         } else {
-          if (
-            rows[key2]._cells[0] != undefined &&
-            rows[key2]._cells[0]._value.model.value == "$$Ar"
-          ) {
+          if (rows[key2] && rows[key2]._cells && rows[key2]._cells[0] && rows[key2]._cells[0]._value.model.value === "$$Ar") {
             for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
-              let nextRow = worksheet.getRow(i);
-
-              if (nextRow.getCell(1).value === "$$A,v") {
-                // First, make the cells blank
-                nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                  cell.value = "";
-                });
-                break;
+                let nextRow = worksheet.getRow(i);
+        
+                if (nextRow.getCell(1).value === "$$A,v") {
+                    // First, make the cells blank
+                    nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                        cell.value = "";
+                    });
+                    break;
+                }
+                
                 // Blank the corresponding rows
-              }
-              nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                cell.value = "";
-              });
+                nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                    cell.value = "";
+                });
             }
-          }
+        }
         }
 
     }
@@ -2328,6 +2329,7 @@ if (vn_i == 2){
       // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
       
     }
+    deleteRowsBetweenMarkers(worksheet);
     for (let i = 0; i < (rows.length + 15); i++) {
           if (rows[i] && rows[i]._cells && rows[i]._cells[0]) {
           const cellValue = rows[i]._cells[0]?._value?.model?.value;
@@ -2356,6 +2358,42 @@ if (vn_i == 2){
     setWorkbookData(workbookData);
     setSheetName(worksheet.name);
   }
+  function getSafeCell(row, index) {
+      try {
+        if (row && row._cells && row._cells[index] && row._cells[index]._value && row._cells[index]._value.model) {
+          return row._cells[index];
+        }
+      } catch (error) {
+        console.error(`Error accessing cell at index ${index}:`, error);
+      }
+      return null;
+    }
+    function deleteRowsBetweenMarkers(worksheet) {
+      for (let i = 1; i <= worksheet.rowCount; i++) {
+        let row = worksheet.getRow(i);
+        let cell = getSafeCell(row, 0);
+    
+        if (cell && cell._value.model.value === "$$b_str") {
+          // Make the row with "$$b_str" and the next 3 rows blank
+          for (let j = 0; j < 4; j++) {
+            let currentRow = worksheet.getRow(i + j);
+            currentRow.eachCell({ includeEmpty: true }, (cell) => {
+              cell.value = null;
+            });
+            // worksheet._merges.forEach((merge, index) => {
+            //   if (
+            //     merge.top <= currentRow.number &&
+            //     merge.bottom >= currentRow.number
+            //   ) {
+            //     worksheet.unMergeCells(merge.top, merge.left, merge.bottom, merge.right);
+            //   }
+            // });
+          }
+        }
+      }
+    }
+    
+    
 
   function updatedata2(wkey, worksheet2,beamStresses) {
     if (!workbookData) return;
