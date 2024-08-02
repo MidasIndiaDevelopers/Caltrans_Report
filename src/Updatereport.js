@@ -239,7 +239,7 @@ export const Updatereport = () => {
 
           // Enter your content in the merged cell
           const mergedCell = worksheet2.getCell(newRowNumber, 1); // Get the top-left cell of the merged range
-          mergedCell.value = "Tensile Stress unit in Prestress concrete at Service after loss: No tension case    (See CA-5.9.2.2b-1)";
+          mergedCell.value = "Tensile Stress Limits in Prestressed Concrete At Service Limit State after Losses : No tension case    (As per CA-5.9.2.2b-1)";
           mergedCell.font = { bold: true, size: 12 }; // Increase the font size to 14
 
           // Center-align the content
@@ -379,6 +379,8 @@ export const Updatereport = () => {
     let vr_i = 0;
     let check_i = 0;
     let bv;
+    let h;
+    let Mcr_i = 0;
     
    
     for (let key1 in rows) {
@@ -392,11 +394,20 @@ export const Updatereport = () => {
         let cell17 = rows[key1]._cells[17];
         let add17 = cell17._address;
         let cell17Value = cell17.value !== undefined ? cell17.value : null;
-        if (cell17Value == "Composite") {
+        if (cell17Value === "Composite") {
           type = "Composite";
+        } else if (cell17Value === undefined) {
+          type = "Box";
         } else {
           type = "Box";
         }
+      }
+      console.log(type);
+      if (
+        rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$H"
+      ) {
+        h = rows[key1]._cells[27]._value.model.value;
       }
 
       if (
@@ -432,7 +443,7 @@ export const Updatereport = () => {
           let equ = rows[key1]._cells[22]._value.model.address;
           let existingValue = rows[key1]._cells[22]._value.model.value;
           // Concatenate the existing value with the new string
-          let concatenatedValue = '0.005 ≤εt  ' + ' (See CA- 5.5.4.2)';
+          let concatenatedValue = '0.005 ≤εt  ' + '(As per CA- 5.5.4.2)';
           data = { ...data, [equ]: concatenatedValue };
         } else {
           data = { ...data, [location]: 1 };
@@ -446,7 +457,7 @@ export const Updatereport = () => {
             data = { ...data, [location]: 0.95 };
             phi = 0.95;
             let equ = rows[key1]._cells[25]._value.model.address;
-            data = { ...data, [equ] : '(See CA- 5.5.4.2)'}
+            data = { ...data, [equ] : '(As per CA- 5.5.4.2)'}
           } else {
             data = { ...data, [location]: 1 };
             phi = 1;
@@ -472,7 +483,7 @@ export const Updatereport = () => {
         data = { ...data, [location]: mr };
 
         // location of oK
-        if (mr < Number(mu)) {
+        if (Math.abs(mr) < Math.abs(Number(mu))) {
           let location1 = rows[key1]._cells[29]._value.model.address;
           let location2 = rows[key1]._cells[13]._value.model.address;
           data = { ...data, [location1]: "NG" };
@@ -486,30 +497,73 @@ export const Updatereport = () => {
         }
        }
        if(Mr_i == 2) {
-          let location = rows[key1]._cells[5]._value.model.address;
-          let value5 = rows[key1]._cells[5]._value.model.value;
-          let mu = rows[key1]._cells[17]._value.model.value;
-          mu_neg =mu;
-          mr_neg = value5 * phi;
-          mr_neg = parseFloat(mr_neg.toFixed(3));
-          data = { ...data, [location]: mr_neg };
-  
-          // location of oK
-          if (mr_neg < Number(mu)) {
+        let location = rows[key1]._cells[5]._value.model.address;
+
+        let mu = rows[key1]._cells[17]._value.model.value;
+        let value5 = rows[key1]._cells[5]._value.model.value; 
+        mu_neg = mu;
+        mr_neg = rows[key1]._cells[5]._value.model.value;
+        mr_old_neg = mr_neg;
+        mr_neg = value5*phi;
+        mr_neg = parseFloat(mr_neg.toFixed(3));
+        mr_new_neg = mr_neg;
+        data = { ...data, [location]: mr_neg };
+
+        // location of oK
+        if (Math.abs(mr) < Math.abs(Number(mu))) {
+          let location1 = rows[key1]._cells[29]._value.model.address;
+          let location2 = rows[key1]._cells[13]._value.model.address;
+          data = { ...data, [location1]: "NG" };
+          data = { ...data, [location2]: "<" };
+        }
+        else {
             let location1 = rows[key1]._cells[29]._value.model.address;
             let location2 = rows[key1]._cells[13]._value.model.address;
-            data = { ...data, [location1]: "NG" };
-            data = { ...data, [location2]: "<" };
-          }
-          else {
-              let location1 = rows[key1]._cells[29]._value.model.address;
-              let location2 = rows[key1]._cells[13]._value.model.address;
-              data = { ...data, [location1]: "OK" };
-              data = { ...data, [location2]: "≥" };
-          }
-       }
+            data = { ...data, [location1]: "OK" };
+            data = { ...data, [location2]: "≥" };
+        }
       }
-
+    }
+      if (
+        getSafeCell(rows[key1], 0) &&
+        getSafeCell(rows[key1], 0)._value.model.value === "$$Mcr"
+      ) {
+        Mcr_i += 1;
+      
+        let cell5 = getSafeCell(rows[key1], 5);
+        let cell13 = getSafeCell(rows[key1], 13);
+        let cell29 = getSafeCell(rows[key1], 29);
+        let cell21 = getSafeCell(rows[key1], 21);
+      
+        let add5 = cell5._address;
+        let add13 = cell13._address;
+        let add29 = cell29._address;
+      
+        if (Mcr_i === 1) {
+          data = { ...data, [add5]: mr_new_pos };
+      
+          if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_pos)) {
+            data = { ...data, [add13]: '≥' };
+            data = { ...data, [add29]: 'OK' };
+          } else {
+            data = { ...data, [add13]: '<' };
+            data = { ...data, [add29]: 'NG' };
+          }
+        }
+      
+        if (Mcr_i === 2) {
+          data = { ...data, [add5]: mr_new_neg };
+      
+          if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_neg)) {
+            data = { ...data, [add13]: '≥' };
+            data = { ...data, [add29]: 'OK' };
+          } else {
+            data = { ...data, [add13]: '<' };
+            data = { ...data, [add29]: 'NG' };
+          }
+        }
+      }
+      
       if (
         rows[key1]._cells[0] != undefined &&
         rows[key1]._cells[0]._value.model.value == "$$dv"
@@ -536,6 +590,7 @@ export const Updatereport = () => {
          }
          
       }
+      
     if (
       rows[key1]._cells[0] != undefined &&
       rows[key1]._cells[0]._value.model.value == "$$sm"
@@ -552,9 +607,10 @@ export const Updatereport = () => {
         } else {
           data = { ...data, [add2]: 0.8 * dv };
         }
+        let add27 = rows[key1]._cells[27]._value.model.address;
+        data = { ...data,[add27] : '(As per CA-5.7.2.6-1)'}
       }
-      let add27 = rows[key1]._cells[27]._value.model.address;
-      data = { ...data,[add27] : '(See CA-5.7.2.6-1)'}
+      
     }
     if (sm_i == 2) {
         if (sp === "ca1" && vu_check == '<') {
@@ -567,9 +623,10 @@ export const Updatereport = () => {
           } else {
             data = { ...data, [add2]: 0.8 * dv };
           }
+          let add27 = rows[key1]._cells[27]._value.model.address;
+          data = { ...data,[add27] : '(As per CA-5.7.2.6-1)'}
         }
-        let add27 = rows[key1]._cells[27]._value.model.address;
-        data = { ...data,[add27] : '(See CA-5.7.2.6-1)'}
+       
       }
     }
 
@@ -631,13 +688,10 @@ export const Updatereport = () => {
             if (rows[nextKey1]._cells[0] != undefined) {
               if (rows[nextKey1]._cells[0]._value.model.value == "$$B") {
                 // Store the value and address of cell in column 13 for $$B row
-                column15Address =
-                  rows[nextKey1]._cells[15]._value.model.address;
+                column15Address = rows[nextKey1]._cells[15]._value.model.address;
                 column15Value = rows[nextKey1]._cells[15]._value.model.value;
-                column15Value_new =
-                  1 +
-                  (1 * 2.5) / (1 / ((column15Value - 1) / 1.8) + 1.26 - 1.75);
-                column15Value_new = Math.round(column15Value_new);
+                column15Value_new = (1 + (2.5/(0.7*(h-2.5))));
+                column15Value_new = parseFloat(column15Value_new.toFixed(3));
                 console.log(column15Value_new);
                 storedValues[column15Address] = column15Value;
                 data = { ...data, [column15Address]: column15Value_new };
@@ -651,7 +705,7 @@ export const Updatereport = () => {
                 storedValues[column9Address] = column9Value;
                 data = { ...data, [column9Address]: column9Value_new };
                 let add13 = rows[nextKey1]._cells[13]._value.model.address;
-                data = { ...data,[add13] : '(in)      (See CA-5.6.7-1)'};
+                data = { ...data,[add13] : '(in)                                                                    (As per CA-5.6.7-1)'};
                 break;
               }
             }
@@ -732,6 +786,11 @@ export const Updatereport = () => {
         rows[key1]._cells[0]._value.model.value == "$$Ag"
       ) {
         Ag = rows[key1]._cells[27]._value.model.value;
+        if (type == 'Box') {
+          Ag = rows[key1]._cells[14]._value.model.value;
+          h= rows[key1]._cells[4]._value.model.value;
+          St = rows[key1]._cells[24]._value.model.value;
+        }
       }
       if (
         rows[key1]._cells[0] != undefined &&
@@ -744,6 +803,9 @@ export const Updatereport = () => {
         rows[key1]._cells[0]._value.model.value == "$$Sb"
       ) {
         Sb = rows[key1]._cells[27]._value.model.value;
+        if(type == 'Box') {
+          Sb = rows[key1]._cells[24]._value.model.value;
+        }
       }
       if (
         rows[key1]._cells[0] != undefined &&
@@ -764,6 +826,10 @@ export const Updatereport = () => {
       ) {
         E = rows[key1]._cells[12]._value.model.value;
         fc = rows[key1]._cells[5]._value.model.value;
+        if ( type == 'Box'){
+          E = rows[key1]._cells[9]._value.model.value;
+          fc = rows[key1]._cells[2]._value.model.value;
+        }
       }
       if (
         rows[key1]._cells[0] != undefined &&
@@ -929,7 +995,7 @@ export const Updatereport = () => {
         if (strm_i === 1) {
           add1 = getSafeCell(row, 2)._value.model.address;
           add2 = getSafeCell(row, 8)._value.model.address;
-          data = { ...data, [add1]: "Calculation for β and θ  (See CA - 5.7.3.4)" };
+          data = { ...data, [add1]: "Calculation for β and θ                 (As per CA - 5.7.3.4)" };
           data = { ...data, [add2]: "" };
         }
     
@@ -939,7 +1005,7 @@ export const Updatereport = () => {
           add12 = getSafeCell(row, 12)._value.model.address;
           data = { ...data, [add1]: "Calculation for β and θ" };
           data = { ...data, [add2]: "" };
-          data = { ...data, [add12]: '(See CA - 5.7.3.4)' };
+          data = { ...data, [add12]: '(as per CA - 5.7.3.4)' };
         }
       }
     
@@ -1423,7 +1489,7 @@ export const Updatereport = () => {
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
-            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
@@ -1462,7 +1528,7 @@ export const Updatereport = () => {
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
-            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
@@ -1512,7 +1578,7 @@ export const Updatereport = () => {
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
-            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
@@ -1560,7 +1626,7 @@ export const Updatereport = () => {
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
-            data = { ...data, [cell15._address]: '(See CA-5.7.3.4)' };
+            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
@@ -1700,227 +1766,206 @@ export const Updatereport = () => {
         }
       }
     }
-    if (
-      rows[key1]._cells[0] != undefined &&
-      rows[key1]._cells[0]._value.model.value == "$$check"
-    ) {
-      check_i = check_i + 1;
-      if (check_i == 1){
-      let cell2 = rows[key1]._cells[2];
-      let cell11 = rows[key1]._cells[11];
-      let cell12 = rows[key1]._cells[12];
-      let add2 = cell2._address;
-      let add11 = cell11._address;
-      let add12 = cell12._address;
-      let cell2Value;
-      if (Math.abs(half_finalResult) > Vu_max) {
-        cell2Value = "Vu < 0.5Φ(Vc+Vp)";
-        data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
-        data = { ...data, [add11]: "∴" };
-        data = { ...data, [add12]: "No Shear reinforcing" };
-      } else {
-        cell2Value = "Vu ≥ 0.5ΦVc";
-        data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
-      }
-      let key2 = parseInt(key1) + 1;
-
-      // Check if rows[key2]._cells[0] value is '$$A,req'
-      if (cell2Value == "Vu ≥ 0.5ΦVc") {
-        if (
-          rows[key2]._cells[0] != undefined &&
-          rows[key2]._cells[0]._value.model.value == "$$Ar"
-        ) {
-          let cell13 = rows[key2]._cells[13];
-          let add13 = cell13._address;
-          let Av_extra;
-          let Avr =
-            ((Vu_max - finalResult) * s_max) /
-            (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-            Avr = parseFloat(Avr.toFixed(3));
-          console.log(Avr);
-          data = { ...data, [add13]: Avr };
-          for (let i = key2; i <= worksheet.rowCount; i++) {
-            // console.log("Hello");
-            let nextRow = worksheet.getRow(i);
-            if (
-              rows[i]._cells[0] != undefined &&
-              rows[i]._cells[0]._value.model.value == "$$Av,req"
-            ) {
-              let cell12 = rows[i]._cells[12];
-              let add12 = cell12._address;
-              if (Avm > Avr) {
-                Av_extra = Avm;
-                data = { ...data, [add12]: Av };
-              } else {
-                Av_extra = Avr;
-                data = { ...data, [add12]: Avr };
-              }
-            }
-            if (
-              rows[i]._cells[0] != undefined &&
-              rows[i]._cells[0]._value.model.value == "$$A,v"
-            ) {
-              let cell11 = rows[i]._cells[11];
-              let cell29 = rows[i]._cells[29];
-              let add11 = cell11._address;
-              let add29 = cell29._address;
-              if (Av >= Av_extra) {
-                data = { ...data, [add11]: "≥" };
-                data = { ...data, [add29]: "OK" };
-              } else {
-                data = { ...data, [add11]: "<" };
-                data = { ...data, [add29]: "NG" };
-              }
-            }
-            if (nextRow.getCell(1).value === "$$A,v") {
-              // Found $$A,v, break the loop
-              break;
-            }
-            // Perform your desired operations within the loop here
+    if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$check") {
+        check_i += 1;
+      
+        if (check_i === 1) {
+          let cell2 = getSafeCell(rows[key1], 2);
+          let cell11 = getSafeCell(rows[key1], 11);
+          let cell12 = getSafeCell(rows[key1], 12);
+          let add2 = cell2._address;
+          let add11 = cell11._address;
+          let add12 = cell12._address;
+          let cell2Value;
+      
+          if (Math.abs(half_finalResult) > Vu_max) {
+            cell2Value = "Vu < 0.5Φ(Vc+Vp)";
+            data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
+            data = { ...data, [add11]: "∴" };
+            data = { ...data, [add12]: "No Shear reinforcing" };
+          } else {
+            cell2Value = "Vu ≥ 0.5ΦVc";
+            data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
           }
-        } else {
-          let key3 = parseInt(key1) + 2;
-          key3 += 5;
-
-          let cell19 = rows[key3]._cells[19];
-          let add19 = cell19._address;
-          data = { ...data, [add19]: "Av,req1" };
-          let cell20 = rows[key3]._cells[20];
-          let add20 = cell20._address;
-          data = { ...data, [add20]: "=" };
-          let cell21 = rows[key3]._cells[21];
-          let add21 = cell21._address;
-          data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
-          let cell21_n = rows[key3 + 1]._cells[21];
-          let add21_n = cell21_n._address;
-          data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
-          let cell27 = rows[key3]._cells[27];
-          let add27 = cell27._address;
-          data = { ...data, [add27]: "=" };
-          let cell28 = rows[key3]._cells[28];
-          let add28 = cell28._address;
-          let Av_extra;
-          let Avr =
-            ((Vu_max - finalResult) * s_max) /
-            (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-          data = { ...data, [add28]: Avr };
-        }
-      } else {
-          if (
-              getSafeCell(rows[key2], 0) &&
-              getSafeCell(rows[key2], 0)._value.model.value === "$$Ar"
-            ) {
+      
+          let key2 = parseInt(key1) + 1;
+      
+          if (cell2Value === "Vu ≥ 0.5ΦVc") {
+            if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
+              let cell13 = getSafeCell(rows[key2], 13);
+              let add13 = cell13._address;
+              let Av_extra;
+              let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+              Avr = parseFloat(Avr.toFixed(3));
+              console.log(Avr);
+              data = { ...data, [add13]: Avr };
+      
+              for (let i = key2; i <= worksheet.rowCount; i++) {
+                let nextRow = worksheet.getRow(i);
+      
+                if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$Av,req") {
+                  let cell12 = getSafeCell(rows[i], 12);
+                  let add12 = cell12._address;
+      
+                  if (Avm > Avr) {
+                    Av_extra = Avm;
+                    data = { ...data, [add12]: Av };
+                  } else {
+                    Av_extra = Avr;
+                    data = { ...data, [add12]: Avr };
+                  }
+                }
+      
+                if (getSafeCell(rows[i], 0) && getSafeCell(rows[i], 0)._value.model.value === "$$A,v") {
+                  let cell11 = getSafeCell(rows[i], 11);
+                  let cell29 = getSafeCell(rows[i], 29);
+                  let add11 = cell11._address;
+                  let add29 = cell29._address;
+      
+                  if (Av >= Av_extra) {
+                    data = { ...data, [add11]: "≥" };
+                    data = { ...data, [add29]: "OK" };
+                  } else {
+                    data = { ...data, [add11]: "<" };
+                    data = { ...data, [add29]: "NG" };
+                  }
+                }
+      
+                if (nextRow.getCell(1).value === "$$A,v") {
+                  break;
+                }
+              }
+            }
+             else {
+            //   let key3 = parseInt(key1) + 2;
+            //   key3 += 5;
+      
+            //   let cell19 = getSafeCell(rows[key3], 19);
+            //   let add19 = cell19._address;
+            //   data = { ...data, [add19]: "Av,req1" };
+            //   let cell20 = getSafeCell(rows[key3], 20);
+            //   let add20 = cell20._address;
+            //   data = { ...data, [add20]: "=" };
+            //   let cell21 = getSafeCell(rows[key3], 21);
+            //   let add21 = cell21._address;
+            //   data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
+            //   let cell21_n = getSafeCell(rows[key3 + 1], 21);
+            //   let add21_n = cell21_n._address;
+            //   data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
+            //   let cell27 = getSafeCell(rows[key3], 27);
+            //   let add27 = cell27._address;
+            //   data = { ...data, [add27]: "=" };
+            //   let cell28 = getSafeCell(rows[key3], 28);
+            //   let add28 = cell28._address;
+            //   let Av_extra;
+            //   let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+            //   data = { ...data, [add28]: Avr };
+            }
+             } else {
+            if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
               for (let i = parseInt(key2) + 1; i <= worksheet.rowCount; i++) {
                 let nextRow = worksheet.getRow(i);
                 let cell1 = nextRow.getCell(1);
-                
+      
                 if (cell1 && cell1.value === "$$A,v") {
-                  // First, make the cells blank
                   nextRow.eachCell({ includeEmpty: true }, (cell) => {
                     cell.value = "";
                   });
                   break;
                 }
-                
+      
                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
                   cell.value = "";
                 });
               }
             }
-      }
-    }
-    if (check_i == 2){
-        let cell2 = rows[key1]._cells[2];
-        let cell11 = rows[key1]._cells[11];
-        let cell12 = rows[key1]._cells[12];
-        let add2 = cell2._address;
-        let add11 = cell11._address;
-        let add12 = cell12._address;
-        let cell2Value;
-        if (Math.abs(half_finalResult) > Vu_min) {
-          data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
-          data = { ...data, [add11]: "∴" };
-          data = { ...data, [add12]: "No Shear reinforcing" };
-        } else {
-          data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
+          }
         }
-        let key2 = parseInt(key1) + 1;
-
-        // Check if rows[key2]._cells[0] value is '$$A,req'
-        if (cell2Value == "Vu ≥ 0.5ΦVc") {
-          if (
-              getSafeCell(rows[key2], 0) &&
-              getSafeCell(rows[key2], 0)._value.model.value === "$$Ar"
-            ) {
+      
+        if (check_i === 2) {
+          let cell2 = getSafeCell(rows[key1], 2);
+          let cell11 = getSafeCell(rows[key1], 11);
+          let cell12 = getSafeCell(rows[key1], 12);
+          let add2 = cell2._address;
+          let add11 = cell11._address;
+          let add12 = cell12._address;
+          let cell2Value;
+      
+          if (Math.abs(half_finalResult) > Vu_min) {
+            data = { ...data, [add2]: "Vu < 0.5Φ(Vc+Vp)" };
+            data = { ...data, [add11]: "∴" };
+            data = { ...data, [add12]: "No Shear reinforcing" };
+          } else {
+            data = { ...data, [add2]: "Vu ≥ 0.5ΦVc" };
+          }
+      
+          let key2 = parseInt(key1) + 1;
+      
+          if (cell2Value === "Vu ≥ 0.5ΦVc") {
+            if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
               for (let i = parseInt(key2) + 1; i <= worksheet.rowCount; i++) {
                 let nextRow = worksheet.getRow(i);
                 let cell1 = nextRow.getCell(1);
-                
+      
                 if (cell1 && cell1.value === "$$A,v") {
-                  // First, make the cells blank
                   nextRow.eachCell({ includeEmpty: true }, (cell) => {
                     cell.value = "";
                   });
                   break;
                 }
-                
+      
                 nextRow.eachCell({ includeEmpty: true }, (cell) => {
                   cell.value = "";
                 });
               }
             } else {
-            let key3 = parseInt(key1) + 2;
-            if (
-              rows[key3]._cells[0] != undefined &&
-              rows[key3]._cells[0]._value.model.value == "$$vs"
-            ) {
-              let cell19 = rows[key3]._cells[19];
-              let add19 = cell19._address;
-              data = { ...data, [add19]: "Av,req1" };
-              let cell20 = rows[key3]._cells[20];
-              let add20 = cell20._address;
-              data = { ...data, [add20]: "=" };
-              let cell21 = rows[key3]._cells[21];
-              let add21 = cell21._address;
-              data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
-              let cell21_n = rows[key3 + 1]._cells[21];
-              let add21_n = cell21_n._address;
-              data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
-              let cell27 = rows[key3]._cells[27];
-              let add27 = cell27._address;
-              data = { ...data, [add27]: "=" };
-              let cell28 = rows[key3]._cells[28];
-              let add28 = cell28._address;
-              let Av_extra;
-              let Avr =
-                ((Vu_max - finalResult) * s_max) /
-                (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
-              data = { ...data, [add28]: Avr };
+              let key3 = parseInt(key1) + 2;
+      
+              if (getSafeCell(rows[key3], 0) && getSafeCell(rows[key3], 0)._value.model.value === "$$vs") {
+                let cell19 = getSafeCell(rows[key3], 19);
+                let add19 = cell19._address;
+                data = { ...data, [add19]: "Av,req1" };
+                let cell20 = getSafeCell(rows[key3], 20);
+                let add20 = cell20._address;
+                data = { ...data, [add20]: "=" };
+                let cell21 = getSafeCell(rows[key3], 21);
+                let add21 = cell21._address;
+                data = { ...data, [add21]: "{ Vu - Φ(Vc+Vp) }·s" };
+                let cell21_n = getSafeCell(rows[key3 + 1], 21);
+                let add21_n = cell21_n._address;
+                data = { ...data, [add21_n]: "Φ·fy·dv(cotθ+cotα)sinα" };
+                let cell27 = getSafeCell(rows[key3], 27);
+                let add27 = cell27._address;
+                data = { ...data, [add27]: "=" };
+                let cell28 = getSafeCell(rows[key3], 28);
+                let add28 = cell28._address;
+                let Av_extra;
+                let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                data = { ...data, [add28]: Avr };
+              }
+            }
+          } else {
+            if (rows[key2] && rows[key2]._cells && rows[key2]._cells[0] && rows[key2]._cells[0]._value.model.value === "$$Ar") {
+              for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
+                let nextRow = worksheet.getRow(i);
+      
+                if (nextRow.getCell(1).value === "$$A,v") {
+                  nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                    cell.value = "";
+                  });
+                  break;
+                }
+      
+                nextRow.eachCell({ includeEmpty: true }, (cell) => {
+                  cell.value = "";
+                });
+              }
             }
           }
-        } else {
-          if (rows[key2] && rows[key2]._cells && rows[key2]._cells[0] && rows[key2]._cells[0]._value.model.value === "$$Ar") {
-            for (let i = key2 + 1; i <= worksheet.rowCount; i++) {
-                let nextRow = worksheet.getRow(i);
-        
-                if (nextRow.getCell(1).value === "$$A,v") {
-                    // First, make the cells blank
-                    nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                        cell.value = "";
-                    });
-                    break;
-                }
-                
-                // Blank the corresponding rows
-                nextRow.eachCell({ includeEmpty: true }, (cell) => {
-                    cell.value = "";
-                });
-            }
         }
-        }
-
-    }
-  }
+      }
+      
+      
   console.log("hello");
 //   if (
 //     getSafeCell(rows[key1], 0) &&
@@ -2072,15 +2117,15 @@ export const Updatereport = () => {
             data = { ...data, [add7]: parseFloat(Vn.toFixed(2)) };
 
             let cell13 = getSafeCell(rows[key1], 13);
-            let cell19 = getSafeCell(rows[key1], 19);
+            let cell20 = getSafeCell(rows[key1], 20);
             let add13 = cell13 ? cell13._address : null;
-            let add19 = cell19 ? cell19._address : null;
-            let value19 = cell19 ? cell19.value : null;
+            let add20 = cell20 ? cell20._address : null;
+            let value20 = cell20 ? cell20.value : null;
 
-            if (add13 && value19 !== null) {
-                data = { ...data, [add13]: Vn < value19 ? "≤" : ">" };
+            if (add13 && value20 !== null) {
+                data = { ...data, [add13]: Vn < value20 ? "≤" : ">" };
             } else {
-                console.error("Error: Unable to retrieve address or value for rows[key1]._cells[19]");
+                console.error("Error: Unable to retrieve address or value for rows[key1]._cells[20]");
             }
         } else {
             console.error("Error: Unable to retrieve address for rows[key1]._cells[7]");
@@ -2096,15 +2141,15 @@ export const Updatereport = () => {
             data = { ...data, [add7]: parseFloat(Vn_min.toFixed(2)) };
 
             let cell13 = getSafeCell(rows[key1], 13);
-            let cell19 = getSafeCell(rows[key1], 19);
+            let cell20 = getSafeCell(rows[key1], 20);
             let add13 = cell13 ? cell13._address : null;
-            let add19 = cell19 ? cell19._address : null;
-            let value19 = cell19 ? cell19.value : null;
+            let add20 = cell20 ? cell20._address : null;
+            let value20 = cell20 ? cell20.value : null;
 
-            if (add13 && value19 !== null) {
-                data = { ...data, [add13]: Vn_min < value19 ? "≤" : ">" };
+            if (add13 && value20 !== null) {
+                data = { ...data, [add13]: Vn_min < value20 ? "≤" : ">" };
             } else {
-                console.error("Error: Unable to retrieve address or value for rows[key1]._cells[19]");
+                console.error("Error: Unable to retrieve address or value for rows[key1]._cells[20]");
             }
         } else {
             console.error("Error: Unable to retrieve address for rows[key1]._cells[7]");
@@ -2406,9 +2451,15 @@ if (vn_i == 2){
       // Access the last row
       const lastRowNumber = rowCount; // Row numbers are 1-based
       const lastRow = worksheet2.getRow(lastRowNumber);
+      
 
       // Log the last row for debugging
       console.log(`Last row (${lastRowNumber}):`, lastRow);
+
+      const thirdRow = worksheet2.getRow(4);
+      const thirdRowCellValue = thirdRow.getCell(3).value;
+      console.log(`Value of the cell in row 3, column 3: ${thirdRowCellValue}`); 
+
       const nextRowNumber = lastRowNumber + 1;
 
       // Access the next row
@@ -2416,8 +2467,13 @@ if (vn_i == 2){
   
       // Populate the first cell with selectedName
       nextRow.getCell(1).value = beamStresses.BeamStress.DATA[0][1];
-      nextRow.getCell(2).value = beamStresses.BeamStress.DATA[0][5];
-      nextRow.getCell(3).value = 'Girder';
+      nextRow.getCell(2).value = beamStresses.BeamStress.DATA[0][3];
+      if (thirdRowCellValue == '-') {
+      nextRow.getCell(3).value = '-';
+      }
+      else {
+        nextRow.getCell(3).value = 'Girder';
+      }
       nextRow.getCell(4).value = 'Tension';
       nextRow.getCell(5).value = selectedName;
       nextRow.getCell(8).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][12]);
@@ -2446,21 +2502,22 @@ if (vn_i == 2){
       // lastRow.getCell(1).value = 'New Value';
 
       // Save changes to the last row (if necessary)
+      if (thirdRowCellValue!='-') {
       const nextRowNumber2 = lastRowNumber + 2;
 
       // Access the next row
       const nextRow2 = worksheet2.getRow(nextRowNumber2);
   
       // Populate the first cell with selectedName
-      nextRow2.getCell(1).value = beamStresses.BeamStress.DATA[1][1];
-      nextRow2.getCell(2).value = beamStresses.BeamStress.DATA[1][5];
+      nextRow2.getCell(1).value = beamStresses.BeamStress.DATA[0][1];
+      nextRow2.getCell(2).value = beamStresses.BeamStress.DATA[0][5];
       nextRow2.getCell(3).value = 'Slab';
       nextRow2.getCell(4).value = 'Tension';
       nextRow2.getCell(5).value = selectedName;
-      nextRow2.getCell(8).value = changeSignAndFormat(beamStresses.BeamStress.DATA[1][12]);
-      nextRow2.getCell(9).value = changeSignAndFormat(beamStresses.BeamStress.DATA[1][15]);
-      nextRow2.getCell(10).value = changeSignAndFormat(beamStresses.BeamStress.DATA[1][13]);
-      nextRow2.getCell(11).value = changeSignAndFormat(beamStresses.BeamStress.DATA[1][14]); 
+      nextRow2.getCell(8).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][12]);
+      nextRow2.getCell(9).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][15]);
+      nextRow2.getCell(10).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][13]);
+      nextRow2.getCell(11).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][14]); 
       nextRow2.getCell(6).value = calculateAverage(nextRow2.getCell(8).value, nextRow2.getCell(10).value);
       nextRow2.getCell(7).value = calculateAverage(nextRow2.getCell(9).value, nextRow2.getCell(11).value);
       nextRow2.getCell(12).value = findMinValue([ nextRow2.getCell(8),nextRow2.getCell(9),nextRow2.getCell(10),nextRow2.getCell(11)]);
@@ -2476,6 +2533,7 @@ if (vn_i == 2){
   
       // Log the next row for debugging
       console.log(`Next row (${nextRowNumber2}):`, nextRow2);
+    }
       lastRow.commit();
   }
   function safeStringify(obj) {
@@ -2621,6 +2679,7 @@ if (vn_i == 2){
     // fetchLc();
     const combArray = Object.values(lc);
     let beamStresses;
+    let beamStresses_box;
     if (combArray.length === 0) {
       enqueueSnackbar("Please Define Load Combination", {
         variant: "error",
@@ -2645,6 +2704,55 @@ if (vn_i == 2){
     const concatenatedValue_cbr_max = `${selectedName}(CBR:max)`;
     const concatenatedValue_cbsc = `${selectedName}(CBSC)`;
     const concatenatedValue_cbsc_max = `${selectedName}(CBSC:max)`;
+    let box_stresses = {
+      "Argument": {
+          "TABLE_NAME": "BeamStress",
+          "TABLE_TYPE": "BEAMSTRESS",
+          "EXPORT_PATH": "C:\\MIDAS\\Result\\Output.JSON",
+          "STYLES": {
+              "FORMAT": "Fixed",
+              "PLACE": 12
+          },
+          "COMPONENTS": [
+              "Elem",
+              "Load",
+              "Part",
+              "Axial",
+              "Shear-y",
+              "Shear-z",
+              "Bend(+y)",
+              "Bend(-y)",
+              "Bend(+z)",
+              "Bend(-z)",
+              "Cb(min/max)",
+              "Cb1(-y+z)",
+              "Cb2(+y+z)",
+              "Cb3(+y-z)",
+              "Cb4(-y-z)"
+          ],
+          "NODE_ELEMS": {
+              "KEYS": [
+                numberPart
+              ]
+          },
+          "LOAD_CASE_NAMES": [
+            selectedName,
+            concatenatedValue_cbc,
+            concatenatedValue_cbc_max,
+            concatenatedValue_cb,
+            concatenatedValue_cd_max,
+            concatenatedValue_cbr,
+            concatenatedValue_cbr_max,
+            concatenatedValue_cbsc,
+            concatenatedValue_cbsc_max
+          ],
+          "PARTS": [
+             `Part ${letterPart}`
+          ]
+      }
+  };
+  console.log(box_stresses);
+
     let stresses = {
       "Argument": {
           "TABLE_NAME": "BeamStress",
@@ -2699,18 +2807,29 @@ if (vn_i == 2){
   console.log(stresses);
   try {
     beamStresses = await midasAPI("POST", "/post/table", stresses);
+    
+    if (Object.keys(beamStresses).length === 1) {
+      beamStresses_box = await midasAPI("POST", "/post/table", box_stresses);
+    }
+  
     // setBeamStresses(beamStresses);
     console.log(beamStresses);
+    console.log(beamStresses_box);
   } catch (error) {
     console.error("Error fetching beam stresses:", error);
   }
-
+  let type;
     for (let wkey in SelectWorksheets) {
       updatedata(wkey, SelectWorksheets[wkey]);
     }
     for (let wkey in SelectWorksheets2) {
-      updatedata2(wkey, SelectWorksheets2[wkey], beamStresses);
+      if (beamStresses && Object.keys(beamStresses).length > 1) {
+        updatedata2(wkey, SelectWorksheets2[wkey], beamStresses);
+      } else {
+        updatedata2(wkey, SelectWorksheets2[wkey], beamStresses_box);
+      }
     }
+    
     for (let wkey in SelectWorksheets3) {
         updatedata3(wkey, SelectWorksheets3[wkey]);
       }
@@ -2839,12 +2958,12 @@ if (vn_i == 2){
               marginTop: "6px",
               marginRight: "5px",
               height: "10px",
-              width: "300px",
+              width: "235px",
             }}
           >
             <Radio name="CA (2.5 inches)" value="ca2" checked={cvr === "ca2"} />
             <Radio
-              name="AASHTO LFRD (1.8 inches)"
+              name="AASHTO LFRD"
               value="aa2"
               checked={cvr === "aa2"}
             />
@@ -2856,7 +2975,7 @@ if (vn_i == 2){
           <Grid item xs={3}>
             <Typography variant="h1">
               {" "}
-              Load Case for SLS (Permanent Loads)
+              Load Combination for SLS (Permanent Loads)
             </Typography>
           </Grid>
           <Grid item xs={6} paddingLeft="10px">
@@ -2879,7 +2998,7 @@ if (vn_i == 2){
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          marginTop: "20px",
+          marginTop: "11px",
         }}
       >
         <Grid container>
@@ -2946,7 +3065,7 @@ if (vn_i == 2){
           display: "flex",
           justifyContent: "space-between",
           margin: "0px",
-          marginTop: "20px",
+          marginTop: "18px",
           marginBottom: "30px",
         }}
       >
