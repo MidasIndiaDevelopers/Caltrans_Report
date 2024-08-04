@@ -40,6 +40,11 @@ export const Updatereport = () => {
   let mr_new_pos;
   let mr_old_neg;
   let mr_new_neg;
+  let check_mr_old;
+  let check_mr_new;
+  let s;
+  let sm_old;
+  let sm_new
 
 
 
@@ -381,6 +386,11 @@ export const Updatereport = () => {
     let bv;
     let h;
     let Mcr_i = 0;
+    let bs_i = 0;
+    let I ;
+    let cm;
+    let cp;
+    let st1_i = 0;
     
    
     for (let key1 in rows) {
@@ -475,6 +485,8 @@ export const Updatereport = () => {
 
         let mu = rows[key1]._cells[17]._value.model.value;
         let value5 = rows[key1]._cells[5]._value.model.value; 
+        let check_mr = rows[key1]._cells[29]._value.model.value;
+        check_mr_old = check_mr;
         mu_pos = mu;
         mr_old_pos = rows[key1]._cells[5]._value.model.value;
         mr = value5*phi;
@@ -859,6 +871,24 @@ export const Updatereport = () => {
       }
       if (
         rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$Iy"
+      ) {
+        I = rows[key1]._cells[27]._value.model.value;
+      }
+      if (
+        rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$Cps"
+      ) {
+        cp = rows[key1]._cells[27]._value.model.value;
+      }
+      if (
+        rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$Cms"
+      ) {
+        cm = rows[key1]._cells[27]._value.model.value;
+      }
+      if (
+        rows[key1]._cells[0] != undefined &&
         rows[key1]._cells[0]._value.model.value == "$$bv"
       ) {
         bv = rows[key1]._cells[4]._value.model.value;
@@ -911,26 +941,38 @@ export const Updatereport = () => {
     console.log(Vc);
     console.log($$alpha);
     console.log(Vp);
-    let Ecm =
-      ((-1 * Number(Mmax)) / Number(St) + Number(Nmax) / Number(Ag)) /
+    let Ecm;
+    let Etm;
+    let Ecn;
+    let Etn;
+    if ( type == 'Box') {
+    Ecm =((-1 * Number(Mmax)) / Number(St) + Number(Nmax) / Number(Ag)) /
       Number(E);
-    let Ecn =
-      ((-1 * Number(Mmin)) / Number(St) + Number(Nmin) / Number(Ag)) /
+    Ecn =((-1 * Number(Mmin)) / Number(St) + Number(Nmin) / Number(Ag)) /
       Number(E);
-    let Etm =
-      ((-1 * Number(Mmax)) / Number(Sb) + Number(Nmax) / Number(Ag)) /
+    Etm =((1 * Number(Mmax)) / Number(Sb) + Number(Nmax) / Number(Ag)) /
       Number(E);
-    let Etn =
-      ((-1 * Number(Mmin)) / Number(Sb) + Number(Nmin) / Number(Ag)) /
+    Etn =((1 * Number(Mmin)) / Number(Sb) + Number(Nmin) / Number(Ag)) /
       Number(E);
+    }
+    else {
+      Ecm = ((-1 * Number(Mmax) * Number(cp)) / Number(I) + Number(Nmax) / Number(Ag)) /
+      Number(E);
+    Ecn =((-1 * Number(Mmin) * Number(cp)) / Number(I) + Number(Nmin) / Number(Ag)) /
+      Number(E);
+    Etm =((1 * Number(Mmax) * Number(cm)) / Number(I) + Number(Nmax) / Number(Ag)) /
+      Number(E);
+    Etn =((1 * Number(Mmin) * Number(cm) ) / Number(I) + Number(Nmin) / Number(Ag)) /
+      Number(E);
+    }
     // console.log(Vu1,Vu2,fc)
     let a1 = Number(Vu1) / Number(fc);
     let a2 = Number(Vu2) / Number(fc);
     let Exm = (Ecm + Etm) / 2;
     let Exn = (Ecn + Etn) / 2;
     // console.log(a1,a2, Exm * 1000, Exn * 1000)
-    let value1 = ThetaBeta1(a1, Exm * 1000);
-    let value2 = ThetaBeta1(a2, Exn * 1000);
+    let value1 = ThetaBeta1(Exm * 1000,a1);
+    let value2 = ThetaBeta1(Exn * 1000,a2);
     // console.log(value1,value2);
     let theta1 = value1[0];
     let theta2 = value2[0];
@@ -988,27 +1030,43 @@ export const Updatereport = () => {
         data = { ...data, [add1]: 'Design Condition for Caltrans Amendment As per AASHTO LRFD Bridge Design' };
       }
     
-      if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm") {
-        strm_i += 1;
-        let add1, add2, add12;
+      worksheet.eachRow((row, rowNumber) => {
+          if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm") {
+            strm_i += 1;
+            let add1, add2, add12;
         
-        if (strm_i === 1) {
-          add1 = getSafeCell(row, 2)._value.model.address;
-          add2 = getSafeCell(row, 8)._value.model.address;
-          data = { ...data, [add1]: "Calculation for β and θ                 (As per CA - 5.7.3.4)" };
-          data = { ...data, [add2]: "" };
-        }
-    
-        if (strm_i === 2) {
-          add1 = getSafeCell(row, 2)._value.model.address;
-          add2 = getSafeCell(row, 8)._value.model.address;
-          add12 = getSafeCell(row, 12)._value.model.address;
-          data = { ...data, [add1]: "Calculation for β and θ" };
-          data = { ...data, [add2]: "" };
-          data = { ...data, [add12]: '(as per CA - 5.7.3.4)' };
-        }
-      }
-    
+            // Unmerge cells in the current row if they are merged
+            for (let col = 1; col <= 8; col++) {
+              let cell = row.getCell(col);
+              if (cell.isMerged) {
+                worksheet.unMergeCells(cell.address);
+              }
+            }
+        
+            // Merge cells from A to H in the current row
+            worksheet.mergeCells(`B${rowNumber}:T${rowNumber}`);
+        
+            const mergedCell = row.getCell(2);
+            const mergedCellValue =
+              " 4) Calculation for β and θ                               (As per CA - 5.7.3.4)";
+            mergedCell.value = mergedCellValue;
+            data = { ...data, [`B${rowNumber}`]: mergedCellValue };
+
+            if (strm_i === 1) {
+              add1 = getSafeCell(row, 2)._value.model.address;
+              add2 = getSafeCell(row, 8)._value.model.address;
+              data = { ...data, [add1]: mergedCellValue };
+              data = { ...data, [add2]: "" };
+            }
+        
+            if (strm_i === 2) {
+              add1 = getSafeCell(row, 2)._value.model.address;
+              add2 = getSafeCell(row, 8)._value.model.address;
+              data = { ...data, [add1]: mergedCellValue };
+              data = { ...data, [add2]: "" };
+            }
+          }
+        });
       if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm1") {
         strm1_i += 1;
         if (strm1_i == 1) {
@@ -1092,6 +1150,8 @@ export const Updatereport = () => {
         }
       }
       if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$strm1") { 
+        st1_i = st1_i + 1;
+        if (st1_i == 1) {
         let cell6 = getSafeCell(rows[key1],6);
         let add6 = cell6._address;
         data = { ...data, [add6] : 'Av'};
@@ -1110,6 +1170,27 @@ export const Updatereport = () => {
         let cell12 = getSafeCell(rows[key1],12);
         let add12 = cell12._address;
         data = { ...data, [add12] : Avm};
+        }
+        if (st1_i == 2){
+          let cell6 = getSafeCell(rows[key1],6);
+          let add6 = cell6._address;
+          data = { ...data, [add6] : 'Av'};
+          let cell7 = getSafeCell(rows[key1],7);
+          let add7 = cell7._address;
+          data = { ...data, [add7] : '='};
+          let cell8 = getSafeCell(rows[key1],8);
+          let add8 = cell8._address;
+          data = { ...data, [add8] : Av};
+          let cell10 = getSafeCell(rows[key1],10);
+          let add10 = cell10._address;
+          data = { ...data, [add10] : 'Avm'};
+          let cell11 = getSafeCell(rows[key1],11);
+          let add11 = cell11._address;
+          data = { ...data, [add11] : '='};
+          let cell12 = getSafeCell(rows[key1],12);
+          let add12 = cell12._address;
+          data = { ...data, [add12] : Avm};
+        }
 
       }
 
@@ -1195,7 +1276,7 @@ export const Updatereport = () => {
         let cell3 = getSafeCell(row, 6);
         if (cell3) {
           let cell3Value = Av >= Avm ? Exm : Etm;
-          data = { ...data, [cell3._address]: cell3Value };
+          data = { ...data, [cell3._address]: cell3Value.toFixed(3) };
         }
       }
       if (e_i == 2){
@@ -1218,7 +1299,7 @@ export const Updatereport = () => {
         let cell3 = getSafeCell(rows[key1], 6);
         if (cell3) {
           let cell3Value = Av >= Avm ? Exn : Etn;
-          data = { ...data, [cell3._address]: cell3Value };
+          data = { ...data, [cell3._address]: cell3Value.toFixed(3) };
         }
       }
       }
@@ -1247,7 +1328,7 @@ export const Updatereport = () => {
           }
       
           let startCol = 7;
-          let endCol = 17;
+          let endCol = 22;
           let rowNumber = getSafeCell(rows[key1], startCol).row;
           try {
             let mergeRange = worksheet.getCell(
@@ -1269,14 +1350,14 @@ export const Updatereport = () => {
                 [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
               };
       
-              let cell4 = getSafeCell(rows[key1], 18);
+              let cell4 = getSafeCell(rows[key1], 23);
               if (cell4) {
                 data = { ...data, [cell4._address]: "=" };
               } else {
                 console.error("Error: Unable to determine address for rows[key1]._cells[18]");
               }
       
-              let cell5 = getSafeCell(rows[key1], 19);
+              let cell5 = getSafeCell(rows[key1], 24);
               if (cell5) {
                 let add15 = cell5._address;
                 let add15value = dv < sg ? dv : sg;
@@ -1313,7 +1394,7 @@ export const Updatereport = () => {
           }
       
           let startCol = 7;
-          let endCol = 17;
+          let endCol = 22;
           let rowNumber = getSafeCell(rows[key1], startCol).row;
           try {
             let mergeRange = worksheet.getCell(
@@ -1335,14 +1416,14 @@ export const Updatereport = () => {
                 [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
               };
       
-              let cell4 = getSafeCell(rows[key1], 18);
+              let cell4 = getSafeCell(rows[key1], 23);
               if (cell4) {
                 data = { ...data, [cell4._address]: "=" };
               } else {
                 console.error("Error: Unable to determine address for rows[key1]._cells[18]");
               }
       
-              let cell5 = getSafeCell(rows[key1], 19);
+              let cell5 = getSafeCell(rows[key1], 24);
               if (cell5) {
                 let add15 = cell5._address;
                 let add15value = dv < sg ? dv : sg;
@@ -1374,7 +1455,7 @@ export const Updatereport = () => {
         if (sxe_i === 1) {
           let cell3 = getSafeCell(rows[key1], 4);
           if (cell3) {
-            data = { ...data, [cell3._address]: "sxe" };
+            data = { ...data, [cell3._address]: "sₓₑ" };
           }
       
           let cell4 = getSafeCell(rows[key1], 5);
@@ -1412,7 +1493,7 @@ export const Updatereport = () => {
         if (sxe_i === 2) {
           let cell3 = getSafeCell(rows[key1], 4);
           if (cell3) {
-            data = { ...data, [cell3._address]: "sxe" };
+            data = { ...data, [cell3._address]: "sₓₑ" };
           }
       
           let cell4 = getSafeCell(rows[key1], 5);
@@ -1447,12 +1528,6 @@ export const Updatereport = () => {
           }
         }
       }
-      // function getSafeCell(row, cellIndex) {
-      //   if (row && row._cells && row._cells[cellIndex]) {
-      //     return row._cells[cellIndex];
-      //   }
-      //   return undefined;
-      // }
       
       if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$b") {
         b_i = b_i + 1;
@@ -1537,6 +1612,7 @@ export const Updatereport = () => {
       
       if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$theta_max") {
         theta_i = theta_i + 1;
+        
         if (theta_i === 1) {
           let cell5 = getSafeCell(rows[key1], 4);
           if (cell5) {
@@ -1552,29 +1628,39 @@ export const Updatereport = () => {
             console.error("Error: Unable to determine address for rows[key1]._cells[5]");
           }
       
-          let cell7 = getSafeCell(rows[key1], 6);
-          if (cell7) {
-            if (Av < Avm) {
-              let theta_value = ThetaBeta2(sxe, Etm * 1000);
-              let theta = theta_value[1];
-              console.log(theta);
-              data = { ...data, [cell7._address]: theta };
-              theta_new = theta;
-            } else {
-              data = { ...data, [cell7._address]: parseFloat(theta1.toFixed(2)) };
-              theta_new = parseFloat(theta1.toFixed(2));
-            }
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
-          }
+          // Merge cells G and H
+         // Merge cells G and H
+    let cellG = getSafeCell(rows[key1], 6);
+    let cellH = getSafeCell(rows[key1], 7);
+    if (cellG && cellH) {
+      cellG.merge(cellH);
+    } else {
+      console.error("Error: Unable to merge cells G and H");
+    }
+
+    if (cellG) {
+      if (Av < Avm) {
+        let theta_value = ThetaBeta2(sxe, Etm * 1000);
+        let theta = theta_value[1];
+        console.log(theta);
+        data = { ...data, [cellG._address]: theta };
+        theta_new = theta;
+      } else {
+        data = { ...data, [cellG._address]: parseFloat(theta1.toFixed(2)) };
+        theta_new = parseFloat(theta1.toFixed(2));
+      }
+    } else {
+      console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+    }
+      
           for (let i = 7; i <= 14; i++) {
             let cell = getSafeCell(rows[key1], i);
             if (cell) {
-                data = { ...data, [cell._address]: "" };
+              data = { ...data, [cell._address]: "" };
             } else {
-                console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
+              console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
             }
-        }
+          }
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
@@ -1582,7 +1668,6 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[15]");
           }
-
         }
       
         if (theta_i === 2) {
@@ -1600,6 +1685,9 @@ export const Updatereport = () => {
             console.error("Error: Unable to determine address for rows[key1]._cells[5]");
           }
       
+          // Merge cells G and H
+          rows[key1].getCell('G').merge(rows[key1].getCell('H'));
+      
           let cell7 = getSafeCell(rows[key1], 6);
           if (cell7) {
             if (Av < Avm) {
@@ -1615,14 +1703,15 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[6]");
           }
+      
           for (let i = 7; i <= 14; i++) {
             let cell = getSafeCell(rows[key1], i);
             if (cell) {
-                data = { ...data, [cell._address]: "" };
+              data = { ...data, [cell._address]: "" };
             } else {
-                console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
+              console.error(`Error: Unable to determine address for rows[key1]._cells[${i}]`);
             }
-        }
+          }
       
           let cell15 = getSafeCell(rows[key1], 15);
           if (cell15) {
@@ -1966,113 +2055,8 @@ export const Updatereport = () => {
       }
       
       
-  console.log("hello");
-//   if (
-//     getSafeCell(rows[key1], 0) &&
-//     getSafeCell(rows[key1], 0)._value.model.value === "$$t_new"
-// ) {
-//     t_i = t_i + 1;
-//     if (t_i == 1) {
-//         let cell13 = getSafeCell(rows[key1], 13);
-//         let add13 = cell13 ? cell13._address : null;
-//         if (add13) {
-//             data = { ...data, [add13]: theta_new };
-//         }
+  // console.log("hello");
 
-//         let cell8 = getSafeCell(rows[key1], 8);
-//         let add8 = cell8 ? cell8._address : null;
-//         // if (add8) {
-//         //     data = { ...data, [add8]: "########" };
-//         // }
-//     }
-//     if (t_i == 2) {
-//         let cell13 = getSafeCell(rows[key1], 13);
-//         let add13 = cell13 ? cell13._address : null;
-//         if (add13) {
-//             data = { ...data, [add13]: theta_new_min };
-//         }
-
-//         let cell8 = getSafeCell(rows[key1], 8);
-//         let add8 = cell8 ? cell8._address : null;
-//         // if (add8) {
-//         //     data = { ...data, [add8]: "########" };
-//         // }
-//     }
-// }
-
-// if (
-//     getSafeCell(rows[key1], 0) &&
-//     getSafeCell(rows[key1], 0)._value.model.value === "$$sum"
-// ) {
-//     sum_i = sum_i + 1;
-//     if (sum_i === 1) {
-//         let cell7 = getSafeCell(rows[key1], 7);
-//         let add7 = cell7 ? cell7._address : null;
-//         if (add7) {
-//             let sum = Vp + Vc + Vs;
-//             Vn = sum;
-//             data = { ...data, [add7]: parseFloat(Vn.toFixed(2)) };
-
-//             let cell13 = getSafeCell(rows[key1], 13);
-//             let cell19 = getSafeCell(rows[key1], 19);
-//             let add13 = cell13 ? cell13._address : null;
-//             let add19 = cell19 ? cell19._address : null;
-//             let value19 = cell19 ? cell19.value : null;
-
-//             if (add13 && value19 !== null) {
-//                 data = { ...data, [add13]: Vn <= value19 ? "≤" : ">" };
-//             }
-//         }
-//     }
-//     if (sum_i === 2) {
-//         let cell7 = getSafeCell(rows[key1], 7);
-//         let add7 = cell7 ? cell7._address : null;
-//         if (add7) {
-//             let sum = Vp_min + Vc_min + Vs_min;
-//             Vn_min = sum;
-//             data = { ...data, [add7]: parseFloat(Vn_min.toFixed(2)) };
-
-//             let cell13 = getSafeCell(rows[key1], 13);
-//             let cell19 = getSafeCell(rows[key1], 19);
-//             let add13 = cell13 ? cell13._address : null;
-//             let add19 = cell19 ? cell19._address : null;
-//             let value19 = cell19 ? cell19.value : null;
-
-//             if (add13 && value19 !== null) {
-//                 data = { ...data, [add13]: Vn_min <= value19 ? "≤" : ">" };
-//             }
-//         }
-//     }
-// }
-    // if (
-    //   rows[key1]._cells[0] != undefined &&
-    //   rows[key1]._cells[0]._value.model.value == "$$vn"
-    // ) {
-    //   let cell11 = rows[key1]._cells[11];
-    //   let add11 = cell11._address;
-    //   data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
-    // }
-    // if (
-    //   rows[key1]._cells[0] != undefined &&
-    //   rows[key1]._cells[0]._value.model.value == "$$vr"
-    // ) {
-    //   let cell8 = rows[key1]._cells[8];
-    //   let cell17_value = rows[key1]._cells[17].value;
-    //   let cell29 = rows[key1]._cells[29];
-    //   let add29 = cell29._address;
-    //   let add8 = cell8._address;
-    //   let vr = pi * Vn;
-    //   let cell16 = rows[key1]._cells[16];
-    //   let add16 = cell16._address;
-    //   if (vr < cell17_value) {
-    //     data = { ...data, [add16]: "<" };
-    //     data = { ...data, [add29]: "NG" };
-    //   } else {
-    //     data = { ...data, [add16]: "≥" };
-    //     data = { ...data, [add29]: "OK" };
-    //   }
-    //   data = { ...data, [add8]: parseFloat(vr.toFixed(2)) };
-    // }
     if (
       getSafeCell(rows[key1], 0) &&
       getSafeCell(rows[key1], 0)._value.model.value === "$$vs"
@@ -2250,131 +2234,45 @@ if (vn_i == 2){
         worksheet._rows[col - 1]._cells[value - 1]._value.model.type = 3;
       }
     }
-    // for (let key1 in rows) {
-    //   if (
-    //     rows[key1]._cells[0] != undefined &&
-    //     rows[key1]._cells[0]._value.model.value == "$$b_str"  
-    //   ) {
-    //     // Store the starting index for deletion
-    //     let startIdx = parseInt(key1);
-    //     let rownumber = 0;
-    //     let endIdx;
-
-    //     // Loop through rows starting from the next row after '$$b_str'
-    //     for (let i = startIdx; i < rows.length; i++) {
-    //       // Check if the current row has the value '$$b_end'
-    //       if (
-    //         rows[i] &&
-    //         rows[i]._cells[0] &&
-    //         rows[i]._cells[0]._value.model.value == "$$b_end"
-    //       ) {
-    //         // Store the ending index for deletion
-    //         endIdx = i;
-    //         // Calculate the number of rows to delete
-    //         rownumber = endIdx - startIdx + 1;
-    //         // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-    //         worksheet._rows.splice(startIdx, rownumber);
-    //         break;
-    //       }
-    //     }
-    //     // Remove the old references
-    //   //   worksheet._rows.length -= rownumber;
-
-    //     break;
-    //   }
-    // }
-    //   // if (
-      //   rows[key1]._cells[0] != undefined &&
-      //   rows[key1]._cells[0]._value.model.value == "$$b_str_min"
-      // ) {
-      //   // Store the starting index for deletion
-      //   let startIdx = parseInt(key1);
-      //   let rownumber = 0;
-      //   let endIdx;
-
-      //   // Loop through rows starting from the next row after '$$b_str'
-      //   for (let i = startIdx; i < rows.length; i++) {
-      //     // Check if the current row has the value '$$b_end'
-      //     if (
-      //       rows[i] &&
-      //       rows[i]._cells[0] &&
-      //       rows[i]._cells[0]._value.model.value == "$$b_end_min"
-      //     ) {
-      //       // Store the ending index for deletion
-      //       endIdx = i;
-      //       // Calculate the number of rows to delete
-      //       rownumber = endIdx - startIdx + 1;
-      //       // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-      //       worksheet._rows.splice(startIdx, rownumber);
-      //       break;
-      //     }
-      //   }
-      // }
-      // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
-      
-    // for (let key1 in rows) {
-    //   if (
-    //     rows[key1]._cells[0] != undefined &&
-    //     rows[key1]._cells[0]._value.model.value == "$$b_str_min"
-    //   ) {
-    //     // Store the starting index for deletion
-    //     let startIdx = parseInt(key1);
-    //     let rownumber = 0;
-    //     let endIdx;
-
-    //     // Loop through rows starting from the next row after '$$b_str'
-    //     for (let i = startIdx; i < rows.length; i++) {
-    //       // Check if the current row has the value '$$b_end'
-    //       if (
-    //         rows[i] &&
-    //         rows[i]._cells[0] &&
-    //         rows[i]._cells[0]._value.model.value == "$$b_end_min"
-    //       ) {
-    //         // Store the ending index for deletion
-    //         endIdx = i;
-    //         // Calculate the number of rows to delete
-    //         rownumber = endIdx - startIdx + 1;
-    //         // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-    //         worksheet._rows.splice(startIdx, rownumber);
-    //         break;
-    //       }
-    //     }
-    //     // Remove the old references
-    //   //   worksheet._rows.length -= rownumber;
-
-    //     break;
-    //   }
-      // if (
-      //   rows[key1]._cells[0] != undefined &&
-      //   rows[key1]._cells[0]._value.model.value == "$$b_str_min"
-      // ) {
-      //   // Store the starting index for deletion
-      //   let startIdx = parseInt(key1);
-      //   let rownumber = 0;
-      //   let endIdx;
-
-      //   // Loop through rows starting from the next row after '$$b_str'
-      //   for (let i = startIdx; i < rows.length; i++) {
-      //     // Check if the current row has the value '$$b_end'
-      //     if (
-      //       rows[i] &&
-      //       rows[i]._cells[0] &&
-      //       rows[i]._cells[0]._value.model.value == "$$b_end_min"
-      //     ) {
-      //       // Store the ending index for deletion
-      //       endIdx = i;
-      //       // Calculate the number of rows to delete
-      //       rownumber = endIdx - startIdx + 1;
-      //       // Delete rows between '$$b_str' and '$$b_end' (inclusive)
-      //       worksheet._rows.splice(startIdx, rownumber);
-      //       break;
-      //     }
-      //   }
-      // }
-      // const pattern = /^\$\$.*/; // Regular expression to match '$$' followed by any characters   
-      
     }
-    deleteRowsBetweenMarkers(worksheet);
+
+  //   deleteRowsBetweenMarkers(worksheet);
+    for (let key1 in rows) {
+      if (
+        rows[key1]._cells[0] != undefined &&
+        rows[key1]._cells[0]._value.model.value == "$$b_str"  
+      ) {
+         bs_i = bs_i + 1;
+        // Store the starting index for deletion
+        if ( bs_i == 1 || bs_i == 2) {
+        let startIdx = parseInt(key1);
+        let rownumber = 0;
+        let endIdx;
+
+        // Loop through rows starting from the next row after '$$b_str'
+        for (let i = startIdx; i < rows.length; i++) {
+          // Check if the current row has the value '$$b_end'
+          if (
+            rows[i] &&
+            rows[i]._cells[0] &&
+            rows[i]._cells[0]._value.model.value == "$$b_end"
+          ) {
+            // Store the ending index for deletion
+            endIdx = i;
+            // Calculate the number of rows to delete
+            rownumber = endIdx - startIdx + 1;
+            // Delete rows between '$$b_str' and '$$b_end' (inclusive)
+            worksheet._rows.splice(startIdx, rownumber);
+            break;
+          }
+        }
+        // Remove the old references
+        worksheet._rows.length -= rownumber;
+
+      }
+  }
+}
+
     for (let i = 0; i < (rows.length + 15); i++) {
           if (rows[i] && rows[i]._cells && rows[i]._cells[0]) {
           const cellValue = rows[i]._cells[0]?._value?.model?.value;
@@ -2425,14 +2323,6 @@ if (vn_i == 2){
             currentRow.eachCell({ includeEmpty: true }, (cell) => {
               cell.value = null;
             });
-            // worksheet._merges.forEach((merge, index) => {
-            //   if (
-            //     merge.top <= currentRow.number &&
-            //     merge.bottom >= currentRow.number
-            //   ) {
-            //     worksheet.unMergeCells(merge.top, merge.left, merge.bottom, merge.right);
-            //   }
-            // });
           }
         }
       }
@@ -2560,29 +2450,92 @@ if (vn_i == 2){
       return Math.min(...cells.map(cell => parseFloat(cell.value))).toFixed(2);
   }
   
-  function updatedata3(wkey, worksheet3) {
-    if (!workbookData) return;
-    if (!worksheet3) {
-      throw new Error("No worksheets found in the uploaded file");
-    }
-    console.log(mu_pos);
-    let rows = worksheet3._rows;
-
-  
-    for (let i = 0; i < rows.length; i++) {
-      let firstCell = rows[i].getCell(1); // Assuming 1-based indexing for cells
-      if (firstCell.value === 'Mu') {
-        console.log(`Row ${i + 1} has 'MU' in the first cell.`);
-        
-        // Change the value of cell 2 to mu_pos
-        let secondCell = rows[i].getCell(2);
-        secondCell.value = mu_pos; // Update this to the actual value you want to set
-        
-        // Commit the row changes if necessary
-        rows[i].commit();
+  async function updatedata3(wkey, worksheet3) {
+      if (!workbookData) return;
+      if (!worksheet3) {
+        throw new Error("No worksheets found in the uploaded file");
       }
+      console.log(mu_pos);
+    
+      // Merge cells in the first row and apply formatting
+      worksheet3.mergeCells('A1:A2');
+      const cell1 = worksheet3.getCell('A1');
+      cell1.value = 'Element';
+      cell1.font = {
+        bold: true,
+        color: { argb: 'FF000000' }
+      };
+      cell1.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFADD8E6' } // Light blue color
+      };
+      cell1.alignment = { vertical: 'middle', horizontal: 'center' };
+      const cell2 = worksheet3.getCell('B5');
+      const cell5 = worksheet3.getCell('E5');
+      cell2.value = mu_pos;
+      cell5.value = mu_pos;
+      const cell26 = worksheet3.getCell('B6');
+      const cell56 = worksheet3.getCell('E6');
+      cell26.value = mr_old_pos;
+      cell56.value = mr_new_pos;
+    
+    
+      // Array of rows to merge and format
+      const rowsToMerge = [3, 7, 11, 14, 17, 21, 24, 27];
+      
+      // Array of content for each row to be merged
+      const contentForRows = [
+        "1. Factored Resistance: Positive ",
+        "2. Factored Resistance: Negative ",
+        "3. Maximum spacing for transverse reinforcement: Maximum shear case ",
+        "4. Maximum spacing for transverse reinforcement: Minimum shear case ",
+        "5. Crack Check ",
+        "6. Beta and Theta ",
+        "7. Component of shear resisted by the transverse reinforcement",
+        "8. Shear Resistance "
+      ];
+    
+      // Merge cells and apply formatting for each specified row
+      rowsToMerge.forEach((row, index) => {
+        const startCell = `A${row}`;
+        const endCell = `G${row}`;
+        worksheet3.mergeCells(`${startCell}:${endCell}`);
+        const cell = worksheet3.getCell(startCell);
+        cell.value = contentForRows[index];
+        cell.font = {
+          bold: true,
+          color: { argb: 'FF000000' }
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD3D3D3' } // Light grey color
+        };
+        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      });
+    
+      // Rows to skip while merging B-C and E-F
+      const rowsToSkip = [1, 2, 3, 7, 11, 14, 17, 21, 24, 27];
+    
+      // Merge cells B and C up to row number 29, skipping specified rows
+      for (let i = 1; i <= 29; i++) {
+        if (!rowsToSkip.includes(i)) {
+          worksheet3.mergeCells(`B${i}:C${i}`);
+        }
+      }
+    
+      // Merge cells E and F up to row number 29, skipping specified rows
+      for (let i = 1; i <= 29; i++) {
+        if (!rowsToSkip.includes(i)) {
+          worksheet3.mergeCells(`E${i}:F${i}`);
+        }
+      }
+    
+      // Save the workbook if necessary
+      // await workbook.xlsx.writeFile('updated_file.xlsx'); // Uncomment and specify the filename if you need to save the changes
     }
-  }
+    
 
   async function fetchLc() {
     const endpointsDataKeys = [
@@ -2859,7 +2812,8 @@ if (vn_i == 2){
   }
 
   return (
-    <Panel width={520} height={420} marginTop={3} padding={2} variant="shadow2">
+    <Panel width={510} height={470} marginTop={3} padding={2} variant="shadow2">
+      <Panel width={480} height={200} marginTop={0} variant="shadow2">
       <div>
         <Typography variant="h1"> Casting Method</Typography>
         <RadioGroup
@@ -2970,7 +2924,9 @@ if (vn_i == 2){
           </div>
         </RadioGroup>
       </div>
-      <div style={{ marginTop: "25px" }}>
+      </Panel>
+      <Panel width={480} height={200} marginTop={1} variant="shadow2">
+      <div style={{ marginTop: "5px" }}>
         <Grid container>
           <Grid item xs={3}>
             <Typography variant="h1">
@@ -3012,19 +2968,6 @@ if (vn_i == 2){
             </Typography>
           </Grid>
           <Grid item xs={6}>
-            {/* <div
-                            style={{
-                                borderBottom: "1px solid gray",
-                                height: "40px",
-                                width: "200px",
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                            }}
-                        >
-                            <div style={{ fontSize: "12px", paddingBottom: "2px" }}>                                
-                            </div>
-                        </div> */}
           </Grid>
         </Grid>
         {/*  */}
@@ -3060,12 +3003,13 @@ if (vn_i == 2){
         {/* </Grid>
                 </Grid> */}
       </div>
+      </Panel>
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           margin: "0px",
-          marginTop: "18px",
+          marginTop: "10px",
           marginBottom: "30px",
         }}
       >
