@@ -1276,7 +1276,7 @@ export const Updatereport = () => {
         let cell3 = getSafeCell(row, 6);
         if (cell3) {
           let cell3Value = Av >= Avm ? Exm : Etm;
-          data = { ...data, [cell3._address]: cell3Value.toFixed(3) };
+          data = { ...data, [cell3._address]: cell3Value.toFixed(6) };
         }
       }
       if (e_i == 2){
@@ -1299,7 +1299,7 @@ export const Updatereport = () => {
         let cell3 = getSafeCell(rows[key1], 6);
         if (cell3) {
           let cell3Value = Av >= Avm ? Exn : Etn;
-          data = { ...data, [cell3._address]: cell3Value.toFixed(3) };
+          data = { ...data, [cell3._address]: cell3Value.toFixed(6) };
         }
       }
       }
@@ -1552,7 +1552,7 @@ export const Updatereport = () => {
               let b_value = ThetaBeta2(sxe, Etm * 1000);
               let beta = b_value[0];
               console.log(beta);
-              data = { ...data, [cell7._address]: beta };
+              data = { ...data, [cell7._address]: parseFloat(beta.toFixed(2)) };
               beta_new = beta;
             } else {
               data = { ...data, [cell7._address]: parseFloat(beta1.toFixed(2)) };
@@ -1561,13 +1561,34 @@ export const Updatereport = () => {
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[6]");
           }
-      
-          let cell15 = getSafeCell(rows[key1], 15);
-          if (cell15) {
-            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
+          let cell11 = getSafeCell(rows[key1], 11);
+          if (cell11) {
+            data = { ...data, [cell11._address]: "θ" };
           } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
           }
+      
+          let cell12 = getSafeCell(rows[key1], 12);
+          if (cell12) {
+            data = { ...data, [cell12._address]: "=" };
+          } else {
+            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          }
+          let cell13 = getSafeCell(rows[key1], 13);
+                if (cell13) {
+                  if (Av < Avm) {
+                    let theta_value = ThetaBeta2(sxe, Etn * 1000);
+                    let theta = parseFloat(theta_value[1].toFixed(2));
+                    console.log(theta);
+                    data = { ...data, [cell13._address]: theta };
+                    theta_new_min = theta;
+                  } else {
+                    data = { ...data, [cell13._address]: parseFloat(theta2.toFixed(2)) };
+                    theta_new_min = parseFloat(theta2.toFixed(2));
+                  }
+                } else {
+                  console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+                }
         }
       
         if (b_i === 2) {
@@ -1591,7 +1612,7 @@ export const Updatereport = () => {
               let b_value = ThetaBeta2(sxe, Etn * 1000);
               let beta = parseFloat(b_value[0].toFixed(2));
               console.log(beta);
-              data = { ...data, [cell7._address]: beta };
+              data = { ...data, [cell7._address]: parseFloat(beta.toFixed(2)) };
               beta_new_min = beta;
             } else {
               data = { ...data, [cell7._address]: parseFloat(beta2.toFixed(2)) };
@@ -1614,44 +1635,44 @@ export const Updatereport = () => {
         theta_i = theta_i + 1;
         
         if (theta_i === 1) {
-          let cell5 = getSafeCell(rows[key1], 4);
-          if (cell5) {
-            data = { ...data, [cell5._address]: "θ" };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
-          }
+    //       let cell5 = getSafeCell(rows[key1], 4);
+    //       if (cell5) {
+    //         data = { ...data, [cell5._address]: "θ" };
+    //       } else {
+    //         console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+    //       }
       
-          let cell6 = getSafeCell(rows[key1], 5);
-          if (cell6) {
-            data = { ...data, [cell6._address]: "=" };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
-          }
+    //       let cell6 = getSafeCell(rows[key1], 5);
+    //       if (cell6) {
+    //         data = { ...data, [cell6._address]: "=" };
+    //       } else {
+    //         console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+    //       }
       
-          // Merge cells G and H
-         // Merge cells G and H
-    let cellG = getSafeCell(rows[key1], 6);
-    let cellH = getSafeCell(rows[key1], 7);
-    if (cellG && cellH) {
-      cellG.merge(cellH);
-    } else {
-      console.error("Error: Unable to merge cells G and H");
-    }
+    //       // Merge cells G and H
+    //      // Merge cells G and H
+    // let cellG = getSafeCell(rows[key1], 6);
+    // let cellH = getSafeCell(rows[key1], 7);
+    // if (cellG && cellH) {
+    //   cellG.merge(cellH);
+    // } else {
+    //   console.error("Error: Unable to merge cells G and H");
+    // }
 
-    if (cellG) {
-      if (Av < Avm) {
-        let theta_value = ThetaBeta2(sxe, Etm * 1000);
-        let theta = theta_value[1];
-        console.log(theta);
-        data = { ...data, [cellG._address]: theta };
-        theta_new = theta;
-      } else {
-        data = { ...data, [cellG._address]: parseFloat(theta1.toFixed(2)) };
-        theta_new = parseFloat(theta1.toFixed(2));
-      }
-    } else {
-      console.error("Error: Unable to determine address for rows[key1]._cells[6]");
-    }
+    // if (cellG) {
+    //   if (Av < Avm) {
+    //     let theta_value = ThetaBeta2(sxe, Etm * 1000);
+    //     let theta = theta_value[1];
+    //     console.log(theta);
+    //     data = { ...data, [cellG._address]: theta };
+    //     theta_new = theta;
+    //   } else {
+    //     data = { ...data, [cellG._address]: parseFloat(theta1.toFixed(2)) };
+    //     theta_new = parseFloat(theta1.toFixed(2));
+    //   }
+    // } else {
+    //   console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+    // }
       
           for (let i = 7; i <= 14; i++) {
             let cell = getSafeCell(rows[key1], i);
@@ -1662,47 +1683,47 @@ export const Updatereport = () => {
             }
           }
       
-          let cell15 = getSafeCell(rows[key1], 15);
-          if (cell15) {
-            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
-          }
+          // let cell15 = getSafeCell(rows[key1], 15);
+          // if (cell15) {
+          //   data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
+          // } else {
+          //   console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          // }
         }
       
         if (theta_i === 2) {
-          let cell5 = getSafeCell(rows[key1], 4);
-          if (cell5) {
-            data = { ...data, [cell5._address]: "θ" };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[4]");
-          }
+          // let cell5 = getSafeCell(rows[key1], 4);
+          // if (cell5) {
+          //   data = { ...data, [cell5._address]: "θ" };
+          // } else {
+          //   console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+          // }
       
-          let cell6 = getSafeCell(rows[key1], 5);
-          if (cell6) {
-            data = { ...data, [cell6._address]: "=" };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[5]");
-          }
+          // let cell6 = getSafeCell(rows[key1], 5);
+          // if (cell6) {
+          //   data = { ...data, [cell6._address]: "=" };
+          // } else {
+          //   console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+          // }
       
-          // Merge cells G and H
-          rows[key1].getCell('G').merge(rows[key1].getCell('H'));
+          // // Merge cells G and H
+          // rows[key1].getCell('G').merge(rows[key1].getCell('H'));
       
-          let cell7 = getSafeCell(rows[key1], 6);
-          if (cell7) {
-            if (Av < Avm) {
-              let theta_value = ThetaBeta2(sxe, Etn * 1000);
-              let theta = parseFloat(theta_value[1].toFixed(2));
-              console.log(theta);
-              data = { ...data, [cell7._address]: theta };
-              theta_new_min = theta;
-            } else {
-              data = { ...data, [cell7._address]: parseFloat(theta2.toFixed(2)) };
-              theta_new_min = parseFloat(theta2.toFixed(2));
-            }
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[6]");
-          }
+          // let cell7 = getSafeCell(rows[key1], 6);
+          // if (cell7) {
+          //   if (Av < Avm) {
+          //     let theta_value = ThetaBeta2(sxe, Etn * 1000);
+          //     let theta = parseFloat(theta_value[1].toFixed(2));
+          //     console.log(theta);
+          //     data = { ...data, [cell7._address]: theta };
+          //     theta_new_min = theta;
+          //   } else {
+          //     data = { ...data, [cell7._address]: parseFloat(theta2.toFixed(2)) };
+          //     theta_new_min = parseFloat(theta2.toFixed(2));
+          //   }
+          // } else {
+          //   console.error("Error: Unable to determine address for rows[key1]._cells[6]");
+          // }
       
           for (let i = 7; i <= 14; i++) {
             let cell = getSafeCell(rows[key1], i);
@@ -1713,12 +1734,12 @@ export const Updatereport = () => {
             }
           }
       
-          let cell15 = getSafeCell(rows[key1], 15);
-          if (cell15) {
-            data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
-          } else {
-            console.error("Error: Unable to determine address for rows[key1]._cells[15]");
-          }
+          // let cell15 = getSafeCell(rows[key1], 15);
+          // if (cell15) {
+          //   data = { ...data, [cell15._address]: '(as per CA-5.7.3.4)' };
+          // } else {
+          //   console.error("Error: Unable to determine address for rows[key1]._cells[15]");
+          // }
         }
       }
       
