@@ -3260,7 +3260,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let type;
       for (let wkey in SelectWorksheets) {
         updatedata(wkey, SelectWorksheets[wkey]);
-      }
+      }    
       for (let wkey in SelectWorksheets2) {
         // if (beamStresses && Object.keys(beamStresses).length > 1) {
           updatedata2(wkey, SelectWorksheets2[wkey], beamStresses);
