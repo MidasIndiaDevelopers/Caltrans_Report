@@ -12,6 +12,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
   import { saveAs } from "file-saver";
   import { closeSnackbar } from 'notistack'
   import { useSnackbar, SnackbarProvider } from "notistack";
+  import Image from '../src/assets/longitudianl_rf.png';
 
   
   export const Updatereport = () => {
@@ -48,7 +49,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let sn_old;
     let sn_new;
     let smax_old; let smax_new; let suse; let dc_old; let dc_new; let beta_m; let theta_m; let beta_n; let theta_n; let Av_f; let Avr_old; let Avr_new; let vu; let vr_old; let vr_new; 
-    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n;
+    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n
     const action = snackbarId => (
         <>
           <button style={{ backgroundColor: 'transparent', border: 'none',color: 'white', cursor: 'pointer' }} onClick={() => { closeSnackbar(snackbarId) }}>
@@ -58,9 +59,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       );
   
     console.log(lcname);
-    // let items = new Map([]);
-  
-    // For Summary File
     useEffect(() => {
       fetchLc();
     }, []); 
@@ -209,7 +207,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               let row = worksheet.getRow(rowNumber);
               row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                 if (!cell.value) {
-                  let colLetter = indexToLetter(colNumber - 1); // Adjusting index for 1-based column numbering
+                  let colLetter = indexToLetter(colNumber - 1);
                   let address = colLetter + rowNumber;
                   row.getCell(colNumber).value = "";
                   row.getCell(colNumber)._address = address;
@@ -435,6 +433,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         ) {
           h = rows[key1]._cells[27]._value.model.value;
         }
+        if (
+          rows[key1]._cells[0] != undefined &&
+          rows[key1]._cells[0]._value.model.value == "$$d-c"
+        ) {
+          dc_old = rows[key1]._cells[11].value;
+        }
   
         if (
           rows[key1]._cells[0] != undefined &&
@@ -464,6 +468,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           if (phi_i == 1) {
           let location = rows[key1]._cells[5]._value.model.address;
           if (cast === "inplace") {
+            phi_new_m = 0.95;
             data = { ...data, [location]: 0.95 };
             phi = 0.95;
             let equ = rows[key1]._cells[22]._value.model.address;
@@ -480,6 +485,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           if (phi_i == 2) {
             let location = rows[key1]._cells[5]._value.model.address;
             if (cast === "inplace") {
+              phi_new_n = 0.95;
               data = { ...data, [location]: 0.95 };
               phi = 0.95;
               let equ = rows[key1]._cells[25]._value.model.address;
@@ -638,8 +644,8 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       ) {
         sm_i = sm_i + 1;
         if (sm_i == 1) {
-        if (sp === "ca1" && vu_check == '<') {
-          sm_old = rows[key1]._cells[13]._value.model.value;
+        sm_old = rows[key1]._cells[13]._value.model.value;
+        if (sp === "ca1" && vu_check == '<') {         
           let add1 = rows[key1]._cells[6]._value.model.address;
           data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
           let add2 = rows[key1]._cells[13]._value.model.address;
@@ -657,8 +663,8 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         
       }
       if (sm_i == 2) {
-          if (sp === "ca1" && vu_check == '<') {
-            sn_old = rows[key1]._cells[13]._value.model.value;
+         sn_old = rows[key1]._cells[13]._value.model.value;
+          if (sp === "ca1" && vu_check == '<') {    
             let add1 = rows[key1]._cells[6]._value.model.address;
             data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
             let add2 = rows[key1]._cells[13]._value.model.address;
@@ -682,12 +688,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         rows[key1]._cells[0]._value.model.value == "$$s"
       ) {
           s_i = s_i + 1;
-          if (s_i == 1) {
-            s_m = rows[key1]._cells[8].value;
+        if (s_i == 1) {
+        s_m = rows[key1]._cells[8].value;
         let cell8 = rows[key1]._cells[8];
         s_max = rows[key1]._cells[8].value;
         console.log(s_max);
-          }
+        }
           if (s_i == 2) {
             s_n = rows[key1]._cells[8].value;
         let cell8 = rows[key1]._cells[8];
@@ -749,7 +755,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                 }
                 if (rows[nextKey1]._cells[0]._value.model.value == "$$d-c") {
                   // Store the value and address of cell in column 9 for $$dc row
-                  dc_old = rows[nextKey1]._cells[11].value;
+                  // dc_old = rows[nextKey1]._cells[11].value;
                   dc_new = 2.5;
                   column9Value = rows[nextKey1]._cells[9]._value.model.value;
                   column9Address = rows[nextKey1]._cells[9]._value.model.address;
@@ -2267,6 +2273,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cell13 = rows[key1]._cells[13];
       let add13 = cell13._address;
       data = { ...data,[add13] : "####"}
+      let cell27 = rows[key1]._cells[27];
+      let add27 = getCellAddress(cell27, "dummy_address_27");
+      data = { ...data,[add27] : "  "}
     }
     if(t_i == 2) {
       let cell8 = rows[key1]._cells[8];
@@ -2276,6 +2285,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cell13 = rows[key1]._cells[13];
       let add13 = cell13._address;
       data = { ...data,[add13] : "####"}
+      let cell27 = rows[key1]._cells[27];
+      let add27 = getCellAddress(cell27, "dummy_address_27");
+      data = { ...data,[add27] : "  "}
     }
     if(t_i == 3) {
       let cell8 = rows[key1]._cells[8];
@@ -2284,6 +2296,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cell13 = rows[key1]._cells[13];
       let add13 = cell13._address;
       data = { ...data,[add13] : "####"}
+      let cell27 = rows[key1]._cells[27];
+      let add27 = getCellAddress(cell27, "dummy_address_27");
+      data = { ...data,[add27] : "  "}
     }
     if(t_i == 4) {
       let cell8 = rows[key1]._cells[8];
@@ -2292,6 +2307,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cell13 = rows[key1]._cells[13];
       let add13 = cell13._address;
       data = { ...data,[add13] : "####"}
+      let cell27 = rows[key1]._cells[27];
+      let add27 = getCellAddress(cell27, "dummy_address_27");
+      data = { ...data,[add27] : "  "}
     }
         
   }
@@ -2466,6 +2484,14 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         }
         return null;
       }
+      function getCellAddress(cell, defaultAddress) {
+        if (cell && cell._address) {
+            return cell._address;
+        } else {
+            console.warn(`Cell address is null or undefined, using default: ${defaultAddress}`);
+            return defaultAddress;
+        }
+    }
       function deleteRowsBetweenMarkers(worksheet) {
         for (let i = 1; i <= worksheet.rowCount; i++) {
           let row = worksheet.getRow(i);
@@ -2697,6 +2723,22 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         //   right: { style: 'thin' },
         // };
       };
+
+      // const formatlistCell = (cell, value) => {
+      //   cell.dataValidation={
+      //     type: 'list',
+      //     allowBlank: true,
+      //     formulae: ['"One,Two,Three,Four"']
+      //   }
+      //   cell.DropList = ["asd","ada"];
+      //   cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      //   // cell.border = {
+      //   //   top: { style: 'thin' },
+      //   //   left: { style: 'thin' },
+      //   //   bottom: { style: 'thin' },
+      //   //   right: { style: 'thin' },
+      //   // };
+      // };
     
       const formatResultCell = (cell, value) => {
         cell.value = value;
@@ -2789,9 +2831,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatCell(worksheet3.getCell('A33'), 'Vu(kips)');
       formatCell(worksheet3.getCell('A34'), 'Vr(kips)');
       formatNumberCell(worksheet3.getCell('B4'), 1);
-      formatNumberCell(worksheet3.getCell('E4'), 0.95);
+      // formatlistCell(worksheet3.getCell('B4'),1);
+      formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
       formatNumberCell(worksheet3.getCell('B8'), 1);
-      formatNumberCell(worksheet3.getCell('E8'), 0.95);
+      formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
       formatNumberCell(worksheet3.getCell('B9'), mu_neg);
       formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
       formatNumberCell(worksheet3.getCell('E9'), mu_neg);
@@ -3150,8 +3193,24 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     return (
       <Panel width={510} height={470} marginTop={3} padding={2} variant="shadow2">
         <Panel width={480} height={200} marginTop={0} variant="shadow2">
-        <div>
-          <Typography variant="h1"> Casting Method</Typography>
+        <div style={{ marginTop: "8px" }}>
+          <Grid container>
+            <Grid item xs={9}>
+              <Typography variant="h1">
+                {" "}
+                Casting Method
+              </Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <Typography variant="h1"> (5.5.4.2)</Typography>
+            </Grid>
+          </Grid>
+          {/* <RadioGroup
+            margin={1}
+            onChange={(e) => setSp(e.target.value)} // Update state variable based on user selection
+            value={cast} // Bind the state variable to the RadioGroup
+            text=""
+          > */}
           <RadioGroup
             margin={1}
             onChange={(e) => setCast(e.target.value)} // Update state variable based on user selection
@@ -3262,7 +3321,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         </div>
         </Panel>
         <Panel width={480} height={200} marginTop={1} variant="shadow2">
-        <div style={{ marginTop: "5px" }}>
+        <div style={{ marginTop: "6px" }}>
           <Grid container>
             <Grid item xs={3}>
               <Typography variant="h1">
@@ -3290,7 +3349,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            marginTop: "11px",
+            marginTop: "8px",
           }}
         >
           <Grid container>
@@ -3303,15 +3362,20 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                 />
               </Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
+            {/* <img
+          src={Image} // Use the imported image
+          alt="Description of the image"
+          style={{ width: '100%', height: 'auto' }} // Inline styles for responsiveness
+        /> */}
             </Grid>
           </Grid>
           {/*  */}
           <Grid container direction="row">
-            <Grid item xs={6}>
+            <Grid item xs={9}>
               <Typography>Maximum aggregate size(ag) (in inches)</Typography>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={3}>
               <TextField
                 value={ag}
                 onChange={handleAgChange}
@@ -3320,13 +3384,14 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                 width="100px"
               />
             </Grid>
-            <Grid item xs={6} marginTop={0.5}>
+            </Grid>
+            <Grid container direction="row">
+            <Grid item xs={9} marginTop={0.5}>
               <Typography size="small">
-                Maximum distance between the longitudinal reinforcement (in
-                inches)
+              <span dangerouslySetInnerHTML={{ __html: 'Maximum distance between the layers of longitudinal crack control reinforcement (s<sub>xe</sub>) (in inches)' }} />
               </Typography>
             </Grid>
-            <Grid item xs={6} marginTop={0.5}>
+            <Grid item xs={3} marginTop={0.5}>
               <TextField
                 value={sg}
                 onChange={handleSgChange}
