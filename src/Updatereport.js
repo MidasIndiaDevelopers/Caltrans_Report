@@ -49,7 +49,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let sn_old;
     let sn_new;
     let smax_old; let smax_new; let suse; let dc_old; let dc_new; let beta_m; let theta_m; let beta_n; let theta_n; let Av_f; let Avr_old; let Avr_new; let vu; let vr_old; let vr_new; 
-    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n
+    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n; 
     const action = snackbarId => (
         <>
           <button style={{ backgroundColor: 'transparent', border: 'none',color: 'white', cursor: 'pointer' }} onClick={() => { closeSnackbar(snackbarId) }}>
@@ -405,7 +405,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cm;
       let cp;
       let st1_i = 0;
-      
+      let chge_i = 0;
      
       for (let key1 in rows) {
         if (
@@ -706,7 +706,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
        
         if (
           rows[key1]._cells[0] != undefined &&
-          rows[key1]._cells[0]._value.model.value == "$$SX"
+          rows[key1]._cells[0]._value.model.value == "$$sx"
         ) {
           K = rows[key1]._cells[15].value;
         }
@@ -812,7 +812,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$fy"
         ) {
+          if ( type == 'Composite') {
           fy = rows[key1]._cells[6].value;
+          }
+          else {
+            fy = rows[key1]._cells[7].value;
+          }
         }
         console.log(fy);
   
@@ -1099,7 +1104,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               }
           
               // Merge cells from A to H in the current row
-              worksheet.mergeCells(`B${rowNumber}:T${rowNumber}`);
+              worksheet.mergeCells(`B${rowNumber}:U${rowNumber}`);
           
               const mergedCell = row.getCell(2);
               const mergedCellValue =
@@ -1124,11 +1129,56 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           });
         if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$strm1") {
           strm1_i += 1;
-          if (strm1_i == 1) {
+        //   if (strm1_i == 1) {
+        //   for (let i = 1; i <= 50; i++) {
+        //     let cell = getSafeCell(row, i);
+        //     if (cell) {
+        //       cell._value.model = { value: " " };
+        //       cell.style = { font: { underline: false } };
+        //     } else {
+        //       row._cells[i] = {
+        //         _value: {
+        //           model: {
+        //             value: "dummy",
+        //             address: indexToLetter(i) + (parseInt(key1) + 1),
+        //           },
+        //         },
+        //         _address: indexToLetter(i) + (parseInt(key1) + 1),
+        //         style: { font: { underline: false } },
+        //       };
+        //     }
+        //   }
+    
+        //   let nextKey = parseInt(key1) + 1;
+        //   while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
+        //     for (let i = 1; i <= 50; i++) {
+        //       let cell = getSafeCell(rows[nextKey], i);
+        //       if (cell) {
+        //         cell._value.model = { value: " " };
+        //         cell.style = { font: { underline: false } };
+        //       } else {
+        //         rows[nextKey]._cells[i] = {
+        //           _value: {
+        //             model: {
+        //               value: "dummy",
+        //               address: indexToLetter(i) + (nextKey + 1),
+        //             },
+        //           },
+        //           _address: indexToLetter(i) + (nextKey + 1),
+        //           style: { font: { underline: false } },
+
+        //         };
+        //       }
+        //     }
+        //     nextKey++;
+        //   }
+        // }
+        if (strm1_i == 1) {
           for (let i = 1; i <= 50; i++) {
             let cell = getSafeCell(row, i);
             if (cell) {
               cell._value.model = { value: " " };
+              cell.style = { font: { underline: false } };
             } else {
               row._cells[i] = {
                 _value: {
@@ -1138,16 +1188,18 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                   },
                 },
                 _address: indexToLetter(i) + (parseInt(key1) + 1),
+                style: { font: { underline: false } },
               };
             }
           }
-    
+      
           let nextKey = parseInt(key1) + 1;
           while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
             for (let i = 1; i <= 50; i++) {
               let cell = getSafeCell(rows[nextKey], i);
               if (cell) {
                 cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
               } else {
                 rows[nextKey]._cells[i] = {
                   _value: {
@@ -1157,52 +1209,148 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                     },
                   },
                   _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
                 };
               }
             }
             nextKey++;
           }
-        }
       
-          if (strm1_i === 2) {
+          // Process the row containing $$theta_max
+          if (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value === "$$theta_max") {
             for (let i = 1; i <= 50; i++) {
-              let cell = getSafeCell(row, i);
+              let cell = getSafeCell(rows[nextKey], i);
               if (cell) {
                 cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
               } else {
-                row._cells[i] = {
+                rows[nextKey]._cells[i] = {
                   _value: {
                     model: {
                       value: "dummy",
-                      address: indexToLetter(i) + (parseInt(key1) + 1),
+                      address: indexToLetter(i) + (nextKey + 1),
                     },
                   },
-                  _address: indexToLetter(i) + (parseInt(key1) + 1),
+                  _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
                 };
               }
             }
+            nextKey++;
+          }
       
-            let nextKey = parseInt(key1) + 1;
-            while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
-              for (let i = 1; i <= 50; i++) {
-                let cell = getSafeCell(rows[nextKey], i);
-                if (cell) {
-                  cell._value.model = { value: " " };
-                } else {
-                  rows[nextKey]._cells[i] = {
-                    _value: {
-                      model: {
-                        value: "dummy",
-                        address: indexToLetter(i) + (nextKey + 1),
-                      },
+          // Process one extra row after the $$theta_max row
+          if (rows[nextKey]) {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
                     },
-                    _address: indexToLetter(i) + (nextKey + 1),
-                  };
-                }
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
+                };
               }
-              nextKey++;
             }
           }
+        }
+
+      
+        if (strm1_i === 2) {
+          for (let i = 1; i <= 50; i++) {
+            let cell = getSafeCell(row, i);
+            if (cell) {
+              cell._value.model = { value: " " };
+              cell.style = { font: { underline: false } };
+            } else {
+              row._cells[i] = {
+                _value: {
+                  model: {
+                    value: "dummy",
+                    address: indexToLetter(i) + (parseInt(key1) + 1),
+                  },
+                },
+                _address: indexToLetter(i) + (parseInt(key1) + 1),
+                style: { font: { underline: false } },
+              };
+            }
+          }
+      
+          let nextKey = parseInt(key1) + 1;
+          while (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value !== "$$theta_max") {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
+                };
+              }
+            }
+            nextKey++;
+          }
+      
+          // Process the row containing $$theta_max
+          if (rows[nextKey] && getSafeCell(rows[nextKey], 0) && getSafeCell(rows[nextKey], 0)._value.model.value === "$$theta_max") {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
+                };
+              }
+            }
+            nextKey++;
+          }
+      
+          // Process one extra row after the $$theta_max row
+          if (rows[nextKey]) {
+            for (let i = 1; i <= 50; i++) {
+              let cell = getSafeCell(rows[nextKey], i);
+              if (cell) {
+                cell._value.model = { value: " " };
+                cell.style = { font: { underline: false } };
+              } else {
+                rows[nextKey]._cells[i] = {
+                  _value: {
+                    model: {
+                      value: "dummy",
+                      address: indexToLetter(i) + (nextKey + 1),
+                    },
+                  },
+                  _address: indexToLetter(i) + (nextKey + 1),
+                  style: { font: { underline: false } },
+                };
+              }
+            }
+          }
+        }
         }
   
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$A") {
@@ -1233,15 +1381,34 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                 "Error: Unable to determine address for rows[key1]._cells[4]"
               );
             }
-
+            // worksheet.mergeCells(`G${key1}:H${key1}`);
             let cell2 = getSafeCell(rows[key1], 6);
             if (cell2) {
-              data = { ...data, [cell2._address]: "Aₘᵢₙ" };
+              const cellAddress = cell2._address;
+              const rowNumber = parseInt(cellAddress.replace(/\D/g, ''), 10); // Extract the row number from the address
+            
+              // Unmerge cells G and H for the specific row if they are already merged
+              try {
+                worksheet.unMergeCells(`G${rowNumber}:H${rowNumber}`);
+              } catch (error) {
+                console.log(`Cells G${rowNumber}:H${rowNumber} were not merged.`);
+              }
+            
+              // Merge cells G and H for the specific row
+              worksheet.mergeCells(`G${rowNumber}:H${rowNumber}`);
+            
+              // Add "Aₘᵢₙ" to the merged cell G and set the alignment to center
+              let mergedCell = worksheet.getCell(`G${rowNumber}`);
+              mergedCell.value = "Aₘᵢₙ";
+              mergedCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            
+              data = { ...data, [`G${rowNumber}`]: "Aₘᵢₙ" };
             } else {
               console.error(
                 "Error: Unable to determine address for rows[key1]._cells[6]"
               );
             }
+            
 
             let cell3 = getSafeCell(rows[key1], 5);
             if (cell3) {
@@ -1268,12 +1435,31 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
 
             let cell2 = getSafeCell(rows[key1], 6);
             if (cell2) {
-              data = { ...data, [cell2._address]: "Aₘᵢₙ" };
+              const cellAddress = cell2._address;
+              const rowNumber = parseInt(cellAddress.replace(/\D/g, ''), 10); // Extract the row number from the address
+            
+              // Unmerge cells G and H for the specific row if they are already merged
+              try {
+                worksheet.unMergeCells(`G${rowNumber}:H${rowNumber}`);
+              } catch (error) {
+                console.log(`Cells G${rowNumber}:H${rowNumber} were not merged.`);
+              }
+            
+              // Merge cells G and H for the specific row
+              worksheet.mergeCells(`G${rowNumber}:H${rowNumber}`);
+            
+              // Add "Aₘᵢₙ" to the merged cell G and set the alignment to center
+              let mergedCell = worksheet.getCell(`G${rowNumber}`);
+              mergedCell.value = "Aₘᵢₙ";
+              mergedCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            
+              data = { ...data, [`G${rowNumber}`]: "Aₘᵢₙ" };
             } else {
               console.error(
                 "Error: Unable to determine address for rows[key1]._cells[6]"
               );
             }
+            
 
             let cell3 = getSafeCell(rows[key1], 5);
             if (cell3) {
@@ -1335,7 +1521,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             console.error("Error: Unable to determine address for rows[key1]._cells[5]");
           }
   
-          let cell3 = getSafeCell(rows[key1], 9);
+          let cell3 = getSafeCell(rows[key1], 6);
           if (cell3) {
             let cell3Value = Av >= Avm ? Exn : Etn;
             data = { ...data, [cell3._address]: cell3Value.toFixed(6) };
@@ -1725,6 +1911,28 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             }
           }
         }
+        if (
+          getSafeCell(rows[key1], 0) &&
+          getSafeCell(rows[key1], 0)._value.model.value === "$$chge"
+      ) { 
+          chge_i = chge_i + 1;
+          if (chge_i == 1) {
+           let cell2 = rows[key1]._cells[2];
+           let add2 = cell2._address;
+           data = { ...data, [add2] : '0.5Φ(Vc+Vp)'};
+           let cell11 = rows[key1]._cells[11];
+           let add11 = cell11._address;
+           data = { ...data, [add11] : 'Φ(Vc+Vp)'};
+          }
+          if (chge_i == 2) {
+            let cell2 = rows[key1]._cells[2];
+            let add2 = cell2._address;
+            data = { ...data, [add2] : '0.5Φ(Vc+Vp)'};
+            let cell11 = rows[key1]._cells[11];
+            let add11 = cell11._address;
+            data = { ...data, [add11] : 'Φ(Vc+Vp)'};
+           }
+      }
         
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$beta") {
           beta_i = beta_i + 1;
@@ -2186,13 +2394,16 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell13 = getSafeCell(rows[key1], 13);
             let add13 = cell13 ? cell13._address : null;
             if (add13) {
-                let cal = ((Av * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha)) / s_max);
+                let cal = ((Av * fy * dv * (cot(theta_new) + cot($$alpha))) * Math.sin($$alpha)) / s_max;
                 cal = parseFloat(cal.toFixed(3));
                 data = { ...data, [add13]: cal };
                 Vs = cal;
             } else {
                 console.error("Error: Unable to retrieve address for rows[key1]._cells[13]");
             }
+            let cell5 = rows[key1]._cells[5];
+            let add5 = cell5._address;
+            data = { ...data, [add5] : 'Av·fy·dv(cotθ+cotα)sinα'};
         }
         if (vs_i === 2) {
             let cell13 = getSafeCell(rows[key1], 13);
@@ -2205,6 +2416,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             } else {
                 console.error("Error: Unable to retrieve address for rows[key1]._cells[13]");
             }
+            let cell5 = rows[key1]._cells[5];
+            let add5 = cell5._address;
+            data = { ...data, [add5] : 'Av·fy·dv(cotθ+cotα)sinα'};
         }
     }
     if (
@@ -2213,6 +2427,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
   ) {
       sum_i = sum_i + 1;
       if (sum_i === 1) {
+          let cell3 = getSafeCell(rows[key1], 3);
+          let add3 = cell3._address;
+          data = { ...data,[add3] : 'Vc +Vs +Vp'}
+          let cell14 = getSafeCell(rows[key1], 14);
+          let add14 = cell14._address;
+          data = { ...data,[add14] : "0.25·f'cbvdv + Vp ="};
           let cell7 = getSafeCell(rows[key1], 7);
           let add7 = cell7 ? cell7._address : null;
           if (add7) {
@@ -2225,7 +2445,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               let add13 = cell13 ? cell13._address : null;
               let add20 = cell20 ? cell20._address : null;
               let value20 = cell20 ? cell20.value : null;
-  
+              if( type == 'Box') {
+                value20 = (0.25*fc*bv*dv) + Vp;
+                data = { ...data,[add20] : parseFloat(value20.toFixed(3))};
+              }
               if (add13 && value20 !== null) {
                   data = { ...data, [add13]: Vn < value20 ? "≤" : ">" };
               } else {
@@ -2249,6 +2472,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               let add13 = cell13 ? cell13._address : null;
               let add20 = cell20 ? cell20._address : null;
               let value20 = cell20 ? cell20.value : null;
+              if( type == 'Box') {
+                value20 = (0.25*fc*bv*dv) + Vp;
+                data = { ...data,[add20] : parseFloat(value20.toFixed(3))};
+              }
   
               if (add13 && value20 !== null) {
                   data = { ...data, [add13]: Vn_min < value20 ? "≤" : ">" };
@@ -2319,11 +2546,17 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
   ) {
     vn_i = vn_i + 1;
     if (vn_i == 1) {
+    let cell5 = rows[key1]._cells[5];
+    let add5 = cell5._address;
+    data = { ...data,[add5] : 'Vc +Vs +Vp'}
     let cell11 = rows[key1]._cells[11];
     let add11 = cell11._address;
     data = { ...data, [add11]: parseFloat(Vn.toFixed(2)) };
   }
   if (vn_i == 2){
+    let cell5 = rows[key1]._cells[5];
+    let add5 = cell5._address;
+    data = { ...data,[add5] : 'Vc +Vs +Vp'}
     let cell11 = rows[key1]._cells[11];
     let add11 = cell11._address;
     data = { ...data, [add11]: parseFloat(Vn_min.toFixed(2)) };
@@ -2622,11 +2855,28 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         const nextRowNumber = lastRowNumber + 1;
         // Access the next row
         const nextRow = worksheet2.getRow(nextRowNumber);
+        let cell3Value = worksheet2.getRow(4).getCell(3).value;
     
         // Populate the first cell with selectedName
         nextRow.getCell(1).value = beamStresses.BeamStress.DATA[0][1];
-        nextRow.getCell(2).value = beamStresses.BeamStress.DATA[0][5];
-        nextRow.getCell(3).value = 'Girder';
+        if (cell3Value == '-') {
+          let value = beamStresses.BeamStress.DATA[0][3];
+
+           // Remove the square brackets using a regular expression
+           value = value.replace(/\[.*?\]/g, '');
+
+           nextRow.getCell(2).value = value.trim();
+        }
+        else {
+          nextRow.getCell(2).value = beamStresses.BeamStress.DATA[0][5];
+        }
+        if (cell3Value == '-') {
+          nextRow.getCell(3).value = '-';
+        }
+        else {
+          nextRow.getCell(3).value = 'Girder';
+        }
+         
         nextRow.getCell(4).value = 'Tension';
         nextRow.getCell(5).value = selectedName;
         nextRow.getCell(8).value = changeSignAndFormat(beamStresses.BeamStress.DATA[0][12]);
@@ -2644,6 +2894,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             nextRow.getCell(14).value = 'NG';
         }
         console.log(`Next row (${nextRowNumber}):`, nextRow);
+        if(cell3Value !== '-') {
         const nextRowNumber2 = lastRowNumber + 2;
         const nextRow2 = worksheet2.getRow(nextRowNumber2);
     
@@ -2667,6 +2918,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             nextRow2.getCell(14).value = 'NG';
         }
         console.log(`Next row (${nextRowNumber2}):`, nextRow2);
+      }
         lastRow.commit();
     }
     function safeStringify(obj) {
@@ -3112,7 +3364,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     try {
       beamStresses = await midasAPI("POST", "/post/table", stresses);
       
-      if (Object.keys(beamStresses).length === 0) {
+      if (beamStresses.message === '') {
         beamStresses_box = await midasAPI("POST", "/post/table", box_stresses);
       }
     
@@ -3127,12 +3379,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         updatedata(wkey, SelectWorksheets[wkey]);
       }    
       for (let wkey in SelectWorksheets2) {
-        // if (beamStresses && Object.keys(beamStresses).length > 1) {
+        // Check if beamStresses is not null or undefined and has keys
+        if (beamStresses.BeamStress && beamStresses.BeamStress.DATA) {
           updatedata2(wkey, SelectWorksheets2[wkey], beamStresses);
-        // } else {
-        //   updatedata2(wkey, SelectWorksheets2[wkey], beamStresses_box);
-        // }
+        } else {
+          updatedata2(wkey, SelectWorksheets2[wkey], beamStresses_box);
+        }
       }
+      console.log(beamStresses);
+      console.log(beamStresses_box);
       
       for (let wkey in SelectWorksheets3) {
           updatedata3(wkey, SelectWorksheets3[wkey],name);
