@@ -48,8 +48,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let sm_new;
     let sn_old;
     let sn_new;
+    let allMatches = [];
     let smax_old; let smax_new; let suse; let dc_old; let dc_new; let beta_m; let theta_m; let beta_n; let theta_n; let Av_f; let Avr_old; let Avr_new; let vu; let vr_old; let vr_new; 
-    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n; 
+    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n; let dc_i = 0; let suse2; let smax_old_2; let smax_new_2; let dc_old_2; let dc_new_2;
     const action = snackbarId => (
         <>
           <button style={{ backgroundColor: 'transparent', border: 'none',color: 'white', cursor: 'pointer' }} onClick={() => { closeSnackbar(snackbarId) }}>
@@ -94,6 +95,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           await workbook.xlsx.load(buffer);
           let summarySheet = workbook.addWorksheet('Summary');
           let newMatchedParts = [];
+          
           // const summaryWorkbook = await fetchAndProcessExcelFile();
           // const summarySheet = summaryWorkbook.getWorksheet('Sheet1');
   
@@ -108,6 +110,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               // match[1] contains the part that matches [0-9]+
               // match[2] contains the part that matches [A-Z]
               newMatchedParts.push({ numberPart: match[1], letterPart: match[2] });
+              allMatches.push(match[0]);
   
               worksheet = workbook.worksheets[key];
               setWorksheet((prevState) => ({
@@ -133,7 +136,8 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
   
           console.log(matchedParts);
-          for (let key in workbook.worksheets) {
+          console.log(allMatches);
+           for (let key in workbook.worksheets) {
             const lcb = "StressAtLCB";
             if (workbook.worksheets[key].name === lcb) {
               worksheet2 = workbook.worksheets[key];
@@ -252,7 +256,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         const angleInRadians = angleInDegrees * (Math.PI / 180);
         return 1 / Math.tan(angleInRadians);
     }
-      
     console.log(matchedParts);
     const [ag, setAg] = useState("");
     const [sg, setSg] = useState("");
@@ -405,7 +408,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cm;
       let cp;
       let st1_i = 0;
-      let chge_i = 0;
+      let chge_i = 0; 
      
       for (let key1 in rows) {
         if (
@@ -708,12 +711,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$sx"
         ) {
+          if (type !== "Composite")
           K = rows[key1]._cells[15].value;
         }
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$dc"
         ) {
+            dc_i = dc_i + 1;
+            if (dc_i == 1) {
             smax_old = rows[key1]._cells[11].value;
             suse = rows[key1]._cells[21].value;
             let val2_new;
@@ -792,6 +798,87 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           else {
             smax_new = smax_old;
           }
+        }
+        if (dc_i == 2) {
+          smax_old_2 = rows[key1]._cells[11].value;
+          suse2 = rows[key1]._cells[21].value;
+          let val2_new;
+         if (cvr === "ca2") {
+
+          for (let col = 0; col < rows[key1]._cells.length; col++) {
+            if (rows[key1]._cells[col] != undefined) {
+              let cellValue = rows[key1]._cells[col]._value.model.value;
+              let cellAddress = rows[key1]._cells[col]._value.model.address;
+              storedValues[cellAddress] = cellValue;
+            }
+          }
+          let add1 = rows[key1]._cells[8]._value.model.address;
+          let add2 = rows[key1]._cells[11]._value.model.address;
+          let val2 = rows[key1]._cells[11]._value.model.value;
+          let val3 = rows[key1]._cells[21]._value.model.value;
+          let add4 = rows[key1]._cells[29]._value.model.address;
+          let add5 = rows[key1]._cells[17]._value.model.address;
+          let column15Address;
+          let column15Value;
+          let column15Value_new;
+          let column9Address;
+          let column9Value;
+          let column9Value_new;
+
+          // Move to the next row and check for $$B and the next $$dc
+          let nextKey1 = parseInt(key1, 10) + 1;
+          while (rows[nextKey1]) {
+            if (rows[nextKey1]._cells[0] != undefined) {
+              if (rows[nextKey1]._cells[0]._value.model.value == "$$B") {
+                // Store the value and address of cell in column 13 for $$B row
+                column15Address = rows[nextKey1]._cells[15]._value.model.address;
+                column15Value = rows[nextKey1]._cells[15]._value.model.value;
+                column15Value_new = (1 + (2.5/(0.7*(h-2.5))));
+                column15Value_new = parseFloat(column15Value_new.toFixed(3));
+                console.log(column15Value_new);
+                storedValues[column15Address] = column15Value;
+                data = { ...data, [column15Address]: column15Value_new };
+              }
+              if (rows[nextKey1]._cells[0]._value.model.value == "$$d-c") {
+                // Store the value and address of cell in column 9 for $$dc row
+                // dc_old = rows[nextKey1]._cells[11].value;
+                dc_new_2 = 2.5;
+                column9Value = rows[nextKey1]._cells[9]._value.model.value;
+                column9Address = rows[nextKey1]._cells[9]._value.model.address;
+                column9Value_new = column9Value - column9Value + 2.5;
+                console.log(column9Value_new);
+                storedValues[column9Address] = column9Value;
+                data = { ...data, [column9Address]: column9Value_new };
+                let add13 = rows[nextKey1]._cells[13]._value.model.address;
+                data = { ...data,[add13] : '(in)                                                                    (As per CA-5.6.7-1)'};
+                break;
+              }
+            }
+            nextKey1++;
+          }
+          console.log(storedValues);
+          val2_new = ((val2 + 3.6) * column15Value) / column15Value_new - 5;
+          val2_new = parseFloat(val2_new.toFixed(3));
+
+          if (val2_new < 0) {
+            val2_new = 0.0;
+          }
+
+          if (val2_new < val3) {
+            data = { ...data, [add4]: "NG" };
+            data = { ...data, [add5]: "<" };
+          }
+
+          data = { ...data, [add1]: "2*2.5" };
+          data = { ...data, [add2]: val2_new };
+        }
+        if (cvr === "ca2") {
+          smax_new_2 = val2_new;
+        }
+        else {
+          smax_new_2 = smax_old_2;
+        }
+      }
         }
         if (
           rows[key1]._cells[0] != undefined &&
@@ -1482,11 +1569,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
           }
         }
-      
-        // if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$pi_min") {
-        //   pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
-        // }
-      
         if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$e") {
           e_i = e_i + 1;
           if (e_i == 1){
@@ -1528,8 +1610,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
         }
         }
-        
-  
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$sx") {
           sx_i = sx_i + 1;
           if (sx_i === 1) {
@@ -1663,8 +1743,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               console.error("Error: Unable to determine address for rows[key1]._cells[7]");
             }
           }
-        }
-        
+        }  
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$sxe") {
           sxe_i = sxe_i + 1;
           
@@ -2460,13 +2539,18 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       }
   
       if (sum_i === 2) {
+          let cell3 = getSafeCell(rows[key1], 3);
+          let add3 = cell3._address;
+          data = { ...data,[add3] : 'Vc +Vs +Vp'}
+          let cell14 = getSafeCell(rows[key1], 14);
+          let add14 = cell14._address;
+          data = { ...data,[add14] : "0.25·f'cbvdv + Vp ="};
           let cell7 = getSafeCell(rows[key1], 7);
           let add7 = cell7 ? cell7._address : null;
           if (add7) {
               let sum = Vp_min + Vc_min + Vs_min;
               Vn_min = sum;
               data = { ...data, [add7]: parseFloat(Vn_min.toFixed(2)) };
-  
               let cell13 = getSafeCell(rows[key1], 13);
               let cell20 = getSafeCell(rows[key1], 20);
               let add13 = cell13 ? cell13._address : null;
@@ -2706,6 +2790,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       workbookData.worksheets[wkey] = worksheet;
       setWorkbookData(workbookData);
       setSheetName(worksheet.name);
+      return (type);
     }
     function getSafeCell(row, index) {
         try {
@@ -2945,12 +3030,14 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         return Math.min(...cells.map(cell => parseFloat(cell.value))).toFixed(2);
     }
     
-    async function updatedata3(wkey, worksheet3, name) {
+    async function updatedata3(wkey, worksheet3, name,type) {
       if (!workbookData) return;
       if (!worksheet3) {
         throw new Error("No worksheets found in the uploaded file");
       }
       console.log(mu_pos);
+      console.log(type);
+      // let type = type.[[pr]]
     
       const formatCell = (cell, value, bgColor = 'FFADD8E6', textColor = 'FF000000', bold = true) => {
         cell.value = value;
@@ -2964,6 +3051,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           right: { style: 'thin' },
         };
       };
+      console.log(type);
     
       const formatNumberCell = (cell, value) => {
         cell.value = parseFloat(value).toFixed(3);
@@ -3021,10 +3109,13 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatNumberCell(worksheet3.getCell('E6'), mr_new_pos);
       formatResultCell(worksheet3.getCell('D6'), mr_old_pos < mu_pos ? "NG" : "OK");
       formatResultCell(worksheet3.getCell('G6'), mr_new_pos < mu_pos ? "NG" : "OK");
+      let contentForRows;
     
       // Array of rows to merge and format
+      
+      if (type == "Composite") {
       const rowsToMerge = [3, 7, 11, 14, 17, 21, 28];
-      const contentForRows = [
+      contentForRows = [
         "1. Factored Resistance: Positive ",
         "2. Factored Resistance: Negative ",
         "3. Maximum spacing for transverse reinforcement: Maximum shear case ",
@@ -3033,24 +3124,49 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         "6. Shear Resistance parameters : Maximum ",
         "7. Shear Resistance parameters : Minimum "
       ];
-    
-      // Merge and format specified rows
+      rowsToMerge.forEach((row, index) => {
+        worksheet3.mergeCells(`A${row}:G${row}`);
+        formatCell(worksheet3.getCell(`A${row}`), contentForRows[index], 'FFD3D3D3');  
+      });
+    } else {
+      const rowsToMerge = [3, 7, 11, 14, 17, 21, 25,32];
+      contentForRows = [
+        "1. Factored Resistance: Positive ",
+        "2. Factored Resistance: Negative ",
+        "3. Maximum spacing for transverse reinforcement: Maximum shear case ",
+        "4. Maximum spacing for transverse reinforcement: Minimum shear case ",
+        "5. Crack Check : Top",
+        "6. Crack Check : Bottom",
+        "7. Shear Resistance parameters : Maximum ",
+        "8. Shear Resistance parameters : Minimum "
+      ];
       rowsToMerge.forEach((row, index) => {
         worksheet3.mergeCells(`A${row}:G${row}`);
         formatCell(worksheet3.getCell(`A${row}`), contentForRows[index], 'FFD3D3D3');
       });
+    }
+    
+      // Merge and format specified rows
+     
     
       // Rows to skip while merging B-C and E-F
-      const rowsToSkip = [1, 2, 3, 7, 11, 14, 17, 21, 28];
-    
-      // Merge cells B and C, E and F up to row 29, skipping specified rows
+      if (type == 'Composite') {
+      const rowsToSkip = [1, 2, 3, 7, 11, 14, 17,21,28];
       for (let i = 1; i <= 34; i++) {
         if (!rowsToSkip.includes(i)) {
           worksheet3.mergeCells(`B${i}:C${i}`);
           worksheet3.mergeCells(`E${i}:F${i}`);
         }
       } 
-      // Additional cells to format
+      } else {
+        const rowsToSkip = [1, 2, 3, 7, 11, 14, 17, 21,25,32];
+        for (let i = 1; i <= 38; i++) {
+          if (!rowsToSkip.includes(i)) {
+            worksheet3.mergeCells(`B${i}:C${i}`);
+            worksheet3.mergeCells(`E${i}:F${i}`);
+          }
+        } 
+      }
       formatCell(worksheet3.getCell('A4'), "ϕ");
       formatCell(worksheet3.getCell('A5'), "Mu(kips·in)");
       formatCell(worksheet3.getCell('A6'), 'Mr(kips·in)');
@@ -3064,6 +3180,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatCell(worksheet3.getCell('A18'), 'dc(in)');
       formatCell(worksheet3.getCell('A19'), 'smax(in)');
       formatCell(worksheet3.getCell('A20'), 's(in)');
+      if (type == "Composite") {
       formatCell(worksheet3.getCell('A22'), 'β');
       formatCell(worksheet3.getCell('A23'), 'θ');
       formatCell(worksheet3.getCell('A24'), 'Av(in²)');
@@ -3083,7 +3200,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatCell(worksheet3.getCell('A33'), 'Vu(kips)');
       formatCell(worksheet3.getCell('A34'), 'Vr(kips)');
       formatNumberCell(worksheet3.getCell('B4'), 1);
-      // formatlistCell(worksheet3.getCell('B4'),1);
       formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
       formatNumberCell(worksheet3.getCell('B8'), 1);
       formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
@@ -3113,6 +3229,70 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatNumberCell(worksheet3.getCell('E18'), dc_new);
       formatNumberCell(worksheet3.getCell('E19'), smax_new);
       formatNumberCell(worksheet3.getCell('E20'), suse);
+      }
+      else {
+        formatCell(worksheet3.getCell('A22'), 'dc(in)');
+        formatCell(worksheet3.getCell('A23'), 'smax(in)');
+        formatCell(worksheet3.getCell('A24'), 's(in)');
+        formatCell(worksheet3.getCell('A26'), 'β');
+        formatCell(worksheet3.getCell('A27'), 'θ');
+        formatCell(worksheet3.getCell('A28'), 'Av(in²)');
+        formatCell(worksheet3.getCell('A29'), 'Av,req(in²)');
+        formatCell(worksheet3.getCell('A30'), 'Vu(kips)');
+        formatCell(worksheet3.getCell('A31'), 'Vr(kips)');
+        formatCell(worksheet3.getCell('A33'), 'β');
+        formatCell(worksheet3.getCell('A34'), 'θ');
+        formatCell(worksheet3.getCell('A35'), 'Av(in²)');
+        formatCell(worksheet3.getCell('A36'), 'Av,req(in²)');
+        formatCell(worksheet3.getCell('A37'), 'Vu(kips)');
+        formatCell(worksheet3.getCell('A38'), 'Vr(kips)');
+        // formatCell(worksheet3.getCell('A29'), 'β');
+        // formatCell(worksheet3.getCell('A30'), 'θ');
+        // formatCell(worksheet3.getCell('A31'), 'Av(in²)');
+        // formatCell(worksheet3.getCell('A32'), 'Av,req(in²)');
+        // formatCell(worksheet3.getCell('A33'), 'Vu(kips)');
+        // formatCell(worksheet3.getCell('A34'), 'Vr(kips)');
+        formatNumberCell(worksheet3.getCell('B4'), 1);
+        // formatlistCell(worksheet3.getCell('B4'),1);
+        formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
+        formatNumberCell(worksheet3.getCell('B8'), 1);
+        formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
+        formatNumberCell(worksheet3.getCell('B9'), mu_neg);
+        formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
+        formatNumberCell(worksheet3.getCell('E9'), mu_neg);
+        formatNumberCell(worksheet3.getCell('E10'), mr_new_neg);
+        formatResultCell(worksheet3.getCell('D10'), mr_old_neg < mu_neg ? "NG" : "OK");
+        formatResultCell(worksheet3.getCell('G10'), mr_new_neg < mu_neg ? "NG" : "OK");
+        formatNumberCell(worksheet3.getCell('B12'), sm_old);
+        formatNumberCell(worksheet3.getCell('E12'), sm_new);
+        formatNumberCell(worksheet3.getCell('B13'), s_m);
+        formatNumberCell(worksheet3.getCell('E13'), s_m);
+        formatResultCell(worksheet3.getCell('D13'), sm_old < s_m ? "NG" : "OK");
+        formatResultCell(worksheet3.getCell('G13'), sm_new < s_m ? "NG" : "OK");
+        formatNumberCell(worksheet3.getCell('B15'), sn_old);
+        formatNumberCell(worksheet3.getCell('E15'), sn_new);
+        formatNumberCell(worksheet3.getCell('B16'), s_n);
+        formatNumberCell(worksheet3.getCell('E16'), s_n);
+        formatResultCell(worksheet3.getCell('D16'), sn_old < s_n ? "NG" : "OK");
+        formatResultCell(worksheet3.getCell('G16'), sn_new < s_n ? "NG" : "OK");
+        formatNumberCell(worksheet3.getCell('B18'), dc_old);
+        formatNumberCell(worksheet3.getCell('B19'), smax_old);
+        formatNumberCell(worksheet3.getCell('B20'), suse);
+        formatResultCell(worksheet3.getCell('D20'), smax_old < suse ? "NG" : "OK");
+        formatResultCell(worksheet3.getCell('G20'), smax_new < suse ? "NG" : "OK");
+        formatNumberCell(worksheet3.getCell('E18'), dc_new);
+        formatNumberCell(worksheet3.getCell('E19'), smax_new);
+        formatNumberCell(worksheet3.getCell('E20'), suse);
+        formatNumberCell(worksheet3.getCell('B22'), dc_old_2);
+        formatNumberCell(worksheet3.getCell('B23'), smax_old_2);
+        formatNumberCell(worksheet3.getCell('B24'), suse2);
+        formatResultCell(worksheet3.getCell('D24'), smax_old_2 < suse2 ? "NG" : "OK");
+        formatResultCell(worksheet3.getCell('G24'), smax_new_2 < suse2 ? "NG" : "OK");
+        formatNumberCell(worksheet3.getCell('E22'), dc_new_2);
+        formatNumberCell(worksheet3.getCell('E23'), smax_new_2);
+        formatNumberCell(worksheet3.getCell('E24'), suse2);
+      }
+      if (type == 'Composite') {
       formatNumberCell(worksheet3.getCell('B22'), beta_mo);
       formatNumberCell(worksheet3.getCell('B23'), theta_mo);
       formatNumberCell(worksheet3.getCell('E22'), beta_m);
@@ -3145,6 +3325,49 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       formatNumberCell(worksheet3.getCell('E34'), vr_new);
       formatResultCell(worksheet3.getCell('D34'), vu > vr_old ? "NG" : "OK");
       formatResultCell(worksheet3.getCell('G34'), vu > vr_new ? "NG" : "OK");
+      }
+      else {
+      //   formatNumberCell(worksheet3.getCell('B22'), dc_old_2);
+      // formatNumberCell(worksheet3.getCell('B23'), smax_old_2);
+      // formatNumberCell(worksheet3.getCell('B24'), suse2);
+      // formatResultCell(worksheet3.getCell('D24'), smax_old_2 < suse2 ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G24'), smax_new_2 < suse2 ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('E22'), dc_new_2);
+      // formatNumberCell(worksheet3.getCell('E23'), smax_new_2);
+      // formatNumberCell(worksheet3.getCell('E24'), suse2);
+        formatNumberCell(worksheet3.getCell('B26'), beta_mo);
+      formatNumberCell(worksheet3.getCell('B27'), theta_mo);
+      formatNumberCell(worksheet3.getCell('E26'), beta_m);
+      formatNumberCell(worksheet3.getCell('E27'), theta_m);
+      formatNumberCell(worksheet3.getCell('B28'), Av_f);
+      formatNumberCell(worksheet3.getCell('B29'), Avr_old);
+      formatNumberCell(worksheet3.getCell('E28'), Av_f);
+      formatNumberCell(worksheet3.getCell('E29'), Avr_new);
+      formatResultCell(worksheet3.getCell('D29'), Avr_old > Av_f ? "NG" : "OK");
+      formatResultCell(worksheet3.getCell('G29'), Avr_new > Av_f ? "NG" : "OK");
+      formatNumberCell(worksheet3.getCell('B30'), vu);
+      formatNumberCell(worksheet3.getCell('B31'), vr_old);
+      formatNumberCell(worksheet3.getCell('E30'), vu);
+      formatNumberCell(worksheet3.getCell('E31'), vr_new);
+      formatResultCell(worksheet3.getCell('D31'), vu > vr_old ? "NG" : "OK");
+      formatResultCell(worksheet3.getCell('G31'), vu > vr_new ? "NG" : "OK");
+      formatNumberCell(worksheet3.getCell('B33'), beta_no);
+      formatNumberCell(worksheet3.getCell('B34'), theta_no);
+      formatNumberCell(worksheet3.getCell('E33'), beta_n);
+      formatNumberCell(worksheet3.getCell('E34'), theta_n);
+      formatNumberCell(worksheet3.getCell('B35'), Av_f);
+      formatNumberCell(worksheet3.getCell('B36'), Avr_old);
+      formatNumberCell(worksheet3.getCell('E35'), Av_f);
+      formatNumberCell(worksheet3.getCell('E36'), Avr_new);
+      formatResultCell(worksheet3.getCell('D36'), Avr_old > Av_f ? "NG" : "OK");
+      formatResultCell(worksheet3.getCell('G36'), Avr_new > Av_f ? "NG" : "OK");
+      formatNumberCell(worksheet3.getCell('B37'), vu);
+      formatNumberCell(worksheet3.getCell('B38'), vr_old);
+      formatNumberCell(worksheet3.getCell('E37'), vu);
+      formatNumberCell(worksheet3.getCell('E38'), vr_new);
+      formatResultCell(worksheet3.getCell('D38'), vu > vr_old ? "NG" : "OK");
+      formatResultCell(worksheet3.getCell('G38'), vu > vr_new ? "NG" : "OK");
+      }
     }
     
       
@@ -3376,21 +3599,23 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     }
     let type;
       for (let wkey in SelectWorksheets) {
-        updatedata(wkey, SelectWorksheets[wkey]);
-      }    
+        type =  await (updatedata(wkey, SelectWorksheets[wkey]));
+        console.log(type);
+      }
+      console.log(type);
       for (let wkey in SelectWorksheets2) {
         // Check if beamStresses is not null or undefined and has keys
         if (beamStresses.BeamStress && beamStresses.BeamStress.DATA) {
           updatedata2(wkey, SelectWorksheets2[wkey], beamStresses);
         } else {
-          updatedata2(wkey, SelectWorksheets2[wkey], beamStresses_box);
+           updatedata2(wkey, SelectWorksheets2[wkey], beamStresses_box);
         }
       }
       console.log(beamStresses);
       console.log(beamStresses_box);
       
       for (let wkey in SelectWorksheets3) {
-          updatedata3(wkey, SelectWorksheets3[wkey],name);
+          updatedata3(wkey, SelectWorksheets3[wkey],name,type);
         }
       if (!workbookData) return;
       try {
