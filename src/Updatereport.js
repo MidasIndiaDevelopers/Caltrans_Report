@@ -31,15 +31,16 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     const [check, setCheck] = useState(false);
     const [selectedName, setSelectedName] = useState("");
     const [matchedParts, setMatchedParts] = useState([]);
+    let [allMatches, setAllMatches] = useState([]);
     const fileInputRef = useRef(null);
     const [buttonText, setButtonText] = useState('Create Report');
     let lcname;
-    let mu_pos;
-    let mu_neg;
-    let mr_old_pos;
-    let mr_new_pos;
-    let mr_old_neg;
-    let mr_new_neg;
+    let mu_pos ={};
+    let mu_neg ={};
+    let mr_old_pos={};
+    let mr_new_pos = {};
+    let mr_old_neg = {};
+    let mr_new_neg = {};
     let check_mr_old;
     let check_mr_new;
     let s_m;
@@ -48,7 +49,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let sm_new;
     let sn_old;
     let sn_new;
-    let allMatches = [];
     let smax_old; let smax_new; let suse; let dc_old; let dc_new; let beta_m; let theta_m; let beta_n; let theta_n; let Av_f; let Avr_old; let Avr_new; let vu; let vr_old; let vr_new; 
     let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n; let dc_i = 0; let suse2; let smax_old_2; let smax_new_2; let dc_old_2; let dc_new_2;
     const action = snackbarId => (
@@ -111,7 +111,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               // match[2] contains the part that matches [A-Z]
               newMatchedParts.push({ numberPart: match[1], letterPart: match[2] });
               allMatches.push(match[0]);
-  
+              console.log(allMatches);
               worksheet = workbook.worksheets[key];
               setWorksheet((prevState) => ({
                 ...prevState,
@@ -133,6 +133,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             }
             setMatchedParts(newMatchedParts); 
             console.log(matchedParts);
+            setAllMatches(allMatches);
           }
   
           console.log(matchedParts);
@@ -316,6 +317,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       };
     console.log(ag);
     console.log(sg);
+    console.log(allMatches);
     async function updatedata(wkey, worksheet) {
       if (!workbookData) return;
       if (!worksheet) {
@@ -512,11 +514,11 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           let value5 = rows[key1]._cells[5]._value.model.value; 
           let check_mr = rows[key1]._cells[29]._value.model.value;
           check_mr_old = check_mr;
-          mu_pos = mu;
-          mr_old_pos = rows[key1]._cells[5]._value.model.value;
+          mu_pos[wkey] = mu;
+          mr_old_pos[wkey] = rows[key1]._cells[5]._value.model.value;
           mr = value5*phi;
           mr = parseFloat(mr.toFixed(3));
-          mr_new_pos = mr;
+          mr_new_pos[wkey] = mr;
           data = { ...data, [location]: mr };
   
           // location of oK
@@ -538,12 +540,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
   
           let mu = rows[key1]._cells[17]._value.model.value;
           let value5 = rows[key1]._cells[5]._value.model.value; 
-          mu_neg = mu;
+          mu_neg[wkey] = mu;
           mr_neg = rows[key1]._cells[5]._value.model.value;
-          mr_old_neg = mr_neg;
+          mr_old_neg[wkey] = mr_neg;
           mr_neg = value5*phi;
           mr_neg = parseFloat(mr_neg.toFixed(3));
-          mr_new_neg = mr_neg;
+          mr_new_neg[wkey] = mr_neg;
           data = { ...data, [location]: mr_neg };
   
           // location of oK
@@ -3031,11 +3033,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     }
     
     async function updatedata3(wkey, worksheet3, name,type) {
+      console.log(allMatches);
       if (!workbookData) return;
       if (!worksheet3) {
         throw new Error("No worksheets found in the uploaded file");
       }
-      console.log(mu_pos);
+      console.log(mu_pos[wkey]);
       console.log(type);
       // let type = type.[[pr]]
     
@@ -3056,55 +3059,54 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       const formatNumberCell = (cell, value) => {
         cell.value = parseFloat(value).toFixed(3);
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        // cell.border = {
-        //   top: { style: 'thin' },
-        //   left: { style: 'thin' },
-        //   bottom: { style: 'thin' },
-        //   right: { style: 'thin' },
-        // };
       };
 
-      // const formatlistCell = (cell, value) => {
-      //   cell.dataValidation={
-      //     type: 'list',
-      //     allowBlank: true,
-      //     formulae: ['"One,Two,Three,Four"']
-      //   }
-      //   cell.DropList = ["asd","ada"];
-      //   cell.alignment = { vertical: 'middle', horizontal: 'center' };
-      //   // cell.border = {
-      //   //   top: { style: 'thin' },
-      //   //   left: { style: 'thin' },
-      //   //   bottom: { style: 'thin' },
-      //   //   right: { style: 'thin' },
-      //   // };
-      // };
+  
     
       const formatResultCell = (cell, value) => {
         cell.value = value;
         cell.font = { color: { argb: value === "OK" ? 'FF00008B' : 'FFFF0000' } }; // Dark blue for OK, Red for NG
         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        // cell.border = {
-        //   top: { style: 'thin' },
-        //   left: { style: 'thin' },
-        //   bottom: { style: 'thin' },
-        //   right: { style: 'thin' },
-        // };
       };
       worksheet3.getColumn('A').width = 18;
       // Merge and format cells in the first two rows
       worksheet3.mergeCells('A1:A2');
       formatCell(worksheet3.getCell('A1'), 'Element');
+      // worksheet3.mergeCells('B1:G1');
+      // formatCell(worksheet3.getCell('B1'), name);
       worksheet3.mergeCells('B1:G1');
-      formatCell(worksheet3.getCell('B1'), name);
+
+// Create the dropdown in the merged cell
+const dropdownCell = worksheet3.getCell('B1');
+console.log(allMatches);
+let formattedMatches = allMatches.join(',');
+let dropdownValues = `"${formattedMatches}"`;
+console.log(dropdownValues);
+console.log(formattedMatches);
+dropdownCell.dataValidation = {
+    type: 'list',
+    allowBlank: true,
+    formulae: [`${dropdownValues}`],
+    showDropDown: true,
+};
+dropdownCell.value = allMatches.length > 0 ? allMatches[0] : "Default Value";
+
+
+if (allMatches.length > 0) {
+} else {
+    dropdownCell.value = "No Matches Available"; // Fallback if array is empty
+}
+
+// Format the merged cell
+formatCell(dropdownCell, name);
       worksheet3.mergeCells('B2:D2');
       formatCell(worksheet3.getCell('B2'), 'AASTHO');
       worksheet3.mergeCells('E2:G2');
       formatCell(worksheet3.getCell('E2'), 'Caltrans');
     
       // Fill specific cells
-      formatNumberCell(worksheet3.getCell('B5'), mu_pos);
-      formatNumberCell(worksheet3.getCell('E5'), mu_pos);
+      formatNumberCell(worksheet3.getCell('B5'), mu_pos[wkey] || mu_pos[0]);
+      formatNumberCell(worksheet3.getCell('E5'), mu_pos[wkey] || mu_pos[0]);
       formatNumberCell(worksheet3.getCell('B6'), mr_old_pos);
       formatNumberCell(worksheet3.getCell('E6'), mr_new_pos);
       formatResultCell(worksheet3.getCell('D6'), mr_old_pos < mu_pos ? "NG" : "OK");
@@ -3246,14 +3248,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         formatCell(worksheet3.getCell('A36'), 'Av,req(in²)');
         formatCell(worksheet3.getCell('A37'), 'Vu(kips)');
         formatCell(worksheet3.getCell('A38'), 'Vr(kips)');
-        // formatCell(worksheet3.getCell('A29'), 'β');
-        // formatCell(worksheet3.getCell('A30'), 'θ');
-        // formatCell(worksheet3.getCell('A31'), 'Av(in²)');
-        // formatCell(worksheet3.getCell('A32'), 'Av,req(in²)');
-        // formatCell(worksheet3.getCell('A33'), 'Vu(kips)');
-        // formatCell(worksheet3.getCell('A34'), 'Vr(kips)');
         formatNumberCell(worksheet3.getCell('B4'), 1);
-        // formatlistCell(worksheet3.getCell('B4'),1);
         formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
         formatNumberCell(worksheet3.getCell('B8'), 1);
         formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
@@ -3450,6 +3445,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     }
     console.log(item);
     console.log(lcname);
+    
     console.log(matchedParts);
     const handleFileDownload = async () => {
         setButtonText('Creating...');
@@ -3468,6 +3464,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         });
         return;
       }
+      // console.log(allMatches);
       console.log(SelectWorksheets);
       console.log(SelectWorksheets2);
       let numberPart = parseInt(matchedParts[0].numberPart, 10);
@@ -3475,6 +3472,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let name = numberPart + "_" + letterPart;
       console.log(selectedName)
       console.log(name);
+      
       const concatenatedValue_cbc = `${selectedName}(CBC)`;
       const concatenatedValue_cbc_max = `${selectedName}(CBC:max)`;
       const concatenatedValue_cb = `${selectedName}(CB)`;
