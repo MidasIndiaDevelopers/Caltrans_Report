@@ -12,7 +12,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
   import { saveAs } from "file-saver";
   import { closeSnackbar } from 'notistack'
   import { useSnackbar, SnackbarProvider } from "notistack";
-  import Image from '../src/assets/longitudianl_rf.png';
+  // import Image from '../src/assets/longitudianl_rf.png';
 
   
   export const Updatereport = () => {
@@ -43,14 +43,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let mr_new_neg = {};
     let check_mr_old;
     let check_mr_new;
-    let s_m;
-    let s_n;
-    let sm_old;
-    let sm_new;
-    let sn_old;
-    let sn_new;
-    let smax_old; let smax_new; let suse; let dc_old; let dc_new; let beta_m; let theta_m; let beta_n; let theta_n; let Av_f; let Avr_old; let Avr_new; let vu; let vr_old; let vr_new; 
-    let beta_mo; let beta_no; let theta_no; let theta_mo; let vr_old_n; let vr_new_n; let phi_new_m; let phi_new_n; let dc_i = 0; let suse2; let smax_old_2; let smax_new_2; let dc_old_2; let dc_new_2;
+    let s_m ={};
+    let s_n ={};
+    let sm_old ={};
+    let sm_new ={};
+    let sn_old ={};
+    let sn_new ={};
+    let sxe = {} ;
+    let smax_old={}; let smax_new={}; let suse={}; let dc_old={}; let dc_new={}; let beta_m={}; let theta_m ={}; let beta_n ={}; let theta_n ={}; let Av_f={}; let Avr_old={}; let Avr_new={}; let vu={}; let vr_old={}; let vr_new={}; 
+    let beta_mo ={}; let beta_no ={}; let theta_no ={}; let theta_mo ={}; let vr_old_n={}; let vr_new_n ={}; let phi_new_m; let phi_new_n; let dc_i = 0; let suse2; let smax_old_2; let smax_new_2; let dc_old_2; let dc_new_2;
     const action = snackbarId => (
         <>
           <button style={{ backgroundColor: 'transparent', border: 'none',color: 'white', cursor: 'pointer' }} onClick={() => { closeSnackbar(snackbarId) }}>
@@ -417,20 +418,27 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$type"
         ) {
-            let cell2 = rows[key1]._cells[2];
+          let cell2 = getSafeCell(rows[key1], 2);
+          if (cell2) {
             let add2 = cell2._address;
-            data = { ...data,[add2] : 'CALTRANS'}
-          let cell17 = rows[key1]._cells[17];
-          let add17 = cell17._address;
-          let cell17Value = cell17.value !== undefined ? cell17.value : null;
-          if (cell17Value === "Composite") {
-            type = "Composite";
-          } else if (cell17Value === undefined) {
-            type = "Box";
-          } else {
-            type = "Box";
+            data = { ...data, [add2]: 'CALTRANS' };
+          }
+          type = "Box";
+        
+          let cell17 = getSafeCell(rows[key1], 17);
+          if (cell17) {
+            let add17 = cell17._address;
+            let cell17Value = cell17.value !== undefined ? cell17.value : null;
+            if (cell17Value === "Composite") {
+              type = "Composite";
+            // } else if (cell17Value === undefined) {
+            //   type = "Box";
+            // } else {
+            //   type = "Box";
+            // }
           }
         }
+      }
         console.log(type);
         if (
           rows[key1]._cells[0] != undefined &&
@@ -442,7 +450,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$d-c"
         ) {
-          dc_old = rows[key1]._cells[11].value;
+          dc_old[wkey] = rows[key1]._cells[11].value;
         }
   
         if (
@@ -579,9 +587,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           let add29 = cell29._address;
         
           if (Mcr_i === 1) {
-            data = { ...data, [add5]: mr_new_pos };
+            data = { ...data, [add5]: mr_new_pos[wkey]};
         
-            if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_pos)) {
+            if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_pos[wkey])) {
               data = { ...data, [add13]: '≥' };
               data = { ...data, [add29]: 'OK' };
             } else {
@@ -591,9 +599,9 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
         
           if (Mcr_i === 2) {
-            data = { ...data, [add5]: mr_new_neg };
+            data = { ...data, [add5]: mr_new_neg[wkey] };
         
-            if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_neg)) {
+            if (Math.abs(cell21._value.model.value) < Math.abs(mr_new_neg[wkey])) {
               data = { ...data, [add13]: '≥' };
               data = { ...data, [add29]: 'OK' };
             } else {
@@ -649,7 +657,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       ) {
         sm_i = sm_i + 1;
         if (sm_i == 1) {
-        sm_old = rows[key1]._cells[13]._value.model.value;
+        sm_old[wkey] = rows[key1]._cells[13]._value.model.value;
         if (sp === "ca1" && vu_check == '<') {         
           let add1 = rows[key1]._cells[6]._value.model.address;
           data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
@@ -657,10 +665,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           // let val=rows[key1]._cells[13]._value.model.value;
           if (0.8 * dv >= 18) {
             data = { ...data, [add2]: 18 };
-            sm_new = 18;
+            sm_new[wkey] = 18;
           } else {
             data = { ...data, [add2]: 0.8 * dv };
-            sm_new = 0.8 * dv;
+            sm_new[wkey] = 0.8 * dv;
           }
           let add27 = rows[key1]._cells[27]._value.model.address;
           data = { ...data,[add27] : '(As per CA-5.7.2.6-1)'}
@@ -668,7 +676,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         
       }
       if (sm_i == 2) {
-         sn_old = rows[key1]._cells[13]._value.model.value;
+         sn_old[wkey] = rows[key1]._cells[13]._value.model.value;
           if (sp === "ca1" && vu_check == '<') {    
             let add1 = rows[key1]._cells[6]._value.model.address;
             data = { ...data, [add1]: "Min[0.8dv, 18.0(in.)]" };
@@ -676,10 +684,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             // let val=rows[key1]._cells[13]._value.model.value;
             if (0.8 * dv >= 18) {
               data = { ...data, [add2]: 18 };
-              sn_new = 18;
+              sn_new[wkey] = 18;
             } else {
               data = { ...data, [add2]: 0.8 * dv };
-              sn_new = 0.8 * dv;
+              sn_new[wkey] = 0.8 * dv;
             }
             let add27 = rows[key1]._cells[27]._value.model.address;
             data = { ...data,[add27] : '(As per CA-5.7.2.6-1)'}
@@ -694,13 +702,13 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       ) {
           s_i = s_i + 1;
         if (s_i == 1) {
-        s_m = rows[key1]._cells[8].value;
+        s_m[wkey] = rows[key1]._cells[8].value;
         let cell8 = rows[key1]._cells[8];
         s_max = rows[key1]._cells[8].value;
         console.log(s_max);
         }
           if (s_i == 2) {
-            s_n = rows[key1]._cells[8].value;
+            s_n[wkey] = rows[key1]._cells[8].value;
         let cell8 = rows[key1]._cells[8];
         s_min = rows[key1]._cells[8].value;
         console.log(s_min);
@@ -722,8 +730,8 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         ) {
             dc_i = dc_i + 1;
             if (dc_i == 1) {
-            smax_old = rows[key1]._cells[11].value;
-            suse = rows[key1]._cells[21].value;
+            smax_old[wkey] = rows[key1]._cells[11].value;
+            suse[wkey] = rows[key1]._cells[21].value;
             let val2_new;
            if (cvr === "ca2") {
   
@@ -764,7 +772,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                 if (rows[nextKey1]._cells[0]._value.model.value == "$$d-c") {
                   // Store the value and address of cell in column 9 for $$dc row
                   // dc_old = rows[nextKey1]._cells[11].value;
-                  dc_new = 2.5;
+                  dc_new[wkey] = 2.5;
                   column9Value = rows[nextKey1]._cells[9]._value.model.value;
                   column9Address = rows[nextKey1]._cells[9]._value.model.address;
                   column9Value_new = column9Value - column9Value + 2.5;
@@ -795,10 +803,10 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             data = { ...data, [add2]: val2_new };
           }
           if (cvr === "ca2") {
-            smax_new = val2_new;
+            smax_new[wkey] = val2_new;
           }
           else {
-            smax_new = smax_old;
+            smax_new[wkey] = smax_old[wkey];
           }
         }
         if (dc_i == 2) {
@@ -1143,7 +1151,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let theta_new_min;
       let beta_new;
       let beta_new_min;
-      let sxe;
+     
       theta_i = 0;
       function indexToLetter(index) {
         let letter = "";
@@ -1748,13 +1756,19 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         }  
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$sxe") {
           sxe_i = sxe_i + 1;
-          
+          for (let col = 2; col <= 19; col++) {
+            let cell = getSafeCell(rows[key1], col);
+            if (!cell || cell._value.model.value === undefined) {
+                let address = worksheet.getCell(cell ? cell._address : `${worksheet.getColumn(col).letter}${rows[key1]._number}`)._address;
+                data = { ...data, [address]: "" };  // Define the cell with a default value
+            }
+        }
           let cell5 = getSafeCell(rows[key1], 19);
           if (cell5) {
             let add15 = cell5._address;
             let add15value = dv < sg ? dv : sg;
             // data = { ...data, [add15]: add15value };
-            sxe = (add15value * 1.38) / (ag + 0.63); 
+            sxe[wkey] = (add15value * 1.38) / (ag + 0.63); 
           } else {
             console.error("Error: Unable to determine address for rows[key1]._cells[19]");
           }
@@ -1787,7 +1801,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             if (cell5) {
               let add15 = cell5._address;
               if (Av < Avm) {
-                data = { ...data, [add15]: sxe };
+                data = { ...data, [add15]: sxe[wkey] };
               } else {
                 data = { ...data, [add15]: "Not required" };
               }
@@ -1825,7 +1839,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             if (cell5) {
               let add15 = cell5._address;
               if (Av < Avm) {
-                data = { ...data, [add15]: sxe };
+                data = { ...data, [add15]: sxe[wkey] };
               } else {
                 data = { ...data, [add15]: "Not required" };
               }
@@ -1856,15 +1870,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             if (cell7) {
               if (Av < Avm) {
                 let b_value = ThetaBeta2(Etm * 1000,sxe);
-                let beta = b_value[0];
+                let beta = b_value[1];
                 console.log(beta);
                 data = { ...data, [cell7._address]: parseFloat(beta.toFixed(2)) };
                 beta_new = beta;
-                beta_m = beta_new;
+                beta_m[wkey] = beta_new;
               } else {
                 data = { ...data, [cell7._address]: parseFloat(beta1.toFixed(2)) };
                 beta_new = parseFloat(beta1.toFixed(2));
-                beta_m = beta_new;
+                beta_m[wkey] = beta_new;
               }
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[6]");
@@ -1886,7 +1900,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                   if (cell13) {
                     if (Av < Avm) {
                       let theta_value = ThetaBeta2(Etn * 1000,sxe);
-                      let theta = parseFloat(theta_value[1].toFixed(2));
+                      let theta = parseFloat(theta_value[0].toFixed(2));
                       console.log(theta);
                       data = { ...data, [cell13._address]: theta };
                       theta_new = theta;
@@ -1920,15 +1934,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             if (cell7) {
               if (Av < Avm) {
                 let b_value = ThetaBeta2( Etn * 1000,sxe);
-                let beta = parseFloat(b_value[0].toFixed(2));
+                let beta = parseFloat(b_value[1].toFixed(2));
                 console.log(beta);
                 data = { ...data, [cell7._address]: parseFloat(beta.toFixed(2)) };
                 beta_new_min = beta;
-                beta_n = beta_new_min;
+                beta_n[wkey] = beta_new_min;
               } else {
                 data = { ...data, [cell7._address]: parseFloat(beta2.toFixed(2)) };
                 beta_new_min = parseFloat(beta2.toFixed(2));
-                beta_n = beta_new_min;
+                beta_n[wkey] = beta_new_min;
               }
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[6]");
@@ -1950,7 +1964,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
                   if (cell13) {
                     if (Av < Avm) {
                       let theta_value = ThetaBeta2(Etn * 1000,sxe);
-                      let theta = parseFloat(theta_value[1].toFixed(2));
+                      let theta = parseFloat(theta_value[0].toFixed(2));
                       console.log(theta);
                       data = { ...data, [cell13._address]: theta };
                       theta_new_min = theta;
@@ -2021,7 +2035,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell9 = getSafeCell(rows[key1], 9);
             if (cell9) {
               beta = cell9._value.model.value;
-              beta_mo = beta;
+              beta_mo[wkey] = beta;
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[9]");
             }
@@ -2031,7 +2045,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell9 = getSafeCell(rows[key1], 9);
             if (cell9) {
               beta_min = cell9._value.model.value;
-              beta_no = beta_min;
+              beta_no[wkey] = beta_min;
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[9]");
             }
@@ -2176,10 +2190,24 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         
             if (cell2Value === "Vu ≥ 0.5Φ(Vc+Vp)") {
               if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
+                if (type == 'Box'){
+                  let cell5 = rows[key2]._cells[5];
+                  let add5 = cell5._address;
+                  data = { ...data,[add5] : '{ Vu - Φ(Vc+Vp) }·s'}
+                  let key3 = parseInt(key2) + 1;
+                  let cell5_3 = rows[key3]._cells[5];
+                  let add5_3 = cell5_3._address;
+                  data = { ...data,[add5_3] : 'Φ·fy·dv(cotθ+cotα)sinα'}
+                }
                 let cell13 = getSafeCell(rows[key2], 13);
                 let add13 = cell13._address;
                 let Av_extra;
-                let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                let Avr;
+                if(type == 'Composite'){
+                 Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                } else {
+                  Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha));
+                }
                 Avr = parseFloat(Avr.toFixed(3));
                 console.log(Avr);
                 data = { ...data, [add13]: Avr };
@@ -2373,10 +2401,24 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         
             if (cell2Value === "0.5Φ(Vc+Vp)") {
               if (getSafeCell(rows[key2], 0) && getSafeCell(rows[key2], 0)._value.model.value === "$$Ar") {
+                if (type == 'Box'){
+                  let cell5 = rows[key2]._cells[5];
+                  let add5 = cell5._address;
+                  data = { ...data,[add5] : '{ Vu - Φ(Vc+Vp) }·s'}
+                  let key3 = parseInt(key2) + 1;
+                  let cell5_3 = rows[key3]._cells[5];
+                  let add5_3 = cell5_3._address;
+                  data = { ...data,[add5_3] : 'Φ·fy·dv(cotθ+cotα)sinα'}
+                }
                 let cell13 = getSafeCell(rows[key2], 13);
                 let add13 = cell13._address;
                 let Av_extra;
-                let Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                let Avr;
+                if(type == 'Composite'){
+                 Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot(a)) * Math.sin(a));
+                } else {
+                  Avr = ((Vu_max - finalResult) * s_max) / (pi * fy * dv * (cot(theta_new) + cot($$alpha)) * Math.sin($$alpha));
+                }
                 Avr = parseFloat(Avr.toFixed(3));
                 console.log(Avr);
                 data = { ...data, [add13]: Avr };
@@ -2475,10 +2517,17 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell13 = getSafeCell(rows[key1], 13);
             let add13 = cell13 ? cell13._address : null;
             if (add13) {
+              if ($$alpha > 45) {
                 let cal = ((Av * fy * dv * (cot(theta_new) + cot($$alpha))) * Math.sin($$alpha)) / s_max;
                 cal = parseFloat(cal.toFixed(3));
                 data = { ...data, [add13]: cal };
                 Vs = cal;
+              }
+              else {
+                let cal = 0;
+                data = { ...data,[add13]: cal };
+                Vs = cal;
+              }
             } else {
                 console.error("Error: Unable to retrieve address for rows[key1]._cells[13]");
             }
@@ -2490,10 +2539,17 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell13 = getSafeCell(rows[key1], 13);
             let add13 = cell13 ? cell13._address : null;
             if (add13) {
+              if ($$alpha_min > 45) {
                 let cal = (Av * fy * dv_min * (cot(theta_new_min) + cot($$alpha_min)) * Math.sin($$alpha_min)) / s_min;
                 cal = parseFloat(cal.toFixed(3));
                 data = { ...data, [add13]: cal };
                 Vs_min = cal;
+              }
+              else {
+                let cal = 0;
+                data = { ...data,[add13]: cal};
+                Vs_min = cal;
+              }
             } else {
                 console.error("Error: Unable to retrieve address for rows[key1]._cells[13]");
             }
@@ -3097,6 +3153,166 @@ if (allMatches.length > 0) {
     dropdownCell.value = "No Matches Available"; // Fallback if array is empty
 }
 
+// Use the original array `allMatches` for indexed mapping
+let indexedDropdown = allMatches.map((val, index) => `${index + 1}. ${val}`);
+allMatches.forEach((val, index) => {
+  worksheet3.getCell(`A${100 + index}`).value = val;
+});
+console.log(mu_pos);
+
+
+// Store values corresponding to each dropdown option in hidden cells
+let muPosKeys = Object.keys(mu_pos); // This gives an array of keys as strings
+
+// Assuming indexedDropdown is an array of dropdown options
+muPosKeys.forEach((key, index) => {
+  // Convert key to number if needed (depends on your data type)
+  key = Number(key);
+
+  // Process the values based on the key
+  worksheet3.getCell(`B${100 + index}`).value = mu_pos[key] || '';
+  worksheet3.getCell(`C${100 + index}`).value = mr_old_pos[key] || '';
+  worksheet3.getCell(`D${100 + index}`).value = mr_new_pos[key] || '';
+  worksheet3.getCell(`E${100 + index}`).value = mu_neg[key] || '';
+  worksheet3.getCell(`F${100 + index}`).value = mr_old_neg[key] || '';
+  worksheet3.getCell(`G${100 + index}`).value = mr_new_neg[key] || '';
+  worksheet3.getCell(`H${100 + index}`).value = sm_old[key] || '';
+  worksheet3.getCell(`I${100 + index}`).value = sm_new[key] || '';
+  worksheet3.getCell(`J${100 + index}`).value = s_m[key] || '';
+  worksheet3.getCell(`K${100 + index}`).value = sn_old[key] || '';
+  worksheet3.getCell(`L${100 + index}`).value = sn_new[key] || '';
+  worksheet3.getCell(`M${100 + index}`).value = s_n[key] || '';
+  worksheet3.getCell(`N${100 + index}`).value = dc_old[key] || '';
+  worksheet3.getCell(`O${100 + index}`).value = smax_old[key] || '';
+  worksheet3.getCell(`P${100 + index}`).value = suse[key] || '';
+  worksheet3.getCell(`Q${100 + index}`).value = dc_new[key] || '';
+  worksheet3.getCell(`R${100 + index}`).value = smax_new[key] || '';
+  worksheet3.getCell(`S${100 + index}`).value = beta_m[key] || '';
+  worksheet3.getCell(`T${100 + index}`).value = theta_m[key] || '';
+  worksheet3.getCell(`U${100 + index}`).value = Av_f[key] || '';
+  worksheet3.getCell(`V${100 + index}`).value = Avr_old[key] || '';
+  worksheet3.getCell(`W${100 + index}`).value = vu[key] || '';
+  worksheet3.getCell(`X${100 + index}`).value = vr_old[key] || '';
+  worksheet3.getCell(`Y${100 + index}`).value = beta_mo[key] || '';
+  worksheet3.getCell(`Z${100 + index}`).value = theta_mo[key] || '';
+  worksheet3.getCell(`AA${100 + index}`).value = Av_f[key] || '';
+  worksheet3.getCell(`AB${100 + index}`).value = Avr_new[key] || '';
+  worksheet3.getCell(`AC${100 + index}`).value = vu[key] || '';
+  worksheet3.getCell(`AD${100 + index}`).value = vr_new[key] || '';
+  worksheet3.getCell(`AE${100 + index}`).value = beta_no[key] || '';
+  worksheet3.getCell(`AF${100 + index}`).value = theta_no[key] || '';
+  worksheet3.getCell(`AG${100 + index}`).value = Av_f[key] || '';
+  worksheet3.getCell(`AH${100 + index}`).value = Avr_new[key] || '';
+  worksheet3.getCell(`AI${100 + index}`).value = vu[key] || '';
+  worksheet3.getCell(`AJ${100 + index}`).value = vr_new_n[key] || '';
+  worksheet3.getCell(`AK${100 + index}`).value = beta_n[key] || '';
+  worksheet3.getCell(`AL${100 + index}`).value = theta_n[key] || '';
+  worksheet3.getCell(`AM${100 + index}`).value = Av_f[key] || '';
+  worksheet3.getCell(`AN${100 + index}`).value = Avr_new[key] || '';
+  worksheet3.getCell(`AO${100 + index}`).value = vu[key] || '';
+  worksheet3.getCell(`AP${100 + index}`).value = vr_new_n[key] || ''; 
+});
+
+// Loop to format main cells based on dropdown selection
+worksheet3.getCell('B5').value = { formula: `=INDEX(B100:B${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to match the dropdown value and get corresponding `mr_old_pos` value
+worksheet3.getCell('B6').value = { formula: `=INDEX(C100:C${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E5').value = { formula: `=INDEX(B100:B${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E6').value = { formula: `=INDEX(D100:D${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D6').value = { formula: `=IF(B6<B5,"NG","OK")` };
+worksheet3.getCell('G6').value = { formula: `=IF(E6<B5,"NG","OK")` };
+
+worksheet3.getCell('B9').value = { formula: `=INDEX(E100:E${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to match the dropdown value and get corresponding `mr_old_pos` value
+worksheet3.getCell('B10').value = { formula: `=INDEX(F100:F${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E9').value = { formula: `=INDEX(E100:E${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E10').value = { formula: `=INDEX(G100:G${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D10').value = { formula: `=IF(B10<B9,"NG","OK")` };
+worksheet3.getCell('G10').value = { formula: `=IF(E10<B9,"NG","OK")` };
+
+worksheet3.getCell('B12').value = { formula: `=INDEX(H100:H${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E12').value = { formula: `=INDEX(I100:I${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E13').value = { formula: `=INDEX(J100:J${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B13').value = { formula: `=INDEX(J100:J${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D13').value = { formula: `=IF(B12<B13,"NG","OK")` };
+worksheet3.getCell('G13').value = { formula: `=IF(E12<E13,"NG","OK")` };
+
+worksheet3.getCell('B15').value = { formula: `=INDEX(K100:K${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E15').value = { formula: `=INDEX(L100:L${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E16').value = { formula: `=INDEX(M100:M${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B16').value = { formula: `=INDEX(M100:M${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D16').value = { formula: `=IF(B15<B16,"NG","OK")` };     
+worksheet3.getCell('G16').value = { formula: `=IF(E15<E16,"NG","OK")` };
+
+worksheet3.getCell('B18').value = { formula: `=INDEX(N100:N${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E18').value = { formula: `=INDEX(Q100:Q${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E19').value = { formula: `=INDEX(R100:R${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B19').value = { formula: `=INDEX(O100:O${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E20').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B20').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D20').value = { formula: `=IF(B19<B20,"NG","OK")` };
+worksheet3.getCell('G20').value = { formula: `=IF(E19<E20,"NG","OK")` };
+
+worksheet3.getCell('B22').value = { formula: `=INDEX(S100:S${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E22').value = { formula: `=INDEX(Y100:Y${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E23').value = { formula: `=INDEX(Z100:Z${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B23').value = { formula: `=INDEX(T100:T${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B24').value = { formula: `=INDEX(U100:U${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E24').value = { formula: `=INDEX(AA100:AA${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E25').value = { formula: `=INDEX(AB100:AB${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B25').value = { formula: `=INDEX(V100:V${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E26').value = { formula: `=INDEX(AC100:AC${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B26').value = { formula: `=INDEX(W100:W${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E27').value = { formula: `=INDEX(AD100:AD${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B27').value = { formula: `=INDEX(X100:X${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D20').value = { formula: `=IF(B19<B20,"NG","OK")` };
+worksheet3.getCell('G20').value = { formula: `=IF(E19<E20,"NG","OK")` };
+
+worksheet3.getCell('B29').value = { formula: `=INDEX(N100:N${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E29').value = { formula: `=INDEX(Q100:Q${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E30').value = { formula: `=INDEX(R100:R${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B30').value = { formula: `=INDEX(O100:O${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B31').value = { formula: `=INDEX(N100:N${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E31').value = { formula: `=INDEX(Q100:Q${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+// Formula to match the dropdown value and get corresponding `mr_new_pos` value
+worksheet3.getCell('E32').value = { formula: `=INDEX(R100:R${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B32').value = { formula: `=INDEX(O100:O${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E33').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B33').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('E34').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+worksheet3.getCell('B34').value = { formula: `=INDEX(P100:P${99 + allMatches.length}, MATCH($B$1, A100:A${99 + allMatches.length}, 0))` };
+
+// Formula to evaluate the condition and set "NG" or "OK" based on the values
+worksheet3.getCell('D20').value = { formula: `=IF(B19<B20,"NG","OK")` };
+worksheet3.getCell('G20').value = { formula: `=IF(E19<E20,"NG","OK")` };
+
+
+
+
+
+
 // Format the merged cell
 formatCell(dropdownCell, name);
       worksheet3.mergeCells('B2:D2');
@@ -3105,12 +3321,12 @@ formatCell(dropdownCell, name);
       formatCell(worksheet3.getCell('E2'), 'Caltrans');
     
       // Fill specific cells
-      formatNumberCell(worksheet3.getCell('B5'), mu_pos[wkey] || mu_pos[0]);
-      formatNumberCell(worksheet3.getCell('E5'), mu_pos[wkey] || mu_pos[0]);
-      formatNumberCell(worksheet3.getCell('B6'), mr_old_pos);
-      formatNumberCell(worksheet3.getCell('E6'), mr_new_pos);
-      formatResultCell(worksheet3.getCell('D6'), mr_old_pos < mu_pos ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G6'), mr_new_pos < mu_pos ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B5'), mu_pos);
+      // formatNumberCell(worksheet3.getCell('E5'), mu_pos);
+      // formatNumberCell(worksheet3.getCell('B6'), mr_old_pos);
+      // formatNumberCell(worksheet3.getCell('E6'), mr_new_pos);
+      // formatResultCell(worksheet3.getCell('D6'), mr_old_pos < mu_pos ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G6'), mr_new_pos < mu_pos ? "NG" : "OK");
       let contentForRows;
     
       // Array of rows to merge and format
@@ -3205,32 +3421,32 @@ formatCell(dropdownCell, name);
       formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
       formatNumberCell(worksheet3.getCell('B8'), 1);
       formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
-      formatNumberCell(worksheet3.getCell('B9'), mu_neg);
-      formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
-      formatNumberCell(worksheet3.getCell('E9'), mu_neg);
-      formatNumberCell(worksheet3.getCell('E10'), mr_new_neg);
-      formatResultCell(worksheet3.getCell('D10'), mr_old_neg < mu_neg ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G10'), mr_new_neg < mu_neg ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B12'), sm_old);
-      formatNumberCell(worksheet3.getCell('E12'), sm_new);
-      formatNumberCell(worksheet3.getCell('B13'), s_m);
-      formatNumberCell(worksheet3.getCell('E13'), s_m);
-      formatResultCell(worksheet3.getCell('D13'), sm_old < s_m ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G13'), sm_new < s_m ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B15'), sn_old);
-      formatNumberCell(worksheet3.getCell('E15'), sn_new);
-      formatNumberCell(worksheet3.getCell('B16'), s_n);
-      formatNumberCell(worksheet3.getCell('E16'), s_n);
-      formatResultCell(worksheet3.getCell('D16'), sn_old < s_n ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G16'), sn_new < s_n ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B18'), dc_old);
-      formatNumberCell(worksheet3.getCell('B19'), smax_old);
-      formatNumberCell(worksheet3.getCell('B20'), suse);
-      formatResultCell(worksheet3.getCell('D20'), smax_old < suse ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G20'), smax_new < suse ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('E18'), dc_new);
-      formatNumberCell(worksheet3.getCell('E19'), smax_new);
-      formatNumberCell(worksheet3.getCell('E20'), suse);
+      // formatNumberCell(worksheet3.getCell('B9'), mu_neg);
+      // formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
+      // formatNumberCell(worksheet3.getCell('E9'), mu_neg);
+      // formatNumberCell(worksheet3.getCell('E10'), mr_new_neg);
+      // formatResultCell(worksheet3.getCell('D10'), mr_old_neg < mu_neg ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G10'), mr_new_neg < mu_neg ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B12'), sm_old);
+      // formatNumberCell(worksheet3.getCell('E12'), sm_new);
+      // formatNumberCell(worksheet3.getCell('B13'), s_m);
+      // formatNumberCell(worksheet3.getCell('E13'), s_m);
+      // formatResultCell(worksheet3.getCell('D13'), sm_old < s_m ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G13'), sm_new < s_m ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B15'), sn_old);
+      // formatNumberCell(worksheet3.getCell('E15'), sn_new);
+      // formatNumberCell(worksheet3.getCell('B16'), s_n);
+      // formatNumberCell(worksheet3.getCell('E16'), s_n);
+      // formatResultCell(worksheet3.getCell('D16'), sn_old < s_n ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G16'), sn_new < s_n ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B18'), dc_old);
+      // formatNumberCell(worksheet3.getCell('B19'), smax_old);
+      // formatNumberCell(worksheet3.getCell('B20'), suse);
+      // formatResultCell(worksheet3.getCell('D20'), smax_old < suse ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G20'), smax_new < suse ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('E18'), dc_new);
+      // formatNumberCell(worksheet3.getCell('E19'), smax_new);
+      // formatNumberCell(worksheet3.getCell('E20'), suse);
       }
       else {
         formatCell(worksheet3.getCell('A22'), 'dc(in)');
@@ -3252,24 +3468,24 @@ formatCell(dropdownCell, name);
         formatNumberCell(worksheet3.getCell('E4'), phi_new_m);
         formatNumberCell(worksheet3.getCell('B8'), 1);
         formatNumberCell(worksheet3.getCell('E8'), phi_new_n);
-        formatNumberCell(worksheet3.getCell('B9'), mu_neg);
-        formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
-        formatNumberCell(worksheet3.getCell('E9'), mu_neg);
-        formatNumberCell(worksheet3.getCell('E10'), mr_new_neg);
-        formatResultCell(worksheet3.getCell('D10'), mr_old_neg < mu_neg ? "NG" : "OK");
-        formatResultCell(worksheet3.getCell('G10'), mr_new_neg < mu_neg ? "NG" : "OK");
-        formatNumberCell(worksheet3.getCell('B12'), sm_old);
-        formatNumberCell(worksheet3.getCell('E12'), sm_new);
-        formatNumberCell(worksheet3.getCell('B13'), s_m);
-        formatNumberCell(worksheet3.getCell('E13'), s_m);
-        formatResultCell(worksheet3.getCell('D13'), sm_old < s_m ? "NG" : "OK");
-        formatResultCell(worksheet3.getCell('G13'), sm_new < s_m ? "NG" : "OK");
-        formatNumberCell(worksheet3.getCell('B15'), sn_old);
-        formatNumberCell(worksheet3.getCell('E15'), sn_new);
-        formatNumberCell(worksheet3.getCell('B16'), s_n);
-        formatNumberCell(worksheet3.getCell('E16'), s_n);
-        formatResultCell(worksheet3.getCell('D16'), sn_old < s_n ? "NG" : "OK");
-        formatResultCell(worksheet3.getCell('G16'), sn_new < s_n ? "NG" : "OK");
+        // formatNumberCell(worksheet3.getCell('B9'), mu_neg);
+        // formatNumberCell(worksheet3.getCell('B10'), mr_old_neg);
+        // formatNumberCell(worksheet3.getCell('E9'), mu_neg);
+        // formatNumberCell(worksheet3.getCell('E10'), mr_new_neg);
+        // formatResultCell(worksheet3.getCell('D10'), mr_old_neg < mu_neg ? "NG" : "OK");
+        // formatResultCell(worksheet3.getCell('G10'), mr_new_neg < mu_neg ? "NG" : "OK");
+        // formatNumberCell(worksheet3.getCell('B12'), sm_old);
+        // formatNumberCell(worksheet3.getCell('E12'), sm_new);
+        // formatNumberCell(worksheet3.getCell('B13'), s_m);
+        // formatNumberCell(worksheet3.getCell('E13'), s_m);
+        // formatResultCell(worksheet3.getCell('D13'), sm_old < s_m ? "NG" : "OK");
+        // formatResultCell(worksheet3.getCell('G13'), sm_new < s_m ? "NG" : "OK");
+        // formatNumberCell(worksheet3.getCell('B15'), sn_old);
+        // formatNumberCell(worksheet3.getCell('E15'), sn_new);
+        // formatNumberCell(worksheet3.getCell('B16'), s_n);
+        // formatNumberCell(worksheet3.getCell('E16'), s_n);
+        // formatResultCell(worksheet3.getCell('D16'), sn_old < s_n ? "NG" : "OK");
+        // formatResultCell(worksheet3.getCell('G16'), sn_new < s_n ? "NG" : "OK");
         formatNumberCell(worksheet3.getCell('B18'), dc_old);
         formatNumberCell(worksheet3.getCell('B19'), smax_old);
         formatNumberCell(worksheet3.getCell('B20'), suse);
@@ -3288,49 +3504,41 @@ formatCell(dropdownCell, name);
         formatNumberCell(worksheet3.getCell('E24'), suse2);
       }
       if (type == 'Composite') {
-      formatNumberCell(worksheet3.getCell('B22'), beta_mo);
-      formatNumberCell(worksheet3.getCell('B23'), theta_mo);
-      formatNumberCell(worksheet3.getCell('E22'), beta_m);
-      formatNumberCell(worksheet3.getCell('E23'), theta_m);
-      formatNumberCell(worksheet3.getCell('B24'), Av_f);
-      formatNumberCell(worksheet3.getCell('B25'), Avr_old);
-      formatNumberCell(worksheet3.getCell('E24'), Av_f);
-      formatNumberCell(worksheet3.getCell('E25'), Avr_new);
-      formatResultCell(worksheet3.getCell('D25'), Avr_old > Av_f ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G25'), Avr_new > Av_f ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B26'), vu);
-      formatNumberCell(worksheet3.getCell('B27'), vr_old);
-      formatNumberCell(worksheet3.getCell('E26'), vu);
-      formatNumberCell(worksheet3.getCell('E27'), vr_new);
-      formatResultCell(worksheet3.getCell('D27'), vu > vr_old ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G27'), vu > vr_new ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B29'), beta_no);
-      formatNumberCell(worksheet3.getCell('B30'), theta_no);
-      formatNumberCell(worksheet3.getCell('E29'), beta_n);
-      formatNumberCell(worksheet3.getCell('E30'), theta_n);
-      formatNumberCell(worksheet3.getCell('B31'), Av_f);
-      formatNumberCell(worksheet3.getCell('B32'), Avr_old);
-      formatNumberCell(worksheet3.getCell('E31'), Av_f);
-      formatNumberCell(worksheet3.getCell('E32'), Avr_new);
-      formatResultCell(worksheet3.getCell('D32'), Avr_old > Av_f ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G32'), Avr_new > Av_f ? "NG" : "OK");
-      formatNumberCell(worksheet3.getCell('B33'), vu);
-      formatNumberCell(worksheet3.getCell('B34'), vr_old);
-      formatNumberCell(worksheet3.getCell('E33'), vu);
-      formatNumberCell(worksheet3.getCell('E34'), vr_new);
-      formatResultCell(worksheet3.getCell('D34'), vu > vr_old ? "NG" : "OK");
-      formatResultCell(worksheet3.getCell('G34'), vu > vr_new ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B22'), beta_mo);
+      // formatNumberCell(worksheet3.getCell('B23'), theta_mo);
+      // formatNumberCell(worksheet3.getCell('E22'), beta_m);
+      // formatNumberCell(worksheet3.getCell('E23'), theta_m);
+      // formatNumberCell(worksheet3.getCell('B24'), Av_f);
+      // formatNumberCell(worksheet3.getCell('B25'), Avr_old);
+      // formatNumberCell(worksheet3.getCell('E24'), Av_f);
+      // formatNumberCell(worksheet3.getCell('E25'), Avr_new);
+      // formatResultCell(worksheet3.getCell('D25'), Avr_old > Av_f ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G25'), Avr_new > Av_f ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B26'), vu);
+      // formatNumberCell(worksheet3.getCell('B27'), vr_old);
+      // formatNumberCell(worksheet3.getCell('E26'), vu);
+      // formatNumberCell(worksheet3.getCell('E27'), vr_new);
+      // formatResultCell(worksheet3.getCell('D27'), vu > vr_old ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G27'), vu > vr_new ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B29'), beta_no);
+      // formatNumberCell(worksheet3.getCell('B30'), theta_no);
+      // formatNumberCell(worksheet3.getCell('E29'), beta_n);
+      // formatNumberCell(worksheet3.getCell('E30'), theta_n);
+      // formatNumberCell(worksheet3.getCell('B31'), Av_f);
+      // formatNumberCell(worksheet3.getCell('B32'), Avr_old);
+      // formatNumberCell(worksheet3.getCell('E31'), Av_f);
+      // formatNumberCell(worksheet3.getCell('E32'), Avr_new);
+      // formatResultCell(worksheet3.getCell('D32'), Avr_old > Av_f ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G32'), Avr_new > Av_f ? "NG" : "OK");
+      // formatNumberCell(worksheet3.getCell('B33'), vu);
+      // formatNumberCell(worksheet3.getCell('B34'), vr_old);
+      // formatNumberCell(worksheet3.getCell('E33'), vu);
+      // formatNumberCell(worksheet3.getCell('E34'), vr_new);
+      // formatResultCell(worksheet3.getCell('D34'), vu > vr_old ? "NG" : "OK");
+      // formatResultCell(worksheet3.getCell('G34'), vu > vr_new ? "NG" : "OK");
       }
       else {
-      //   formatNumberCell(worksheet3.getCell('B22'), dc_old_2);
-      // formatNumberCell(worksheet3.getCell('B23'), smax_old_2);
-      // formatNumberCell(worksheet3.getCell('B24'), suse2);
-      // formatResultCell(worksheet3.getCell('D24'), smax_old_2 < suse2 ? "NG" : "OK");
-      // formatResultCell(worksheet3.getCell('G24'), smax_new_2 < suse2 ? "NG" : "OK");
-      // formatNumberCell(worksheet3.getCell('E22'), dc_new_2);
-      // formatNumberCell(worksheet3.getCell('E23'), smax_new_2);
-      // formatNumberCell(worksheet3.getCell('E24'), suse2);
-        formatNumberCell(worksheet3.getCell('B26'), beta_mo);
+      formatNumberCell(worksheet3.getCell('B26'), beta_mo);
       formatNumberCell(worksheet3.getCell('B27'), theta_mo);
       formatNumberCell(worksheet3.getCell('E26'), beta_m);
       formatNumberCell(worksheet3.getCell('E27'), theta_m);
