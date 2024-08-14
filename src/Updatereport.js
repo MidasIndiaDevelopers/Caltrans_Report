@@ -34,7 +34,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
     let [allMatches, setAllMatches] = useState([]);
     const fileInputRef = useRef(null);
     const [buttonText, setButtonText] = useState('Create Report');
-    let lcname;
+    let lcname; let lastWkey;
     let mu_pos ={};
     let mu_neg ={};
     let mr_old_pos={};
@@ -396,7 +396,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let b_i =  0;
       let theta_i = 0;
       let beta_i = 0;
-      let vcvp_i = 0;
+      let vcvp_i = 0; let vcvp =0;
       let vs_i = 0;
       let t_i = 0;
       let sum_i = 0;
@@ -411,7 +411,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
       let cm;
       let cp;
       let st1_i = 0;
-      let chge_i = 0; let dc_i = 0; let d_ci = 0;
+      let chge_i = 0; let dc_i = 0; let d_ci = 0; let V ; let V_min;
      
       for (let key1 in rows) {
         if (
@@ -456,6 +456,18 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
           if (d_ci == 2) {
             dc_old_2[wkey] = rows[key1]._cells[9].value; 
+          }
+        }
+        if (
+          rows[key1]._cells[0] != undefined &&
+          rows[key1]._cells[0]._value.model.value == "$$(vc+vp)"
+        ) {
+          vcvp = vcvp + 1;
+          if (vcvp == 1) {
+          V = rows[key1]._cells[20].value;
+          }
+          if (vcvp == 2) {
+          V_min = rows[key1]._cells[20].value; 
           }
         }
   
@@ -515,6 +527,12 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             }
             console.log(phi);
           }
+        }
+        if (
+          rows[key1]._cells[0] != undefined &&
+          rows[key1]._cells[0]._value.model.value == "$$bv"
+        ) {
+          bv = rows[key1]._cells[4]._value.model.value;
         }
         if (
           rows[key1]._cells[0] != undefined &&
@@ -640,7 +658,6 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           if (theta_i == 2) {
             theta_no[wkey]= rows[key1]._cells[13].value ;
           }
-        
         }
   
         if (
@@ -1018,7 +1035,28 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             if (rows[key1]._cells[13] === undefined) {
               Vu1 = rows[key1]._cells[10]._value.model.value;
             } else {
-              Vu1 = rows[key1]._cells[13].value;
+              let cell5 = rows[key1]._cells[5];
+              let add5 = cell5._address;
+              data = { ...data,[add5] : '| Vu - ΦVp |'}
+              let key2 = parseInt(key1) + 1;
+              let cell51 = rows[key2]._cells[5];
+              let add51 = cell51._address;
+              data = { ...data, [add51] : 'Φbvdv'}
+              let cell8 = rows[key1]._cells[8];
+              let add8 = cell8._address;
+              data = { ...data,[add8] : " "}
+              let cell9 = rows[key1]._cells[9];
+              let add9 = cell9._address;
+              data = { ...data,[add9] : " "}
+              key2 = parseInt(key1) + 1;
+              let cell91 = rows[key2]._cells[9];
+              let add91 = cell91._address;
+              data = { ...data,[add91] : " "}
+              let cell13 = rows[key1]._cells[13];
+              let add13 = cell13._address;
+              let new_vu = (V - (pi*Vp))/(pi*bv*dv);
+              data = { ...data,[add13] : new_vu};
+              Vu1 = new_vu;
             }
         }
         if (Vu1_i == 2) {
@@ -1053,12 +1091,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
         ) {
           cm = rows[key1]._cells[27]._value.model.value;
         }
-        if (
-          rows[key1]._cells[0] != undefined &&
-          rows[key1]._cells[0]._value.model.value == "$$bv"
-        ) {
-          bv = rows[key1]._cells[4]._value.model.value;
-        }
+        
         if (
           rows[key1]._cells[0] != undefined &&
           rows[key1]._cells[0]._value.model.value == "$$alpha"
@@ -1087,6 +1120,15 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           if(vp_i == 2) {
             let cell19 = rows[key1]._cells[19];
             Vp_min = rows[key1]._cells[19].value;
+          }
+        }
+        if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$pi") {
+          pi_i = pi_i + 1;
+          if (pi_i == 1){
+          pi = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
+          }
+          if (pi_i == 2){
+            pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
           }
         }
   
@@ -1580,15 +1622,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
         }
       
-        if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$pi") {
-          pi_i = pi_i + 1;
-          if (pi_i == 1){
-          pi = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
-          }
-          if (pi_i == 2){
-            pi_min = getSafeCell(row, 15) ? getSafeCell(row, 15)._value : null;
-          }
-        }
+       
         if (getSafeCell(row, 0) && getSafeCell(row, 0)._value.model.value === "$$e") {
           e_i = e_i + 1;
           if (e_i == 1){
@@ -1669,27 +1703,28 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell3 = worksheet.getCell(rowNumber, startCol);
             if (cell3) {
               let add13 = cell3._address;
+              let add15value = dv < sg ? dv : sg;
               if (Av < Avm) {
                 data = {
                   ...data,
-                  [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
+                  [add13]: `Min| dv, maximum distance between the longitudinal r/f |  = ${add15value} `,
                 };
         
-                let cell4 = getSafeCell(rows[key1], 23);
-                if (cell4) {
-                  data = { ...data, [cell4._address]: "=" };
-                } else {
-                  console.error("Error: Unable to determine address for rows[key1]._cells[18]");
-                }
+                // let cell4 = getSafeCell(rows[key1], 23);
+                // if (cell4) {
+                //   data = { ...data, [cell4._address]: "=" };
+                // } else {
+                //   console.error("Error: Unable to determine address for rows[key1]._cells[18]");
+                // }
         
-                let cell5 = getSafeCell(rows[key1], 24);
-                if (cell5) {
-                  let add15 = cell5._address;
-                  let add15value = dv < sg ? dv : sg;
-                  data = { ...data, [add15]: add15value };
-                } else {
-                  console.error("Error: Unable to determine address for rows[key1]._cells[19]");
-                }
+                // let cell5 = getSafeCell(rows[key1], 24);
+                // if (cell5) {
+                //   let add15 = cell5._address;
+                //   let add15value = dv < sg ? dv : sg;
+                //   data = { ...data, [add15]: add15value };
+                // } else {
+                //   console.error("Error: Unable to determine address for rows[key1]._cells[19]");
+                // }
               } else {
                 data = { ...data, [add13]: `Not Required` };
               }
@@ -1735,27 +1770,29 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             let cell3 = worksheet.getCell(rowNumber, startCol);
             if (cell3) {
               let add13 = cell3._address;
+              let add15value = dv < sg ? dv : sg;
               if (Av < Avm) {
                 data = {
                   ...data,
-                  [add13]: `Min| dv, maximum distance between the longitudinal r/f |`,
+                  [add13]: `Min| dv, maximum distance between the longitudinal r/f |  = ${add15value} `,
                 };
+
         
-                let cell4 = getSafeCell(rows[key1], 23);
-                if (cell4) {
-                  data = { ...data, [cell4._address]: "=" };
-                } else {
-                  console.error("Error: Unable to determine address for rows[key1]._cells[18]");
-                }
+                // let cell4 = getSafeCell(rows[key1], 23);
+                // if (cell4) {
+                //   data = { ...data, [cell4._address]: "=" };
+                // } else {
+                //   console.error("Error: Unable to determine address for rows[key1]._cells[18]");
+                // }
         
-                let cell5 = getSafeCell(rows[key1], 24);
-                if (cell5) {
-                  let add15 = cell5._address;
-                  let add15value = dv < sg ? dv : sg;
-                  data = { ...data, [add15]: add15value };
-                } else {
-                  console.error("Error: Unable to determine address for rows[key1]._cells[19]");
-                }
+                // let cell5 = getSafeCell(rows[key1], 24);
+                // if (cell5) {
+                //   let add15 = cell5._address;
+                //   let add15value = dv < sg ? dv : sg;
+                //   data = { ...data, [add15]: add15value };
+                // } else {
+                //   console.error("Error: Unable to determine address for rows[key1]._cells[19]");
+                // }
               } else {
                 data = { ...data, [add13]: `Not Required` };
               }
@@ -1783,17 +1820,18 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             console.error("Error: Unable to determine address for rows[key1]._cells[19]");
           }
           if (sxe_i === 1) {
-            let cell3 = getSafeCell(rows[key1], 6);
+            if (wkey == lastWkey) {
+            let cell3 = getSafeCell(rows[key1], 4);
             if (cell3) {
               data = { ...data, [cell3._address]: "sₓₑ" };
             }
         
-            let cell4 = getSafeCell(rows[key1], 8);
+            let cell4 = getSafeCell(rows[key1], 5);
             if (cell4) {
               data = { ...data, [cell4._address]: "=" };
             }
         
-            let mergeStartCol = 9;
+            let mergeStartCol = 7;
             let mergeEndCol = 16;
             let mergeRowNumber = getSafeCell(rows[key1], mergeStartCol).row;
             try {
@@ -1818,20 +1856,32 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[7]");
             }
+
+
+            } else {
+               let cell7 = rows[key1]._cells[6];
+              let add7 = cell7._address;
+             if (Av < Avm) {
+                data = { ...data, [add7]: `sxe  =  ${sxe[wkey]}` };
+              } else {
+                data = { ...data, [add7]: "sxe =  Not required" };
+              }
+          }
           }
         
           if (sxe_i === 2) {
-            let cell3 = getSafeCell(rows[key1], 6);
+            if (wkey == lastWkey) {
+            let cell3 = getSafeCell(rows[key1], 4);
             if (cell3) {
               data = { ...data, [cell3._address]: "sₓₑ" };
             }
         
-            let cell4 = getSafeCell(rows[key1], 8);
+            let cell4 = getSafeCell(rows[key1], 5);
             if (cell4) {
               data = { ...data, [cell4._address]: "=" };
             }
         
-            let mergeStartCol = 9;
+            let mergeStartCol = 7;
             let mergeEndCol = 16;
             let mergeRowNumber = getSafeCell(rows[key1], mergeStartCol).row;
             try {
@@ -1851,31 +1901,58 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
               if (Av < Avm) {
                 data = { ...data, [add15]: sxe[wkey] };
               } else {
-                data = { ...data, [add15]: "Not required" };
+                data = { ...data, [add15]: "Not Required" };
               }
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[7]");
             }
           }
+        } else {
+          let cell7 = rows[key1]._cells[6];
+              let add7 = cell7._address;
+             if (Av < Avm) {
+                data = { ...data, [add7]: `sxe  =  ${sxe[wkey]}` };
+              } else {
+                data = { ...data, [add7]: "sxe =  Not Required" };
+              }
+        }
         }
         
         if (getSafeCell(rows[key1], 0) && getSafeCell(rows[key1], 0)._value.model.value === "$$b") {
           b_i = b_i + 1;
           if (b_i === 1) {
+            if (wkey == lastWkey) {
             let cell5 = getSafeCell(rows[key1], 4);
             if (cell5) {
               data = { ...data, [cell5._address]: "β" };
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[4]");
             }
-        
+          }
+          else {
+            let cell7 = getSafeCell(rows[key1], 7);
+            if (cell7) {
+              data = { ...data, [cell7._address]: "β" };
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+            }
+          }
+          if (wkey == lastWkey) {
             let cell6 = getSafeCell(rows[key1], 5);
             if (cell6) {
               data = { ...data, [cell6._address]: "=" };
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[5]");
             }
-        
+          } else {
+            let cell8 = getSafeCell(rows[key1], 8);
+            if (cell8) {
+              data = { ...data, [cell8._address]: "=" };
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+            }
+          }
+          if (wkey == lastWkey) {
             let cell7 = getSafeCell(rows[key1], 6);
             if (cell7) {
               if (Av < Avm) {
@@ -1893,6 +1970,25 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[6]");
             }
+          } else {
+            let cell10 = getSafeCell(rows[key1], 9);
+            if (cell10) {
+              if (Av < Avm) {
+                let b_value = ThetaBeta2(Etm * 1000,sxe[wkey]);
+                let beta = b_value[1];
+                console.log(beta);
+                data = { ...data, [cell10._address]: parseFloat(beta.toFixed(2)) };
+                beta_new = beta;
+                beta_m[wkey] = beta_new;
+              } else {
+                data = { ...data, [cell10._address]: parseFloat(beta1.toFixed(2)) };
+                beta_new = parseFloat(beta1.toFixed(2));
+                beta_m[wkey] = beta_new;
+              }
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[10]");
+            }
+          }
             let cell11 = getSafeCell(rows[key1], 11);
             if (cell11) {
               data = { ...data, [cell11._address]: "θ" };
@@ -1926,20 +2022,38 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
         
           if (b_i === 2) {
+            if (wkey == lastWkey) {
             let cell5 = getSafeCell(rows[key1], 4);
             if (cell5) {
               data = { ...data, [cell5._address]: "β" };
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[4]");
             }
-        
-            let cell6 = getSafeCell(rows[key1], 5);
+          } else {
+            let cell7 = getSafeCell(rows[key1], 7);
+            if (cell7) {
+              data = { ...data, [cell7._address]: "β" };
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[4]");
+            }
+          }
+          if (wkey == lastWkey) {
+          let cell6 = getSafeCell(rows[key1], 5);
             if (cell6) {
               data = { ...data, [cell6._address]: "=" };
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[5]");
             }
-        
+          } else {
+            let cell8 = getSafeCell(rows[key1], 8);
+            if (cell8) {
+              data = { ...data, [cell8._address]: "=" };
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[5]");
+            }
+
+          }
+          if (wkey == lastWkey) {
             let cell7 = getSafeCell(rows[key1], 6);
             if (cell7) {
               if (Av < Avm) {
@@ -1957,6 +2071,26 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
             } else {
               console.error("Error: Unable to determine address for rows[key1]._cells[6]");
             }
+          } else {
+            let cell10 = getSafeCell(rows[key1], 9);
+            if (cell10) {
+              if (Av < Avm) {
+                let b_value = ThetaBeta2( Etn * 1000,sxe[wkey]);
+                let beta = parseFloat(b_value[1].toFixed(2));
+                console.log(beta);
+                data = { ...data, [cell10._address]: parseFloat(beta.toFixed(2)) };
+                beta_new_min = beta;
+                beta_n[wkey] = beta_new_min;
+              } else {
+                data = { ...data, [cell10._address]: parseFloat(beta2.toFixed(2)) };
+                beta_new_min = parseFloat(beta2.toFixed(2));
+                beta_n[wkey] = beta_new_min;
+              }
+            } else {
+              console.error("Error: Unable to determine address for rows[key1]._cells[10]");
+            }
+
+          }
             let cell11 = getSafeCell(rows[key1], 11);
             if (cell11) {
               data = { ...data, [cell11._address]: "θ" };
@@ -2778,7 +2912,7 @@ import {DropList,Grid,Panel,Typography,VerifyUtil, } from "@midasit-dev/moaui";
           }
       }
   }
-  
+    
       for (let key in data) {
         let match = key.match(/^([A-Za-z]+)(\d+)$/);
         if (match) {
@@ -3755,7 +3889,7 @@ formatCell(dropdownCell, name);
       let numberPart = parseInt(matchedParts[0].numberPart, 10);
       let letterPart = matchedParts[0].letterPart;
       let name = numberPart + "_" + letterPart;
-      console.log(selectedName)
+      console.log(selectedName);
       console.log(name);
       
       const concatenatedValue_cbc = `${selectedName}(CBC)`;
@@ -3881,10 +4015,18 @@ formatCell(dropdownCell, name);
       console.error("Error fetching beam stresses:", error);
     }
     let type;
+    console.log(SelectWorksheets);
+    for (let wkey in SelectWorksheets) {
+      lastWkey = wkey;
+      // type =  await (updatedata(wkey, SelectWorksheets[wkey]));
+      // console.log(type);
+    }
       for (let wkey in SelectWorksheets) {
+        // lastWkey = wkey;
         type =  await (updatedata(wkey, SelectWorksheets[wkey]));
         console.log(type);
       }
+      console.log(lastWkey);
       console.log(type);
       for (let wkey in SelectWorksheets2) {
         // Check if beamStresses is not null or undefined and has keys
